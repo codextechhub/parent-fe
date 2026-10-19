@@ -36,6 +36,11 @@ export function AppShell() {
   const current = itemFor(pathname);
   const screenTitle = pathname.startsWith("/results/card/")
     ? "Report card"
+    : pathname.startsWith("/fees/invoices/") ? "Invoice"
+    : pathname.startsWith("/fees/receipts/") ? "Receipt"
+    : pathname.startsWith("/fees/pay-all") ? "Pay all"
+    : pathname.startsWith("/fees/pay/") ? "Pay"
+    : pathname === "/fees/paid" ? "Payment status"
     : current?.key === "home"
       ? "Home"
       : current?.key === "timetable" ? "Timetable"

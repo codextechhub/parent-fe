@@ -325,6 +325,135 @@ export type SessionResults = {
   next_term_begins?: string | null;
 };
 
+/* ─── Fees, invoices, receipts, pay, transfer ───────────────────────────── */
+
+export type InvoiceLine = { description: string; amount: number };
+
+export type Invoice = {
+  invoice_ref: number;
+  number: string;
+  title: string;
+  invoice_date: string | null;
+  due_date: string | null;
+  lines: InvoiceLine[];
+  total: number;
+  paid: number;
+  balance: number;
+  status: "PAID" | "PARTIAL" | "OPEN" | string;
+  status_label: string;
+};
+
+export type ChildFeesEntry =
+  | {
+      available: true;
+      child: { id: number; first_name: string; full_name: string };
+      balance: number;
+      total_billed: number;
+      total_paid: number;
+      invoices: Invoice[];
+    }
+  | {
+      available: false;
+      child: { id: number; first_name: string; full_name: string };
+      message: string;
+    };
+
+export type FamilyFeesBlock =
+  | { available: true; billed: number; paid: number; outstanding: number }
+  | { available: false; message: string };
+
+export type PayAllStep = {
+  child_id: number;
+  first_name: string;
+  invoice_ref: number;
+  number: string;
+  title: string;
+  amount: number;
+};
+
+export type PayAll = {
+  total: number;
+  steps: PayAllStep[];
+  /** True when every step would reach zero on its own full charge. */
+  complete: boolean;
+};
+
+export type FamilyFeesData = {
+  children: ChildFeesEntry[];
+  combined: FamilyFeesBlock;
+  min_part_payment: number;
+  pay_all: PayAll;
+};
+
+export type Payment = {
+  payment_ref: number | null;
+  reference: string;
+  amount: number;
+  status: "CONFIRMED" | "PENDING" | "FAILED" | string;
+  status_label: string;
+  method: string;
+  method_label: string;
+  paid_on: string | null;
+  payer_name: string;
+  receipt_number: string;
+  invoice_number: string;
+  source?: "TRANSFER_ACCOUNT" | "ONLINE" | "SCHOOL" | string;
+  source_label?: string;
+  has_receipt: boolean;
+  child: { id: number; first_name: string };
+};
+
+export type InvoiceSheet = Invoice & {
+  child: { id: number; first_name: string };
+};
+
+export type Receipt = {
+  payment_ref: number;
+  receipt_number: string;
+  paid_on: string;
+  amount: number;
+  method: string;
+  method_label: string;
+  reference: string;
+  payer_name: string;
+  received_from: string;
+  lines: { invoice_number: string; title: string; amount_applied: number; balance_after: number }[];
+  balance_after: number;
+  issuer_name: string;
+  child: { id: number; first_name: string };
+};
+
+export type Checkout = {
+  checkout_url: string;
+  reference: string;
+  amount: number;
+  balance_after: number;
+  child: { id: number; first_name: string };
+};
+
+export type PaymentStatus = {
+  status: "PENDING" | "CONFIRMED" | "FAILED" | "ABANDONED";
+  amount: number;
+  amount_naira: string;
+  payee_name: string;
+  paid_at: string | null;
+};
+
+export type TransferAccount =
+  | { state: "ISSUED"; bank_name: string; account_number: string; account_name: string; as_of: string }
+  | { state: "NONE"; as_of: string }
+  | { state: "UNAVAILABLE"; message: string };
+
+export type Deposit = {
+  reference: string;
+  amount: number;
+  status: "PENDING" | "CONFIRMED" | string;
+  status_label: string;
+  received_at: string;
+  payment_ref: number | null;
+  has_receipt: boolean;
+};
+
 /** The report-card payload the parent portal serves; same shape as school-fe's. */
 export type ReportCard = {
   letterhead: {
@@ -523,6 +652,95 @@ export const parentApi = baseApi.injectEndpoints({
       transformResponse: (res: Envelope<ReportCard>) => res.data,
       providesTags: (_r, _e, args) => [{ type: "Results", id: `card:${args.childId}:${args.term}` }],
     }),
+    /* ─── Family fees ───────────────────────────────────────────────────── */
+    familyFees: builder.query<FamilyFeesData, void>({
+      query: () => ({ url: "/portal/parent/fees/", method: "GET" }),
+      transformResponse: (res: Envelope<FamilyFeesData>) => res.data,
+      providesTags: ["Fees"],
+    }),
+    familyPayments: builder.query<Payment[], void>({
+      query: () => ({ url: "/portal/parent/fees/payments/", method: "GET" }),
+      transformResponse: (res: Envelope<Payment[]>) => res.data,
+      providesTags: ["Payments"],
+    }),
+    invoiceSheet: builder.query<InvoiceSheet, number>({
+      query: (ref) => ({ url: `/portal/parent/fees/invoices/${ref}/`, method: "GET" }),
+      transformResponse: (res: Envelope<InvoiceSheet>) => res.data,
+      providesTags: (_r, _e, ref) => [{ type: "Fees", id: `invoice:${ref}` }],
+    }),
+    invoicePdf: builder.query<string, number>({
+      queryFn: async (ref, _api, _extra, baseQuery) => {
+        const result = await baseQuery({
+          url: `/portal/parent/fees/invoices/${ref}/`,
+          responseHandler: async (r) => (r.ok ? r.blob() : r.text()),
+          params: { as: "pdf" },
+        });
+        if (result.error) return { error: result.error };
+        return { data: URL.createObjectURL(result.data as Blob) };
+      },
+      keepUnusedDataFor: 0,
+    }),
+    receipt: builder.query<Receipt, number>({
+      query: (ref) => ({ url: `/portal/parent/fees/payments/${ref}/receipt/`, method: "GET" }),
+      transformResponse: (res: Envelope<Receipt>) => res.data,
+      providesTags: (_r, _e, ref) => [{ type: "Payments", id: `receipt:${ref}` }],
+    }),
+    receiptPdf: builder.query<string, number>({
+      queryFn: async (ref, _api, _extra, baseQuery) => {
+        const result = await baseQuery({
+          url: `/portal/parent/fees/payments/${ref}/receipt/`,
+          responseHandler: async (r) => (r.ok ? r.blob() : r.text()),
+          params: { as: "pdf" },
+        });
+        if (result.error) return { error: result.error };
+        return { data: URL.createObjectURL(result.data as Blob) };
+      },
+      keepUnusedDataFor: 0,
+    }),
+    startPayment: builder.mutation<Checkout, { invoiceRef: number; amount: number }>({
+      query: ({ invoiceRef, amount }) => ({
+        url: `/portal/parent/fees/invoices/${invoiceRef}/pay/`,
+        method: "POST",
+        body: { amount },
+      }),
+      transformResponse: (res: Envelope<Checkout>) => res.data,
+    }),
+    /** Public collection status, no auth needed. */
+    paymentStatus: builder.query<PaymentStatus, string>({
+      query: (reference) => ({
+        url: `/payments/public/collections/${encodeURIComponent(reference)}/status/`,
+        method: "GET",
+      }),
+      transformResponse: (res: Envelope<PaymentStatus>) => res.data,
+    }),
+    childTransferAccount: builder.query<TransferAccount, number>({
+      query: (childId) => ({
+        url: `/portal/parent/children/${childId}/fees/transfer-account/`,
+        method: "GET",
+      }),
+      transformResponse: (res: Envelope<TransferAccount>) => res.data,
+      providesTags: (_r, _e, childId) => [{ type: "Fees", id: `transfer:${childId}` }],
+    }),
+    openChildTransferAccount: builder.mutation<TransferAccount, number>({
+      query: (childId) => ({
+        url: `/portal/parent/children/${childId}/fees/transfer-account/`,
+        method: "POST",
+        body: {},
+      }),
+      transformResponse: (res: Envelope<TransferAccount>) => res.data,
+      invalidatesTags: (_r, _e, childId) => [{ type: "Fees", id: `transfer:${childId}` }],
+    }),
+    childDeposits: builder.query<
+      { as_of: string; deposits: Deposit[] },
+      { childId: number; since: string }
+    >({
+      query: ({ childId, since }) => ({
+        url: `/portal/parent/children/${childId}/fees/transfer-account/deposits/`,
+        method: "GET",
+        params: { since },
+      }),
+      transformResponse: (res: Envelope<{ as_of: string; deposits: Deposit[] }>) => res.data,
+    }),
   }),
 });
 
@@ -541,6 +759,17 @@ export const {
   useChildResultsQuery,
   useChildSessionResultsQuery,
   useChildReportCardQuery,
+  useFamilyFeesQuery,
+  useFamilyPaymentsQuery,
+  useInvoiceSheetQuery,
+  useLazyInvoicePdfQuery,
+  useReceiptQuery,
+  useLazyReceiptPdfQuery,
+  useStartPaymentMutation,
+  usePaymentStatusQuery,
+  useChildTransferAccountQuery,
+  useOpenChildTransferAccountMutation,
+  useChildDepositsQuery,
 } = parentApi;
 
 /** The sentence a mutation refused for one field, as the backend wraps it. */

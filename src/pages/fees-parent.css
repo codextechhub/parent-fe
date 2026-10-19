@@ -1,0 +1,184 @@
+/* Parent-fe additions on top of fees.css: per-child cards, transfer grid,
+   amber unavailable hero, Pay-all CTA. */
+
+.fees-hero--amber {
+  background: linear-gradient(135deg, #935908 0%, #c08427 60%, #e5a650 100%);
+}
+
+.fees-child-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.fees-child-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e4e9f3;
+  border-radius: 19px;
+  background: #fff;
+  box-shadow: 0 7px 22px #2638590a;
+}
+.fees-child-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.fees-child-name { min-width: 0; display: flex; flex-direction: column; }
+.fees-child-name strong {
+  color: #223153;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fees-child-name small {
+  color: #75849c;
+  font-size: 12px;
+  font-weight: 650;
+}
+.fees-child-head > div:not(.fees-child-name) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.fees-child-head strong {
+  color: #223153;
+  font-size: 15px;
+  font-weight: 800;
+}
+.fees-child-head small { color: #75849c; font-size: 12px; }
+.fees-child-empty {
+  margin: 0;
+  color: #75849c;
+  font-size: 12.5px;
+  padding: 10px 2px;
+}
+.fees-child-card .fees-invoices {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+.fees-child-card .fees-invoice {
+  border-radius: 14px;
+  box-shadow: none;
+  background: #f8faff;
+  border-color: #e2e8f3;
+}
+
+.fees-invoice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+.fees-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 11px;
+  border: 1px solid #cbd5f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #4a659d;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.fees-view-link:hover { background: #eaf0ff; }
+
+/* Pay-all CTA sits under the hero. */
+.fees-pay-all-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 11px;
+  padding: 15px 17px;
+  border: 1px solid #cbd5f0;
+  border-radius: 17px;
+  background: #eff4ff;
+  color: #243654;
+}
+.fees-pay-all-card strong { display: block; font-size: 14.5px; font-weight: 800; color: #243654; letter-spacing: -.02em; }
+.fees-pay-all-card p { margin: 4px 0 0; color: #4b5f81; font-size: 12.5px; line-height: 1.45; }
+.fees-pay-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  background: #4a659d;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 6px 15px #4a659d2b;
+}
+.fees-pay-all-link:hover { background: #3a5389; }
+.fees-pay-all-offline {
+  margin: 0;
+  color: #7a7334;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* Transfer cards grid. */
+.fees-transfer-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.fees-transfer-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #e4e9f3;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 7px 22px #2638590a;
+}
+.fees-transfer-card--loading { min-height: 140px; background: #e9edfa; animation: fees-pulse 1.4s ease-in-out infinite alternate; }
+.fees-transfer-card--note strong { display: block; color: #243654; font-size: 14px; font-weight: 800; }
+.fees-transfer-card--note p { margin: 5px 0 0; color: #75849c; font-size: 12.5px; }
+@keyframes fees-pulse { to { opacity: .55; } }
+
+.fees-transfer-card .student-transfer-card {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.fees-transfer-card .student-transfer-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.fees-transfer-card .student-transfer-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: #e8eef8; color: #4a659d; }
+.fees-transfer-card .student-transfer-status { color: #227956; font-size: 11.5px; font-weight: 800; }
+.fees-transfer-card .student-transfer-label { margin: 0; color: #243654; font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+.fees-transfer-card .student-transfer-name { margin: 2px 0 0; color: #4a659d; font-size: 12.5px; font-weight: 650; }
+.fees-transfer-card .student-transfer-number {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 13px;
+  border: 1px solid #cbd5f0;
+  border-radius: 11px;
+  background: #f8faff;
+  color: #243654;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.fees-transfer-card .student-transfer-bank { margin: 4px 0 0; color: #75849c; font-size: 12px; }
+.fees-transfer-card .student-transfer-hint { margin: 0; padding: 10px 11px; border-radius: 10px; background: #f3f5f9; color: #6a7a97; font-size: 11.5px; line-height: 1.45; }
+
+/* "Get my account number" style for the per-child button. */
+.fees-get-account h3 { margin: 0; color: #243654; font-size: 15px; font-weight: 800; }
+.fees-get-account p { margin: 6px 0 0; color: #6b7991; font-size: 12.5px; line-height: 1.45; }
+.fees-get-account-error { margin: 10px 0 0; color: #a62d2d; font-size: 12px; font-weight: 700; }
+.fees-get-account-action { margin-top: 11px; min-height: 40px; }
+
+@media (min-width: 800px) {
+  .fees-transfer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fees-child-list { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 1024px) {
+  .fees-transfer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

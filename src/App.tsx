@@ -5,12 +5,17 @@ import { AppShell } from "@/components/shell/app-shell";
 import { PageShell } from "@/components/layout/page-shell";
 import { UpdateBar } from "@/components/update-bar";
 import { RequireParent } from "@/pages/guard";
-import PlaceholderPage from "@/pages/placeholder";
 import SignInPage from "@/pages/sign-in";
 import { AttendancePage } from "@/pages/attendance";
+import { FeesPage } from "@/pages/fees";
 import { HomePage } from "@/pages/home";
+import { InvoicePage } from "@/pages/invoice";
 import { NoticesPage } from "@/pages/notices";
+import { PaidPage } from "@/pages/paid";
+import { PayPage } from "@/pages/pay";
+import { PayAllPage } from "@/pages/pay-all";
 import { ProfilePage } from "@/pages/profile";
+import { ReceiptPage } from "@/pages/receipt";
 import { ReportCardPage } from "@/pages/report-card";
 import { ResultsPage } from "@/pages/results";
 import { TimetablePage } from "@/pages/timetable";
@@ -41,7 +46,12 @@ export default function App() {
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="results" element={<ResultsPage />} />
           <Route path="results/card/:termId" element={<ReportCardPage />} />
-          <Route path="fees" element={<PlaceholderPage title="Fees" description="Bills and payments for every child." />} />
+          <Route path="fees" element={<FeesPage />} />
+          <Route path="fees/invoices/:invoiceRef" element={<InvoicePage />} />
+          <Route path="fees/receipts/:paymentRef" element={<ReceiptPage />} />
+          <Route path="fees/pay/:invoiceRef" element={<PayPage />} />
+          <Route path="fees/pay-all" element={<PayAllPage />} />
+          <Route path="fees/paid" element={<PaidPage />} />
           <Route path="notices" element={<NoticesPage />} />
           <Route path="notices/:id" element={<NoticesPage />} />
           <Route path="profile" element={<ProfilePage />} />
