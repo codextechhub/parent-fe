@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/parent/svg/xvs-logo.svg" />
+  <link rel="apple-touch-icon" href="/parent/icons/apple-touch-icon.png" />
+  <!-- The XVS manifest; the app points this at the school's own once it has
+       read it (src/lib/school-app.ts). -->
+  <link rel="manifest" href="/parent/manifest.webmanifest" />
+  <meta name="theme-color" content="#4A659D" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- The names for an address that names no school; the app puts the
+       school's own here (src/lib/school-app.ts). -->
+  <meta name="apple-mobile-web-app-title" content="XVS Parent" />
+  <meta name="application-name" content="XVS Parent" />
+  <title>XVS Parent</title>
+</head>
+
+<body>
+  <!-- The boot screen: shown from the first paint until React mounts. -->
+  <div id="root">
+    <div style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:#F9FAFB">
+      <img src="/parent/svg/xvs-loading.svg" width="160" height="203" alt="Loading" />
+    </div>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

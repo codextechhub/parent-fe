@@ -1,0 +1,855 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./shadcn-tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  font-family: var(--font-geist);
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #4A659D;
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: #4A659D;
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: #4A659D;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #4A659D;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: #4A659D;
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+@theme inline {
+  --font-geist: 'Geist Variable', system-ui, Helvetica, sans-serif;
+  --font-geist-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, monospace;
+  /* Geist, under a name that says Montserrat. The name is a handle, not a
+     promise: `font-mont` is written 1451 times inside @xvs/finance and hundreds
+     more here, and the package is shared with the console, where the class must
+     keep resolving to Montserrat outside its own screens. Renaming it there
+     would restyle the console. Pointing the token at Geist here restyles this
+     app and nothing else. */
+  --font-mont: var(--font-geist);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sec: #303A51;
+  --color-pry-01: #DBE0EB;
+  /* The hairline every box is drawn with, and the surface behind the ones that
+     recede. Both were being USED - 65 `border-white-02` and 14 `bg-white-05`
+     across 21 files - and neither was ever defined, so Tailwind emitted nothing
+     and every one of those boxes rendered with no border at all. That is why
+     the drawers, the header and the sidebar all looked outline-less.
+
+     `white-02` is bound to `--border` rather than given its own hex, so the
+     hand-written classes and the `Input` / `Textarea` / `NativeSelect`
+     primitives (which use `border-border`) cannot drift apart - one line to
+     change, and every box in the app follows. */
+  --color-white-02: var(--border);
+  --color-white-05: #FBFBFA;
+  --color-error: #E33131;
+  --color-error-01: #f76659;
+  --color-black-01: #212121;
+  --color-gray-01: #555654;
+  --color-gray-02: #B8BAB7;
+  /* Surface tints for cards, chips and tracks - never a text or icon colour,
+     where they vanish on white. src/lib/surface-tints.test.ts holds this. */
+  --color-gray-03: #F7F7F7;
+  --color-gray-04: #F9F9F8;
+  /* The grey almost all small text is written in, at 1,600-odd uses across the
+     app and @xvs/finance. WCAG AA asks 4.5:1 at this size; this measures 4.97:1
+     on white and 4.64:1 on gray-03, the lightest surface a card is drawn on, so
+     it holds wherever the text lands rather than only on the pure-white parts.
+     It shares a value with gray-06 because both are the lightest neutral that
+     still passes, not by accident.
+     Text on this colour's own 10% tint is the exception and wants
+     gray-06-text: the tint lifts the background to within 4.4:1 of this. */
+  --color-gray-05: #6F706F;
+  --color-gray-06: #6F706F;
+  --color-yellow-01: #F59E0B;
+  --color-green-01: #16A34A;
+  --color-green-02: #0F6E56;
+  --color-teal-01: #0F6E56;
+  --color-amber-01: #854F0B;
+  --color-blue-01: #185FA5;
+  --color-red-01: #A32D2D;
+
+  /* Darkened siblings, for STATUS AND VALIDATION TEXT ONLY - never for fills,
+     borders or glyphs, which keep the raw hue above.
+     The raw hues work as backgrounds but fail WCAG AA as small text on their
+     own 10% tint over white: green 2.96:1, yellow 1.99:1, error 3.81:1,
+     gray-05 2.89:1 - all under 4.5:1, and none large enough for the 3:1
+     large-text exception at text-sm. These four measure 5.5-6.3:1 on the same
+     composited tint, so the hue still reads and the label stays legible.
+     --primary needs no sibling: it measures 5.05:1 on primary/10 unmodified.
+     Ported from console-fe, which had already solved this. */
+  --color-green-01-text: #0F6B32;  /* 5.94:1 on green-01/10  */
+  --color-yellow-01-text: #8A5A08; /* 5.48:1 on yellow-01/10 */
+  --color-error-text: #A81E1E;     /* 6.31:1 on error/10     */
+  --color-gray-06-text: #5C5D5C;   /* 6.01:1 on gray-05/10   */
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: #4A659D;
+  --card-foreground: oklch(0.985 0 0);
+  --popover: #4A659D;
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: #4A659D;
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: #4A659D;
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+   input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px #F7F7F7 inset !important;
+    -webkit-text-fill-color: black !important;
+  }
+  body {
+    background-color: #F7F7F7;
+  }
+}
+/* Global notifications - centered over the active work area, not the viewport.
+   Dashboard toasts sit above the sticky header. Colours come from the app's
+   own palette tokens (@theme inline above) so a toast never introduces a
+   shade the rest of the app does not already use. */
+.workspace-toaster[data-sonner-toaster][data-x-position="center"] {
+  left: var(--workspace-toast-center) !important;
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] {
+  min-height: 50px;
+  padding: 11px 44px 11px 13px;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 98%);
+  color: var(--color-black-01);
+  box-shadow:
+    0 12px 30px rgb(15 23 42 / 12%),
+    0 2px 8px rgb(15 23 42 / 7%);
+  font-family: var(--font-geist);
+  font-size: 13px;
+}
+
+.app-toaster [data-sonner-toast] {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease,
+    height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease;
+}
+
+.app-toaster [data-sonner-toast][data-removed="true"] {
+  transition-duration: 160ms;
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-icon] {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.app-toaster [data-sonner-toast][data-type="success"] [data-icon] {
+  background: color-mix(in srgb, var(--color-green-01) 10%, transparent);
+  color: var(--color-green-01);
+}
+
+.app-toaster [data-sonner-toast][data-type="error"] [data-icon] {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  color: var(--color-red-01);
+}
+
+.app-toaster [data-sonner-toast][data-type="warning"] [data-icon] {
+  background: color-mix(in srgb, var(--color-yellow-01) 12%, transparent);
+  color: var(--color-amber-01);
+}
+
+.app-toaster [data-sonner-toast][data-type="info"] [data-icon],
+.app-toaster [data-sonner-toast][data-type="loading"] [data-icon] {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-title] {
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-description] {
+  margin-top: 1px;
+  color: var(--color-gray-06);
+  line-height: 1.4;
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-close-button] {
+  top: 50%;
+  right: 8px;
+  left: auto;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--color-gray-05);
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-close-button]:hover {
+  border: 0;
+  background: var(--color-gray-03);
+  color: var(--color-black-01);
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-close-button]:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.app-toaster [data-sonner-toast][data-styled="true"] [data-button] {
+  height: 28px;
+  border-radius: 7px;
+  background: var(--primary);
+  color: white;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+/* Tablet: the sidebar is off-canvas, so the work area is the whole viewport. */
+@media (max-width: 767px) and (min-width: 601px) {
+  .workspace-toaster[data-sonner-toaster][data-x-position="center"] {
+    left: 50% !important;
+  }
+}
+
+/* Phone: sonner switches to the full-width mobile offsets. */
+@media (max-width: 600px) {
+  .workspace-toaster[data-sonner-toaster][data-x-position="center"] {
+    left: var(--mobile-offset-left) !important;
+  }
+
+  .app-toaster [data-sonner-toast][data-styled="true"] {
+    min-height: 48px;
+    padding-block: 10px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Printing one document out of an application.
+
+   A timetable is the most widely read thing a school produces, and most of the
+   ways it travels are paper: the staffroom noticeboard, the folder a head of
+   department carries, the copy a parent is handed at the gate. So a screen that
+   can only be read on screen is a screen that has not finished the job.
+
+   `visibility` rather than `display`, deliberately. Hiding the chrome with
+   `display: none` collapses the layout the print area is positioned inside, and
+   a grid that has lost its container prints as a column of cells. Making
+   everything invisible and the print area visible again leaves the geometry
+   alone, which is why this old trick is still the reliable one.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.print-only {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   The dashboard hero.
+
+   Two soft lights drifting behind the greeting, slowly and out of phase, so the
+   panel is not a flat rectangle. Ported from console-fe's overview, where the
+   same pair sits behind its own hero.
+
+   The movement is the whole reason they are here, so a reader who has asked for
+   less of it gets none: the lights stay where they are and the panel is simply
+   a gradient.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes hero-ambient-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-18px, 14px, 0) scale(1.08);
+  }
+}
+
+.hero-ambient {
+  animation: hero-ambient-drift 14s ease-in-out infinite;
+}
+
+.hero-ambient-delayed {
+  animation: hero-ambient-drift 18s ease-in-out -6s infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ambient,
+  .hero-ambient-delayed {
+    animation: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   The sidebar mark.
+
+   The school's crest, which turns over on hover to write the XVS wordmark and
+   turns back when the pointer leaves. Ported from console-fe's `.app-logo`,
+   which writes "CodeX" the same way; the artwork is components/xvs-wordmark.
+
+   Transitions rather than keyframes, for the reason the console records: they
+   reverse from wherever they had got to, so flicking the pointer across the
+   mark never leaves it stranded side-on, and the letters un-write in the order
+   opposite the one they were written in.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.school-mark {
+  --flip-in: 620ms;
+  --flip-out: 560ms;
+  --draw-in: 760ms;
+  --draw-out: 320ms;
+  /* Hold the writing until the card is past side-on and the back face has come
+     round. Earlier and the letters are drawn while steeply foreshortened; later
+     and the mark sits blank for a beat mid-spin. Same hold the console uses,
+     for the same reason. */
+  --draw-start: 210ms;
+  --spin: cubic-bezier(0.2, 0.72, 0.24, 1);
+
+  position: relative;
+  display: inline-block;
+  perspective: 620px;
+}
+
+.school-mark__card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--flip-out) var(--spin);
+}
+
+/* Gated behind a real pointer. Touch browsers keep `:hover` applied after a tap,
+   which would leave the mark flipped on a phone with no way to turn it back. */
+@media (hover: hover) and (pointer: fine) {
+  .school-mark:hover .school-mark__card {
+    transform: rotateY(180deg);
+    transition: transform var(--flip-in) var(--spin) 0ms;
+  }
+}
+
+.school-mark:focus-visible .school-mark__card,
+a:focus-visible .school-mark__card,
+button:focus-visible .school-mark__card {
+  transform: rotateY(180deg);
+  transition: transform var(--flip-in) var(--spin) 0ms;
+}
+
+.school-mark__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.school-mark__face--back {
+  transform: rotateY(180deg);
+}
+
+/* ── the writing ──────────────────────────────────────────────────────────────
+
+   The filled wordmark is painted through an SVG mask whose content is the pen
+   strokes, stroked thick and white. Walking a stroke's `stroke-dashoffset` down
+   to zero grows the mask along the stroke, so the letters emerge along the path
+   the pen travels rather than fading in or wiping across.
+
+   `stroke-dasharray: 1 2` against `pathLength="1"` is one dash as long as the
+   whole stroke followed by a gap twice that, so the offset alone controls how
+   much of the stroke is painted and nothing wraps round.
+
+   Each stroke carries its own slice of the shared duration in `--s` and `--l`,
+   both cut from its real arc length so the pen holds a constant speed instead of
+   dawdling over the short flourish. The delays are declared twice - in the
+   resting rule, which plays on the way out, and in the hover rule, the way in -
+   which is what makes the letters un-write from the S back to the X. */
+
+.school-mark__pen {
+  fill: none;
+  stroke: #fff;
+  /* Wide enough to cover every letter to its edges, narrow enough that no
+     stroke reaches the next letter's ink and reveals it before the pen gets
+     there. 26 against the 100-unit-tall wordmark is the tested value; see
+     docs/XVS_WORDMARK.md for how to check a change to it. */
+  stroke-width: 26;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: var(--o);
+  transition: stroke-dashoffset calc(var(--draw-out) * var(--l)) linear
+    calc(var(--draw-out) * (1 - var(--s) - var(--l)));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .school-mark:hover .school-mark__pen {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset calc(var(--draw-in) * var(--l)) linear
+      calc(var(--draw-start) + var(--draw-in) * var(--s));
+  }
+}
+
+.school-mark:focus-visible .school-mark__pen,
+a:focus-visible .school-mark__pen,
+button:focus-visible .school-mark__pen {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset calc(var(--draw-in) * var(--l)) linear
+    calc(var(--draw-start) + var(--draw-in) * var(--s));
+}
+
+/* Nothing here carries meaning that the motion is required to deliver: the
+   school is named on the link that wraps the mark either way. So for a reader
+   who has asked for less movement, the card turns without turning and the
+   wordmark is simply there, already written. */
+@media (prefers-reduced-motion: reduce) {
+  .school-mark__card {
+    transition: none;
+  }
+  .school-mark__pen {
+    stroke-dashoffset: 0;
+    transition: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scrollbars.
+
+   Two mechanisms on purpose, because they answer two different problems.
+
+   `ScrollArea` (components/ui/scroll-area.tsx) is for boxes with a bounded
+   height: drawer bodies, dialog lists, table wrappers, grids that scroll
+   sideways. It hides the native scrollbar and floats a thumb over the content,
+   so nothing in the box moves when it becomes scrollable.
+
+   These rules are for everything else - the page itself, and any scroller not
+   converted yet. A native scrollbar cannot be made to overlay: it takes its
+   width out of the box whatever you style it. What it CAN be is thin and quiet,
+   so a screen does not have two scrollbars on it that look like they came from
+   different applications. Chrome, Edge and Firefox all read the two standard
+   properties now; the WebKit block below is for Safari, which does not.
+
+   The page keeps its native scroll deliberately. Replacing the window's
+   scroller breaks anchor links, `scrollIntoView` (which the forms rely on to
+   put the cursor in a missing field), sticky headers, and the browser's own
+   scroll restoration on back.
+   ───────────────────────────────────────────────────────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  /* Thumb, then track. The track is transparent rather than a colour: the
+     groove is the part that reads as furniture. */
+  scrollbar-color: color-mix(in srgb, var(--color-black-01, #212121) 22%, transparent)
+    transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--color-black-01, #212121) 22%, transparent);
+    /* Inset by a transparent border so the thumb reads as narrower than the
+       area it can be grabbed in - small to look at, easy to hit. */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--color-black-01, #212121) 42%, transparent);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* A scrollbar on paper is a control nobody can press. */
+@media print {
+  * {
+    scrollbar-width: none;
+  }
+}
+
+@media print {
+  /* The chrome is REMOVED rather than made invisible.
+
+     Hiding it with `visibility` alone leaves it occupying its space, so the
+     document printed beside a 256px sidebar - indented on every page and
+     clipped on the right. These four are the whole of the app frame, and with
+     them gone the print area is simply the first thing on the page. */
+  [data-slot="sidebar"],
+  [data-slot="sidebar-wrapper"] > [data-slot="sidebar"],
+  header,
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Everything else is hidden but keeps its box, so the print area's own
+     layout - a table inside a panel inside a grid - is not rebuilt from
+     scratch on paper. */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Paper is white. The app's grey page would otherwise print behind the
+     document, since colours print exactly (below). */
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  /* An instruction inside the printed region: "Add" in an empty cell tells a
+     reader with a mouse what to do and tells paper nothing. Needs `important`
+     because the rule above turns everything in the area back on, and a
+     Tailwind `print:` utility sits in a layer this plain rule outranks. */
+  .print-blank {
+    visibility: hidden !important;
+  }
+
+  .print-area {
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  /* A grid that scrolls on screen has no scrollbar on paper; it has a second
+     page. Let it size to its content rather than clipping at the viewport. */
+  .print-area .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  .print-area table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed;
+  }
+
+  /* An Action column is not part of the document. Marked explicitly rather
+     than taken by position: the class grid is also a table inside a print
+     area, and its last column is Friday. */
+  .print-drop-last th:last-child,
+  .print-drop-last td:last-child {
+    display: none;
+  }
+
+  /* Backgrounds are dropped by default in most browsers, which would take the
+     clash tint and the non-teaching rows with them. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 12mm;
+    size: landscape;
+  }
+
+  /* A report card is a portrait A4 document, one to a page, while every
+     other print in the app is landscape. The report card screens name the
+     page on the document root (useReportCardPrint), so the whole print takes
+     it and no page switches part-way. */
+  @page report-card {
+    margin: 12mm;
+    size: A4 portrait;
+  }
+
+  html[data-print-page="report-card"] body {
+    page: report-card;
+  }
+
+  /* A card must fit one page with fifteen subjects and ten ratings, so on
+     paper it is set smaller and tighter than on screen. */
+  .report-card {
+    max-width: none !important;
+    padding: 0 !important;
+    zoom: 0.85;
+  }
+
+  .report-card > * + * {
+    margin-top: 8px !important;
+  }
+
+  .report-card th,
+  .report-card td {
+    padding: 2px 3px !important;
+    height: auto !important;
+  }
+
+  .report-card section {
+    padding: 6px 8px !important;
+  }
+
+  /* Several cards print one to a page. */
+  .report-card-break {
+    break-after: page;
+  }
+
+  .report-card-break:last-child {
+    break-after: auto;
+  }
+}
+
+/* Figures in mono inside the finance and procurement screens, so money and
+   codes line up in a column. Same rule the console carries, scoped the same
+   way: `console-geist` is the class @xvs/finance puts on its shell. The rest
+   of the app has no columns of figures to align, and mono there would read as
+   a different product. */
+.console-geist .tabular-nums {
+  font-family: var(--font-geist-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   The enrolment stepper's connector.
+
+   A line joins the five steps so they read as one journey rather than five
+   separate buttons, and the segment LEAVING the current step carries a light
+   travelling towards the next one. That is the only moving thing on the form,
+   and it is pointing at where the reader is going next - which is what a
+   stepper is for and what a row of numbered circles cannot say.
+
+   Reduced motion gets the same line without the travel: the segment stays
+   filled, so the direction is still legible, it simply does not move.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes step-connector-glow {
+  from {
+    background-position: -140% 0;
+  }
+  to {
+    background-position: 240% 0;
+  }
+}
+
+.step-connector-live {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-white-02) 0%,
+    var(--color-white-02) 34%,
+    var(--color-primary) 50%,
+    var(--color-white-02) 66%,
+    var(--color-white-02) 100%
+  );
+  background-size: 220% 100%;
+  animation: step-connector-glow 1.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-connector-live {
+    animation: none;
+    background-image: none;
+    background-color: var(--color-primary);
+    opacity: 0.45;
+  }
+}
+
+/* Button loading - three sequential opacity-fading dots (no layout shift) */
+@keyframes dot-fade {
+  0%, 80%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
+}
+.loading-dot {
+  animation: dot-fade 1.4s ease-in-out infinite both;
+}
+
+/* Organogram: the pulse on a card the search box jumps to. */
+@keyframes pulseHL {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45); }
+  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+/* Organogram chart: top-down connectors drawn in CSS. Each <li> draws the two
+   half-width rails above it and a drop into its card; each child <ul> draws the
+   drop from its parent. A closed branch simply renders no <ul>. */
+.org-chart ul {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+  position: relative;
+}
+.org-chart > ul {
+  padding-top: 0;
+}
+.org-chart li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 24px 8px 0;
+}
+.org-chart li::before,
+.org-chart li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 24px;
+  border-top: 1px solid #cbd5e1;
+}
+.org-chart li::after {
+  right: auto;
+  left: 50%;
+  border-left: 1px solid #cbd5e1;
+}
+.org-chart li:only-child::before,
+.org-chart li:only-child::after {
+  display: none;
+}
+.org-chart li:first-child::before,
+.org-chart li:last-child::after {
+  border-top: 0 none;
+}
+.org-chart li:last-child::before {
+  border-right: 1px solid #cbd5e1;
+  border-radius: 0 6px 0 0;
+}
+.org-chart li:first-child::after {
+  border-radius: 6px 0 0 0;
+}
+/* vertical drop from a parent card into its children row */
+.org-chart ul ul::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 24px;
+  border-left: 1px solid #cbd5e1;
+}
+/* an only child still needs the drop line from its parent */
+.org-chart ul ul > li:only-child {
+  padding-top: 0;
+}
+/* top-level roots have no parent - no rails, no drop */
+.org-chart > ul > li::before,
+.org-chart > ul > li::after {
+  display: none;
+}
+.org-chart > ul > li {
+  padding-top: 0;
+}

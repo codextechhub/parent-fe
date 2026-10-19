@@ -1,0 +1,15 @@
+.school-calendar { width: min(320px, calc(100vw - 40px)); padding: 13px; border: 1px solid #dce4f0; border-radius: 15px; background: #fff; box-shadow: 0 16px 48px #24365625; color: #263b5a; }
+.school-calendar-head { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+.school-calendar-head button { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #4a659d; cursor: pointer; }
+.school-calendar-head button:hover, .school-calendar-grid button:hover { background: #e8eef8; }
+.school-calendar-selects { display: flex; align-items: center; justify-content: center; min-width: 0; gap: 4px; }
+.school-calendar-selects select { max-width: 120px; padding: 5px 2px; border: 0; border-radius: 7px; background: transparent; color: #263b5a; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.school-calendar-selects select:last-child { max-width: 80px; }
+.school-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin-top: 12px; }
+.school-calendar-weekday { display: grid; place-items: center; height: 27px; color: #7d8da3; font-size: 11px; }
+.school-calendar-grid button { display: grid; place-items: center; aspect-ratio: 1; min-width: 0; border: 0; border-radius: 8px; background: transparent; color: #2e4265; font: inherit; font-size: 12px; cursor: pointer; }
+.school-calendar-grid button.is-outside { color: #aeb9c8; }
+.school-calendar-grid button[data-today="true"] { background: #eef2f9; color: #3e5d94; font-weight: 750; }
+.school-calendar-grid button[aria-pressed="true"] { background: #4a659d; color: #fff; font-weight: 750; }
+.school-calendar-today { width: 100%; margin-top: 12px; padding: 9px; border: 0; border-top: 1px solid #e7ecf4; background: transparent; color: #4a659d; font: inherit; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; }
+.school-calendar :is(button, select):focus-visible { outline: 3px solid #7895c5; outline-offset: 2px; }

@@ -1,0 +1,45 @@
+name: CI
+
+# main only. Staging is not a branch anybody commits to: it is reset to main and
+# force-pushed by the deploy script, so a staging run tests a tree main has
+# already tested, twice as slowly and for the same answer.
+#
+# The one case this gives up is a commit pushed straight to staging without
+# going through main. That is not how this repo deploys, and a direct push to
+# staging is a mistake CI ought not to be the thing that catches.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      # The codebase is at zero ESLint problems - keep it there.
+      - name: Lint
+        run: npx eslint . --max-warnings 0
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npx vite build
+        env:
+          # The build reads these; neither is contacted, and a real URL here
+          # would bake a live backend into a CI artefact nobody deploys.
+          VITE_BACKEND_URL: https://ci.invalid/v1
+          VITE_APP_BASE_DOMAIN: ci.invalid
