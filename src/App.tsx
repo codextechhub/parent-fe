@@ -7,6 +7,9 @@ import { UpdateBar } from "@/components/update-bar";
 import { RequireParent } from "@/pages/guard";
 import PlaceholderPage from "@/pages/placeholder";
 import SignInPage from "@/pages/sign-in";
+import { HomePage } from "@/pages/home";
+import { NoticesPage } from "@/pages/notices";
+import { ProfilePage } from "@/pages/profile";
 
 /**
  * The parent app's routes, all under `/parent/`.
@@ -29,7 +32,7 @@ export default function App() {
             </RequireParent>
           }
         >
-          <Route index element={<PlaceholderPage title="Home" description="Your family at a glance." />} />
+          <Route index element={<HomePage />} />
           <Route
             path="results"
             element={
@@ -41,8 +44,9 @@ export default function App() {
             }
           />
           <Route path="fees" element={<PlaceholderPage title="Fees" description="Bills and payments for every child." />} />
-          <Route path="notices" element={<PlaceholderPage title="Notices" description="Everything the school has posted for your family." />} />
-          <Route path="profile" element={<PlaceholderPage title="My profile" description="Your details, and the children linked to you." />} />
+          <Route path="notices" element={<NoticesPage />} />
+          <Route path="notices/:id" element={<NoticesPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

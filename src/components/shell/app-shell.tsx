@@ -7,6 +7,7 @@ import { SchoolMark } from "@/components/school-mark";
 import { ChildSwitcher, CHILD_PARAM, useActiveChild } from "@/components/session/child-switcher";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hooks";
+import { useNoticesQuery } from "@/redux/services/portal-api";
 
 import { itemFor, NAV, splitTabs, type NavItem } from "./nav";
 import { OfflineBar } from "./offline-bar";
@@ -30,9 +31,11 @@ export function AppShell() {
     return () => window.removeEventListener("scroll", update);
   }, []);
   const me = useAppSelector((s) => s.auth.me);
+  const { data: firstPage } = useNoticesQuery(1, { skip: !me });
+  const unreadNotices = firstPage?.unreadCount ?? 0;
   const current = itemFor(pathname);
   const screenTitle = current?.key === "home"
-    ? me?.parent.first_name ? `Welcome, ${me.parent.first_name}` : "Home"
+    ? "Home"
     : current?.key === "results" ? "Results"
     : current?.key === "fees" ? "Fees"
     : current?.key === "notices" ? "Notices"
@@ -73,7 +76,7 @@ export function AppShell() {
       </header>
       <OfflineBar />
       <Outlet />
-      <TabBar />
+      <TabBar badges={{ notices: unreadNotices }} />
     </div>
   );
 }
@@ -83,7 +86,7 @@ const TAB =
   "relative flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] transition-colors";
 
 /** The frosted pill floating above the bottom edge. */
-function TabBar() {
+function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> }) {
   const { tabs, more } = splitTabs(NAV);
   const [moreOpen, setMoreOpen] = useState(false);
   const { pathname } = useLocation();
@@ -112,6 +115,7 @@ function TabBar() {
         />
         {tabs.map((item) => {
           const Icon = item.icon;
+          const count = badges[item.key];
           return (
             <NavLink
               key={item.key}
@@ -126,7 +130,14 @@ function TabBar() {
                 )
               }
             >
-              <Icon className="size-5" />
+              <span className="relative">
+                <Icon className="size-5" />
+                {!!count && (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] leading-4 font-semibold text-primary-foreground">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
+              </span>
               <span className="truncate">{item.label}</span>
             </NavLink>
           );
