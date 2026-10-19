@@ -72,6 +72,15 @@ export const portalApi = baseApi.injectEndpoints({
         return { data: undefined };
       },
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        // Best effort: drop this browser's push row for the signed-in parent
+        // BEFORE the token goes away. Lazy import to avoid a circular edge
+        // between portal-api → push → push-api → base-api → portal-api.
+        try {
+          const { dropPushOnSignOut } = await import("@/push/push");
+          await dropPushOnSignOut(dispatch);
+        } catch {
+          // Push state teardown never blocks sign-out.
+        }
         try {
           await queryFulfilled;
         } finally {

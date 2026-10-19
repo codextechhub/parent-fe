@@ -6,6 +6,7 @@ import { PageShell } from "@/components/layout/page-shell";
 import { UpdateBar } from "@/components/update-bar";
 import { RequireParent } from "@/pages/guard";
 import SignInPage from "@/pages/sign-in";
+import { PushListener } from "@/push/push-listener";
 import { AttendancePage } from "@/pages/attendance";
 import { FeesPage } from "@/pages/fees";
 import { HomePage } from "@/pages/home";
@@ -32,6 +33,7 @@ import { TimetablePage } from "@/pages/timetable";
 export default function App() {
   return (
     <BrowserRouter basename="/parent">
+      <PushListener />
       <Routes>
         <Route path="/sign-in" element={<SignInPage />} />
         <Route

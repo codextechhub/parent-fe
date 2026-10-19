@@ -11,8 +11,9 @@
  * fallback page is the app's own `index.html` under `/parent/`, never a page
  * of school-fe's or student-fe's, which share the origin.
  *
- * Push notifications are added in Phase 6; until then nothing is imported
- * into the generated worker.
+ * Push notifications are handled by `public/push-sw.js`, loaded into the
+ * generated worker. It shows what the school sent and opens the right
+ * `/parent/...` screen on tap; it caches nothing.
  */
 export const workboxOptions = {
   globPatterns: ["**/*.{js,css,html,svg,png,woff2,webmanifest}"],
@@ -21,4 +22,5 @@ export const workboxOptions = {
   navigateFallbackDenylist: [/^\/v1\//, /^\/media\//],
   runtimeCaching: [],
   cleanupOutdatedCaches: true,
+  importScripts: ["push-sw.js"],
 };

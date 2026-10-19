@@ -52,6 +52,20 @@ export default defineConfig({
       "/media": { target: devApiTarget, changeOrigin: false },
     },
   },
+  /**
+   * `vite preview` serves the built app. The service worker only registers
+   * from a real build, so Phase 6's push plumbing is verified here, not on
+   * the dev server. The proxy mirrors the one above so a built app with
+   * VITE_BACKEND_URL=/v1 can still reach a local backend.
+   */
+  preview: {
+    port: 4176,
+    proxy: {
+      "/parent/app/": schoolApp,
+      "/v1": { target: devApiTarget, changeOrigin: false },
+      "/media": { target: devApiTarget, changeOrigin: false },
+    },
+  },
   plugins: [
     react({
       babel: {
