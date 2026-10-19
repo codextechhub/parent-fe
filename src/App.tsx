@@ -7,9 +7,13 @@ import { UpdateBar } from "@/components/update-bar";
 import { RequireParent } from "@/pages/guard";
 import PlaceholderPage from "@/pages/placeholder";
 import SignInPage from "@/pages/sign-in";
+import { AttendancePage } from "@/pages/attendance";
 import { HomePage } from "@/pages/home";
 import { NoticesPage } from "@/pages/notices";
 import { ProfilePage } from "@/pages/profile";
+import { ReportCardPage } from "@/pages/report-card";
+import { ResultsPage } from "@/pages/results";
+import { TimetablePage } from "@/pages/timetable";
 
 /**
  * The parent app's routes, all under `/parent/`.
@@ -33,16 +37,10 @@ export default function App() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route
-            path="results"
-            element={
-              <PlaceholderPage
-                title="Results"
-                description="A child's released results."
-                perChild
-              />
-            }
-          />
+          <Route path="timetable" element={<TimetablePage />} />
+          <Route path="attendance" element={<AttendancePage />} />
+          <Route path="results" element={<ResultsPage />} />
+          <Route path="results/card/:termId" element={<ReportCardPage />} />
           <Route path="fees" element={<PlaceholderPage title="Fees" description="Bills and payments for every child." />} />
           <Route path="notices" element={<NoticesPage />} />
           <Route path="notices/:id" element={<NoticesPage />} />

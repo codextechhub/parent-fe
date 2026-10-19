@@ -1,0 +1,31 @@
+/* A slim identity strip at the top of each per-child screen. */
+.child-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+  border: 1px solid #dbe3f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px #26385908;
+}
+.child-strip > div { min-width: 0; display: flex; flex-direction: column; }
+.child-strip strong {
+  color: #273956;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: -.015em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.child-strip span {
+  margin-top: 2px;
+  color: #75849c;
+  font-size: 11px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

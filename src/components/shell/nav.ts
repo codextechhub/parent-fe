@@ -1,8 +1,8 @@
-import { Award, Bell, Home, User, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, CalendarDays, CheckCircle2, Home, User, Wallet, type LucideIcon } from "lucide-react";
 
 /** One destination in the parent app's navigation. */
 export type NavItem = {
-  key: "home" | "results" | "fees" | "notices" | "profile";
+  key: "home" | "timetable" | "results" | "attendance" | "notices" | "fees" | "profile";
   label: string;
   path: string;
   icon: LucideIcon;
@@ -13,9 +13,10 @@ export type NavItem = {
 };
 
 /**
- * Phase 2 nav: five destinations, no More sheet needed. Phase 4 adds the
- * per-child screens (Timetable, Attendance, Assignments) and the More item
- * splits in.
+ * Phase 4 nav: seven destinations. Five fit on the tab bar; the rest sit
+ * behind More, in the design's own order. Home / Results / Fees stay on
+ * the bar because they are the ones a parent opens most, plus Notices for
+ * its unread badge and Profile. Timetable and Attendance go under More.
  *
  * `perChild` marks the routes that need to know whose child is being read.
  * The child switcher attaches `?child=` to a link that carries it, and drops
@@ -23,7 +24,9 @@ export type NavItem = {
  */
 export const NAV: NavItem[] = [
   { key: "home", label: "Home", path: "/", icon: Home, onBar: true },
+  { key: "timetable", label: "Timetable", path: "/timetable", icon: CalendarDays, perChild: true },
   { key: "results", label: "Results", path: "/results", icon: Award, onBar: true, perChild: true },
+  { key: "attendance", label: "Attendance", path: "/attendance", icon: CheckCircle2, perChild: true },
   { key: "fees", label: "Fees", path: "/fees", icon: Wallet, onBar: true },
   { key: "notices", label: "Notices", path: "/notices", icon: Bell, onBar: true },
   { key: "profile", label: "Profile", path: "/profile", icon: User, onBar: true },

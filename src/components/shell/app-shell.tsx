@@ -34,13 +34,17 @@ export function AppShell() {
   const { data: firstPage } = useNoticesQuery(1, { skip: !me });
   const unreadNotices = firstPage?.unreadCount ?? 0;
   const current = itemFor(pathname);
-  const screenTitle = current?.key === "home"
-    ? "Home"
-    : current?.key === "results" ? "Results"
-    : current?.key === "fees" ? "Fees"
-    : current?.key === "notices" ? "Notices"
-    : current?.key === "profile" ? "My profile"
-    : current?.label ?? "";
+  const screenTitle = pathname.startsWith("/results/card/")
+    ? "Report card"
+    : current?.key === "home"
+      ? "Home"
+      : current?.key === "timetable" ? "Timetable"
+      : current?.key === "results" ? "Results"
+      : current?.key === "attendance" ? "Attendance"
+      : current?.key === "fees" ? "Fees"
+      : current?.key === "notices" ? "Notices"
+      : current?.key === "profile" ? "My profile"
+      : current?.label ?? "";
 
   // The branch line names the showing child's branch, so a parent with
   // children at two branches can tell which branch the current screen is

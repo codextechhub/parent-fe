@@ -191,6 +191,184 @@ export type PasswordChange = {
   confirm_password: string;
 };
 
+/* ─── Per-child reads ───────────────────────────────────────────────────── */
+
+export type TimetableCell = {
+  start_time: string;
+  end_time: string;
+  kind: "LESSON" | "BREAK" | string;
+  label: string;
+  subject?: string;
+  teacher?: string;
+  room?: string;
+};
+
+export type TodayPeriod = TimetableCell & {
+  state: "done" | "now" | "next" | "later";
+};
+
+export type Timetable = {
+  published: boolean;
+  class_name: string;
+  days: { day_of_week: number; day_label: string; is_today: boolean; cells: TimetableCell[] }[];
+  today: { date: string; periods: TodayPeriod[] } | null;
+};
+
+export type AttendanceTerm = {
+  id: number;
+  name: string;
+  session_name: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+};
+
+export type AttendanceDay = {
+  date: string;
+  state: "MARKED" | "NOT_TAKEN" | "CLOSED" | "SUSPENDED" | "NOT_ON_ROLL" | string;
+  mark: "P" | "L" | "A" | "E" | null;
+  arrived_at: string | null;
+  closed_reason: string | null;
+};
+
+export type AttendanceNote = {
+  date: string;
+  mark: "L" | "A" | "E";
+  mark_label: string;
+  reason_label: string | null;
+  note: string;
+  arrived_at: string | null;
+};
+
+export type Attendance = {
+  term: AttendanceTerm | null;
+  terms: AttendanceTerm[];
+  counts: {
+    present: number;
+    late: number;
+    absent: number;
+    excused: number;
+    not_taken: number;
+    opened: number;
+    rate: number | null;
+  };
+  days: AttendanceDay[];
+  notes: AttendanceNote[];
+  today: AttendanceDay | null;
+};
+
+export type ResultTerm = {
+  id: number;
+  name: string;
+  session: string;
+  state: "released" | "withheld";
+};
+
+export type SubjectResult = {
+  name: string;
+  teacher: string | null;
+  cells: { short_name: string; max_score: number | null; mark: number | string | null }[];
+  total: number | null;
+  obtainable: number | null;
+  percentage: string | null;
+  grade: string | null;
+  remark: string | null;
+};
+
+export type TermResult = {
+  state: "released" | "withheld" | "not_published";
+  term: { id: number; name: string; session: string } | null;
+  terms: ResultTerm[];
+  message?: string;
+  released_at?: string;
+  class_name?: string;
+  components?: { short_name: string; max_score: number; is_exam: boolean }[];
+  subjects?: SubjectResult[];
+  summary?: {
+    overall_average: string | null;
+    subjects: number;
+    position?: number;
+    position_label?: string;
+    class_average?: string;
+  };
+  teacher_comment?: string;
+  class_teacher?: string | null;
+  next_term_begins?: string | null;
+};
+
+export type SessionResults = {
+  state: "released" | "withheld" | "not_published";
+  session: { id: number; name: string } | null;
+  terms: (ResultTerm & {
+    released_at?: string;
+    average?: string | null;
+    position_label?: string;
+    class_average?: string;
+  })[];
+  terms_released?: number;
+  terms_total?: number;
+  cumulative: null | {
+    terms: { id: number; name: string }[];
+    subjects: {
+      name: string;
+      terms: { term: string; percentage: string | null }[];
+      annual_average: string | null;
+      annual_grade?: string | null;
+    }[];
+    annual_average: string | null;
+    annual_position_label?: string;
+    class_average?: string;
+    promotion: string | null;
+    remark: string;
+    class_teacher: string | null;
+  };
+  next_term_begins?: string | null;
+};
+
+/** The report-card payload the parent portal serves; same shape as school-fe's. */
+export type ReportCard = {
+  letterhead: {
+    school_name: string;
+    logo_url: string | null;
+    branch_name: string | null;
+    branch_address: string | null;
+    phone: string | null;
+  };
+  term_line: string;
+  facts: { label: string; value: string }[];
+  components: { short_name: string; max_score: number }[];
+  subjects: {
+    name: string;
+    cells?: string[];
+    total?: number | null;
+    grade?: string | null;
+    remark?: string | null;
+    class_average?: string | null;
+    highest?: number | null;
+    lowest?: number | null;
+  }[];
+  totals: { label: string; value: string }[];
+  attendance?: { label: string; value: string }[];
+  ratings?: { trait: string; value: number }[];
+  rating_key?: string;
+  teacher_comment?: string;
+  teacher_name?: string | null;
+  principal_comment?: string | null;
+  principal_name?: string | null;
+  grading_key: string;
+  cumulative?: {
+    terms: string[];
+    subjects: { name: string; totals?: string[]; annual_average?: string | null }[];
+    annual_average?: string | null;
+    annual_position?: string;
+    promotion_line?: string;
+  };
+  next_term_line?: string;
+  version: number;
+  /** Backend's parent portal only serves released cards; this is here for shape parity. */
+  held: boolean;
+};
+
 export const parentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     home: builder.query<Home, void>({
@@ -299,6 +477,52 @@ export const parentApi = baseApi.injectEndpoints({
         return { data: undefined };
       },
     }),
+    /* Per-child reads. Each refetches when `childId` changes, so the shell
+       never shows one child's data under another's name. */
+    childTimetable: builder.query<Timetable, number>({
+      query: (childId) => ({
+        url: `/portal/parent/children/${childId}/timetable/`,
+        method: "GET",
+      }),
+      transformResponse: (res: Envelope<Timetable>) => res.data,
+      providesTags: (_r, _e, childId) => [{ type: "Timetable", id: childId }],
+    }),
+    childAttendance: builder.query<Attendance, { childId: number; term: number | null }>({
+      query: ({ childId, term }) => ({
+        url: `/portal/parent/children/${childId}/attendance/`,
+        method: "GET",
+        params: term ? { term } : {},
+      }),
+      transformResponse: (res: Envelope<Attendance>) => res.data,
+      providesTags: (_r, _e, args) => [{ type: "Attendance", id: `${args.childId}:${args.term ?? "current"}` }],
+    }),
+    childResults: builder.query<TermResult, { childId: number; term: number | null }>({
+      query: ({ childId, term }) => ({
+        url: `/portal/parent/children/${childId}/results/`,
+        method: "GET",
+        params: term ? { term } : {},
+      }),
+      transformResponse: (res: Envelope<TermResult>) => res.data,
+      providesTags: (_r, _e, args) => [{ type: "Results", id: `${args.childId}:${args.term ?? "current"}` }],
+    }),
+    childSessionResults: builder.query<SessionResults, { childId: number; session: number | null }>({
+      query: ({ childId, session }) => ({
+        url: `/portal/parent/children/${childId}/results/session/`,
+        method: "GET",
+        params: session ? { session } : {},
+      }),
+      transformResponse: (res: Envelope<SessionResults>) => res.data,
+      providesTags: (_r, _e, args) => [{ type: "Results", id: `session:${args.childId}:${args.session ?? "current"}` }],
+    }),
+    childReportCard: builder.query<ReportCard, { childId: number; term: number }>({
+      query: ({ childId, term }) => ({
+        url: `/portal/parent/children/${childId}/results/report-card/`,
+        method: "GET",
+        params: { term },
+      }),
+      transformResponse: (res: Envelope<ReportCard>) => res.data,
+      providesTags: (_r, _e, args) => [{ type: "Results", id: `card:${args.childId}:${args.term}` }],
+    }),
   }),
 });
 
@@ -312,6 +536,11 @@ export const {
   useMarkAllNoticesReadMutation,
   usePasswordPolicyQuery,
   useChangePasswordMutation,
+  useChildTimetableQuery,
+  useChildAttendanceQuery,
+  useChildResultsQuery,
+  useChildSessionResultsQuery,
+  useChildReportCardQuery,
 } = parentApi;
 
 /** The sentence a mutation refused for one field, as the backend wraps it. */

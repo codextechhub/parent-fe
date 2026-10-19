@@ -45,3 +45,9 @@ export function formatTimestampDate(value: string): string {
   if (Number.isNaN(at.getTime())) return "";
   return `${at.getDate()} ${MONTHS[at.getMonth()]} ${at.getFullYear()}`;
 }
+
+/** "8:00" from "08:00:00" - clock reading at the school. */
+export function formatClock(value: string): string {
+  const match = /^(\d{1,2}):(\d{2})/.exec(value || "");
+  return match ? `${Number(match[1])}:${match[2]}` : "";
+}
