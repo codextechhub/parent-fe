@@ -39,12 +39,35 @@ calls them.
   origin's root and student-fe owns `/student/`, so a root-relative address
   (`/svg/...`) would load another app's file. Use `import.meta.env.BASE_URL`
   for public assets.
-- **One parent per browser, usually.** A parent has one account on this app,
-  not several children sharing an account the way the student app does on a
-  shared phone. The child switcher in the header picks which child's record
-  is showing in memory; it does not switch accounts. Nothing is cached per
-  child yet in Phase 1 - that machinery lands with the per-child screens
-  in Phase 4.
+- **One parent per browser.** A parent has one account on this app, not
+  several children sharing an account the way student-fe does on a shared
+  phone. **No per-device cookies here**: parents sign in through the ordinary
+  tenant `/user/auth/login/`, the backend sets Django's refresh cookie and
+  the short-lived access token lives in memory (`src/auth/access-token.ts`).
+  A 401 asks `/user/auth/token/refresh/` once and retries; a second 401
+  clears the session. The CSRF plumbing is the same as school-fe's. The
+  child switcher in the header picks which child's record is showing; it
+  does not switch accounts. The chosen child rides in the URL as `?child=`
+  on per-child routes (Results, Attendance, Timetable, Assignments) and is
+  dropped from family-scoped routes (Fees, Notices, Profile).
+- **Auth and the shell share plumbing with school-fe.** `src/auth/csrf.ts`,
+  `src/auth/refresh.ts` and the `/user/auth/` paths they call are the same
+  the staff app uses. `src/components/shell/app-shell.tsx` is adapted from
+  student-fe's and keeps the floating tab bar at every size. Keep those
+  modules in step with their counterparts.
+- **The route guard is `me/`.** `GET /v1/portal/parent/me/` is the one check
+  that answers "is this account a parent at this school". 200 opens the
+  shell; 404 is `NOT_A_PARENT` and sends the account back to sign-in with
+  the staff-app message; 401 is a session expired and sends the parent back
+  without a message. The platform tenant and any `device_app` answer on
+  login are refused inline on sign-in: Codex staff and pupils never open
+  the shell.
+- **No school-fe hand-off yet.** school-fe's sign-in page already hands
+  pupils to `/student/`; a parallel branch for parents to `/parent/` needs
+  a backend `device_app` for guardians, which does not exist today. Parent
+  sign-in works self-contained on this app's own `/parent/sign-in` page.
+  Follow-up: add a parent policy to `vs_user.services.device_sessions`, then
+  the symmetric branch in school-fe.
 - **Phones are the main screen.** The layout is derived from the desktop
   design; the owner's choice between a desktop sidebar and the floating tab
   bar at every size is pending (see the plan). Horizontal page overflow is
@@ -64,8 +87,9 @@ calls them.
   `http://lagoon-view.localhost:4176/parent/`.
 - Before committing: `npx tsc -b`, `npx eslint . --max-warnings 0`,
   `npm test`, `npx vite build`. CI runs the same four.
-- Test parents will come from the backend's `seed_parent_portal_scenarios`
-  once Phase 0 lands; the plan lists who signs in as whom.
+- Test parents come from the backend's `seed_parent_portal_scenarios` (now
+  shipped). On lagoon-view: `patricia.okafor@example.ng` with four children
+  across both branches, password `Parent@School2026`.
 - Releasing: `./deploy-staging.sh` puts main on staging; `./release.sh
   promote` moves staging to production with a version tag, `rollback <tag>`
   steps back. Both are student-fe's scripts, kept in step with them. Commit

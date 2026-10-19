@@ -1,19 +1,25 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 
+import { authReducer } from "./features/auth-slice";
+import { connectivityReducer } from "./features/connectivity-slice";
 import { baseApi } from "./services/base-api";
+// Side-effect import: registering endpoints on the base API.
+import "./services/portal-api";
 
 /**
  * The app's one store.
  *
- * Phase 1 scaffold: only the RTK Query root is wired in. Session, child
- * switcher and connectivity slices arrive with Phase 2+; a parent that
- * reopens the app expects their last read to be there, so `setupListeners`
- * is kept here too.
+ * - `baseApi` holds the RTK Query cache for every portal read and write.
+ * - `auth` holds the signed-in parent (`me`) and the one-shot "not a parent"
+ *   flag the sign-in page watches for.
+ * - `connectivity` sits here so the OfflineBar reads it on every render.
  */
 export const store = configureStore({
   reducer: {
     [baseApi.reducerPath]: baseApi.reducer,
+    auth: authReducer,
+    connectivity: connectivityReducer,
   },
   middleware: (getDefault) => getDefault().concat(baseApi.middleware),
 });

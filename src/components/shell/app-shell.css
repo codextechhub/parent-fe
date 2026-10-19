@@ -1,0 +1,3 @@
+/* The parent app's shell carries no backdrop treatment yet. Phase 3 adds
+   the Home hero and this file picks up a `.app-shell--design` class the
+   way student-fe's does. For now the frame is a plain surface. */
