@@ -35,41 +35,70 @@ behind Cloudflare. Render's rules match paths only, never the host, so
 nothing here depends on knowing which school was asked for: the app works
 that out itself and names the school in the path.
 
-Each environment (staging, then production) needs the same three things the
-student app lays down, scaled over `/parent/*` and
-`/parent/manifest.webmanifest`. The full write-up lives in student-fe's
-README and belongs here once Phase 7 ships; the sections below are
-placeholders for that.
+Each environment (staging, then production) needs three things, in this
+order.
 
 ### 1. A static site for this app
 
 A Render **Static Site** per environment, from `codextechhub/parent-fe`, in
 the My works project beside that environment's school-fe and student-fe
-sites. See the student-fe README for the exact environment variables, the
-`VITE_BACKEND_URL` / `VITE_APP_BASE_DOMAIN` / `VITE_CSRF_COOKIE_NAME` set,
-the `Rewrite /*` catch-all, and the headers for `sw.js`, `index.html`,
-`manifest.webmanifest` and `/assets/`.
+sites:
+
+| Setting | Staging | Production |
+| --- | --- | --- |
+| Name | `xvs-parent-staging-fe` | `xvs-prod-parent` |
+| Branch | `staging` | `production` |
+| Build command | `npm ci && npm run build` | same |
+| Publish directory | `dist` | same |
+| `VITE_BACKEND_URL` | `https://api-staging.codexng.com/v1` | `https://api.codexng.com/v1` |
+| `VITE_APP_BASE_DOMAIN` | `xvs-staging.codexng.com` | `xvs.codexng.com` |
+| `VITE_CSRF_COOKIE_NAME` | `csrftoken_staging` | `csrftoken` |
+| Auto-deploy | on commit | off (deployed by hand, as school-fe and student-fe are) |
+
+The last three variables must match that environment's school-fe,
+student-fe and API. The base domain is how the app reads the school off
+its address: built without it, every staging address reads as "no school".
+The cookie name is the API's `CSRF_COOKIE_NAME`; staging and production
+share `.codexng.com`, so staging's has its own name.
+
+Under **Redirects/Rewrites**, one rule: Rewrite `/*` to `/index.html`. A
+file that exists is served first, so this only catches the app's own routes
+on a refresh.
+
+Under **Headers**: `Cache-Control: no-cache` on `/sw.js` and `/index.html`,
+so a new version reaches phones on their next open, and
+`Content-Type: application/manifest+json` on `/manifest.webmanifest`, which
+Render otherwise sends as a plain download. Everything under `/assets/` is
+named by its content and may be cached for good.
 
 ### 2. Two rules on school-fe's static site
 
-On school-fe's static site of the same environment, add these **above** its
-catch-all `/*` to `/index.html` rule:
+On the **existing** school-fe static site of the same environment, under
+**Redirects/Rewrites**, add these **above** its catch-all `/*` to
+`/index.html` rule (rules run top to bottom, and the catch-all would
+otherwise answer `/parent/` with school-fe's page):
 
 | Type | Source | Destination |
 | --- | --- | --- |
 | Rewrite | `/parent/app/*` | `https://api-staging.codexng.com/v1/portal/parent/app/*` (production: `https://api.codexng.com/...`) |
-| Rewrite | `/parent/*` | the parent-fe static site's `*` on the same environment |
+| Rewrite | `/parent/*` | `https://xvs-parent-staging-fe.onrender.com/*` (production: `https://xvs-prod-parent.onrender.com/*`) |
 
 The first passes the school's own manifest and crest icons through from the
 API. The app asks for `/parent/app/<slug>/manifest.webmanifest` on its own
 address (`src/lib/school-app.ts`); until that answers, the XVS manifest in
-`dist/` stands in, so the app can always be installed. The second serves this
-app.
+`dist/` stands in, so the app can always be installed. The second serves
+this app: `/parent/fees` is fetched from the app's site as `/fees`, and its
+own catch-all hands it `index.html`.
 
-### 3. `PARENT_APP_BASE_URL` on the API
+### 3. Push keys on the API
 
-Phase 7. The backend's card checkout returns to `/parent/fees/paid`, and
-`PARENT_APP_BASE_URL` names which host that is per environment.
+The same `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY` and
+`WEB_PUSH_CONTACT` the student app relies on are already set on each
+environment's backend web service and worker. The parent app reads the same
+public key through the plain-user `GET /notifications/push/public-key/`
+route (`src/redux/services/push-api.ts`), so no new keys are needed; without
+them the Home card is not offered and nothing breaks. The one-off script
+that mints a pair is in the student-fe README.
 
 ### Checking an environment
 
@@ -81,6 +110,9 @@ With `<school>` a real school's address on that environment:
    `cache-control: no-cache`, not school-fe's HTML.
 3. `curl -s https://<school>/parent/app/<slug>/manifest.webmanifest` is the
    school's manifest (its own `name`).
+4. Signed in as a parent, Home offers Get the app (where the browser can
+   install) and, once installed or on a desktop Chrome, Get notifications;
+   turning them on and sending a parent a payment-received push brings one.
 
 The dev server and `vite preview` follow the same `/parent/app/` rule
 themselves (see `vite.config.ts`).

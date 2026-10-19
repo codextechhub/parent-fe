@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { ChildAvatar } from "@/components/child-avatar";
+import { InstallOffer } from "@/components/install-offer";
 import { PushOffer } from "@/components/push-settings";
 import { formatLongDate, formatNaira, formatTimestampDate } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
@@ -85,6 +86,7 @@ export function HomePage() {
           )}
           {home && (
             <>
+              <InstallOffer />
               <PushOffer />
               <FamilyFeesBanner block={home.fees} />
               <section aria-labelledby="home-children-title">

@@ -2,6 +2,7 @@ import { BrowserRouter, Link, Route, Routes } from "react-router";
 import { Toaster } from "sonner";
 
 import { AppShell } from "@/components/shell/app-shell";
+import { InstallListener } from "@/components/install-offer";
 import { PageShell } from "@/components/layout/page-shell";
 import { UpdateBar } from "@/components/update-bar";
 import { RequireParent } from "@/pages/guard";
@@ -34,6 +35,7 @@ export default function App() {
   return (
     <BrowserRouter basename="/parent">
       <PushListener />
+      <InstallListener />
       <Routes>
         <Route path="/sign-in" element={<SignInPage />} />
         <Route

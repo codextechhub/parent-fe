@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { ChangePasswordCard } from "@/components/change-password";
 import { ChildAvatar } from "@/components/child-avatar";
+import { InstallSetting } from "@/components/install-offer";
 import { PageShell } from "@/components/layout/page-shell";
 import { PushSetting } from "@/components/push-settings";
 import { useAppSelector } from "@/redux/hooks";
@@ -53,6 +54,7 @@ export function ProfilePage() {
               <SchoolDetails profile={profile} />
             </div>
             <LinkedChildren profile={profile} showBranch={me?.show_branch ?? false} />
+            <InstallSetting />
             <PushSetting />
             <ChangePasswordCard />
           </>

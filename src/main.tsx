@@ -8,6 +8,8 @@ import "@fontsource-variable/geist/index.css";
 import "@fontsource-variable/geist-mono/index.css";
 
 import App from "./App";
+import { captureInstallPrompt } from "./install/install-prompt";
+import { checkRelatedApps } from "./install/installed";
 import { applySchoolApp } from "./lib/school-app";
 import { store } from "./redux/store";
 import { schoolNameUrl } from "./utils/school-brand";
@@ -29,7 +31,11 @@ async function readSchoolName(slug: string): Promise<string> {
   return (body.name ?? "").trim();
 }
 
-void applySchoolApp(readSchoolName);
+// Chrome fires `beforeinstallprompt` before React has mounted, so the listener
+// goes on now; `checkRelatedApps` is asked once the school's manifest has been
+// put on the page.
+captureInstallPrompt();
+void applySchoolApp(readSchoolName).then(() => checkRelatedApps());
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
