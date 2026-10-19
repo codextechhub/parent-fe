@@ -2,22 +2,22 @@
  * Push notifications for the parent app, loaded into the generated service
  * worker (`workbox.importScripts` in `pwa.config.ts`), scoped to `/parent/`.
  *
- * The backend sends `{title, body, tag, url, notification_id}` for parents.
- * The `url` field is `/` (the backend uses the recipient's device-session
- * app_path, and parents have no device session), so this worker IGNORES the
- * server's url and routes by `tag`:
+ * The backend sends `{title, body, tag, url, notification_id, child?}`. For a
+ * parent's notice, released result or confirmed payment, `url` is the screen
+ * in this app (`/parent/notices/<id>`, `/parent/results?child=<id>`,
+ * `/parent/fees?child=<id>`) and `child` names the child it is about. Both are
+ * kept on the notification so a tap opens that screen.
  *
- *   billing.payment_received   → /parent/fees
- *   notices.published_parent   → /parent/notices  (backend has no PUSH
- *                                 channel for this today; the route is here
- *                                 for the day the backend adds it)
- *   gradebook.result_released  → /parent/results  (sent to the pupil today,
- *                                 not the parent; here for completeness)
- *   anything else              → /parent/
+ * The `url` is followed only when it is a `/parent/` path. Otherwise the tap
+ * opens the screen for the push's `tag`, with `?child=` when a child is named:
  *
- * Push text never carries a mark or an amount: that is the backend's to
- * enforce. If a payload we open shows a figure, flag it in the parent-fe
- * report; we do not strip server copy here.
+ *   billing.payment_received     → /parent/fees
+ *   notices.published_parent     → /parent/notices
+ *   gradebook.report_card_ready  → /parent/results
+ *   anything else                → /parent/
+ *
+ * Push text never carries a mark or an amount; the backend's templates keep
+ * figures out, and this worker shows the server's words as sent.
  */
 
 const APP_ROOT = "/parent/";
@@ -26,6 +26,7 @@ const SCREEN_FOR_TAG = {
   "billing.payment_received": "fees",
   "notices.published_parent": "notices",
   "notices.published": "notices",
+  "gradebook.report_card_ready": "results",
   "gradebook.result_released": "results",
 };
 
@@ -34,7 +35,8 @@ function screenFor(data) {
   // The server's `url` is only trusted when it names a /parent/ path.
   const serverUrl = typeof (data && data.url) === "string" ? data.url : "";
   if (serverUrl.startsWith("/parent/")) return serverUrl;
-  return APP_ROOT + screen;
+  const child = data && Number.isInteger(data.child) ? data.child : null;
+  return APP_ROOT + screen + (screen && child !== null ? "?child=" + child : "");
 }
 
 self.addEventListener("push", (event) => {
@@ -55,6 +57,8 @@ self.addEventListener("push", (event) => {
       data: {
         tag: data.tag || "",
         notificationId: data.notification_id || "",
+        url: typeof data.url === "string" ? data.url : "",
+        child: Number.isInteger(data.child) ? data.child : null,
       },
     }),
   );

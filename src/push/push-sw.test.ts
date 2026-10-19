@@ -2,10 +2,11 @@
  * The parent app's service-worker push handler (`public/push-sw.js`), run
  * against a fake worker.
  *
- * A payment confirmed for Patricia opens Fees. The server's `url` field is
- * ignored unless it names a `/parent/` path. A notice (if the backend ever
- * adds a PUSH channel for parents) opens Notices. Everything else opens
- * the app root.
+ * Patricia's push for Grace's released result opens Results with Grace
+ * showing, and a notice opens that notice: the screen and the child the school
+ * named are kept from the moment the push arrives to the tap. The server's
+ * `url` is followed only when it names a `/parent/` path; otherwise the tap
+ * opens the screen for the push's tag, and anything unknown opens the app root.
  */
 import { describe, expect, it, vi } from "vitest";
 
@@ -44,7 +45,7 @@ const PAYMENT_PUSH = {
   title: "Payment confirmed",
   body: "Your payment was confirmed. Open the app for your receipt.",
   tag: "billing.payment_received",
-  url: "/", // the server sends `/` for a parent recipient; the worker ignores it
+  url: "/", // not the parent app's, so the tap falls back to the tag
   notification_id: "900",
 };
 
@@ -62,6 +63,15 @@ const RESULT_PUSH = {
   tag: "gradebook.result_released",
   url: "/",
   notification_id: "902",
+};
+
+const GRACE_RESULT_PUSH = {
+  title: "Grace's First Term result is ready",
+  body: "Open the parent app to read it.",
+  tag: "gradebook.report_card_ready",
+  url: "/parent/results?child=431",
+  child: 431,
+  notification_id: "904",
 };
 
 const UNKNOWN_PUSH = {
@@ -84,7 +94,21 @@ describe("push arriving", () => {
         renotify: true,
         icon: "/parent/icons/icon-192.png",
         badge: "/parent/icons/badge-96.png",
-        data: { tag: "billing.payment_received", notificationId: "900" },
+        data: { tag: "billing.payment_received", notificationId: "900", url: "/", child: null },
+      }),
+    );
+  });
+
+  it("keeps the screen and the child the school named, for the tap", async () => {
+    const { self, listeners } = loadWorker([]);
+    await fire(listeners.push, { data: { json: () => GRACE_RESULT_PUSH } });
+    expect(self.registration.showNotification).toHaveBeenCalledWith(
+      "Grace's First Term result is ready",
+      expect.objectContaining({
+        data: {
+          tag: "gradebook.report_card_ready", notificationId: "904",
+          url: "/parent/results?child=431", child: 431,
+        },
       }),
     );
   });
@@ -96,6 +120,32 @@ describe("push arriving", () => {
       "Your school",
       expect.objectContaining({ renotify: false }),
     );
+  });
+});
+
+describe("a push that arrives and is then tapped", () => {
+  async function arriveThenTap(payload: Record<string, unknown>, windows: unknown[]) {
+    const { self, listeners } = loadWorker(windows as never);
+    await fire(listeners.push, { data: { json: () => payload } });
+    const [, options] = self.registration.showNotification.mock.calls[0] as unknown as [string, { data: unknown }];
+    await fire(listeners.notificationclick, { notification: { data: options.data, close: vi.fn() } });
+    return self;
+  }
+
+  it("opens the child's results the school named, in a new window", async () => {
+    const self = await arriveThenTap(GRACE_RESULT_PUSH, []);
+    expect(self.clients.openWindow).toHaveBeenCalledWith("/parent/results?child=431");
+  });
+
+  it("opens the notice the school named in the open app", async () => {
+    const open = [{ url: "http://lagoon-view.localhost:5176/parent/", postMessage: vi.fn(), focus: vi.fn(async () => undefined) }];
+    await arriveThenTap({ ...NOTICE_PUSH, url: "/parent/notices/42" }, open);
+    expect(open[0].postMessage).toHaveBeenCalledWith({ type: "xvs-parent-push-open", path: "/parent/notices/42" });
+  });
+
+  it("names the child from the push when the url is not the parent app's", async () => {
+    const self = await arriveThenTap({ ...PAYMENT_PUSH, child: 424 }, []);
+    expect(self.clients.openWindow).toHaveBeenCalledWith("/parent/fees?child=424");
   });
 });
 
