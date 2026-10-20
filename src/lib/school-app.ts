@@ -18,17 +18,24 @@ import { currentSchoolSlug } from "@/utils/school-host";
  * a crest; a school without one lists this app's own XVS icons under
  * `/parent/icons/`, and the XVS touch icon stays.
  *
- * iOS ignores the manifest's names too: Add to Home Screen labels the icon
- * from `<meta name="apple-mobile-web-app-title">`, else the page's title, and
- * the app switcher shows the title. So the page carries the school's full
- * name as its title ("Meridian Crest Academy") and the home-screen label
- * ("Meridian") in that meta and in `application-name`, the same label the
- * backend puts in the manifest's `short_name` for Android. They come from the
- * manifest, else from the school's public name, and are kept per school so
- * the next start, offline included, is named before anything is fetched.
+ * The app is named after the school and the app: "Meridian Crest Academy
+ * Parent" in full, "Meridian Parent" under the icon. iOS ignores the
+ * manifest's names: Add to Home Screen labels the icon from
+ * `<meta name="apple-mobile-web-app-title">`, else the page's title, and the
+ * app switcher shows the title. So the page carries the full name as its
+ * title and the home-screen label in that meta and in `application-name`,
+ * the same names the backend puts in the manifest for Android. Both are made
+ * here from the school's own name, which comes from the manifest's
+ * `school_name` (else its `name`), else from the school's public name, and is
+ * kept per school so the next start, offline included, is named before
+ * anything is fetched. The school's own name, without "Parent", is what the
+ * screens show (`schoolFullName`).
  * An address that names no school stays "XVS Parent", as `index.html` has it.
  */
-type Manifest = { name?: string; short_name?: string; icons?: { src?: string }[] };
+type Manifest = { name?: string; school_name?: string; icons?: { src?: string }[] };
+
+/** The word that names this app beside the school's name. */
+const APP_LABEL = "Parent";
 
 /** The most a home screen shows under an icon; the backend's `SHORT_NAME_LENGTH`. */
 const LABEL_LENGTH = 12;
@@ -45,7 +52,7 @@ export function schoolFullName(): string {
   return fullName;
 }
 
-/** The name under the school's icon ("Meridian"), or "" before it is read. */
+/** The name under the school's icon ("Meridian Parent"), or "" before it is read. */
 export function schoolAppName(): string {
   return appName;
 }
@@ -67,6 +74,11 @@ export function homeScreenLabel(name: string): string {
   return whole.split(" ")[0];
 }
 
+/** The app's name under the icon for a school named `name`: "Meridian Parent". */
+export function appLabel(name: string): string {
+  return `${homeScreenLabel(name)} ${APP_LABEL}`;
+}
+
 function setMeta(name: string, content: string) {
   let meta = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
   if (!meta) {
@@ -77,12 +89,12 @@ function setMeta(name: string, content: string) {
   meta.content = content;
 }
 
-/** Names the page after the school: its full name as the title, its label under the icon. */
-export function nameThePage(name: string, label: string = homeScreenLabel(name)): void {
-  const full = name.trim();
+/** Names the page after the school named `name`: "Meridian Crest Academy Parent", "Meridian Parent" under the icon. */
+export function nameThePage(name: string): void {
+  const full = name.trim().split(/\s+/).join(" ");
   if (!full) return;
-  const short = label.trim() || homeScreenLabel(full);
-  document.title = full;
+  const short = appLabel(full);
+  document.title = `${full} ${APP_LABEL}`;
   setMeta("apple-mobile-web-app-title", short);
   setMeta("application-name", short);
   fullName = full;
@@ -90,7 +102,7 @@ export function nameThePage(name: string, label: string = homeScreenLabel(name))
   for (const listener of nameListeners) listener();
 }
 
-type KeptName = { slug: string; name: string; label: string };
+type KeptName = { slug: string; name: string };
 
 function keptName(slug: string): KeptName | null {
   try {
@@ -136,11 +148,11 @@ export async function applySchoolApp(readName?: (slug: string) => Promise<string
   const url = schoolManifestUrl(slug);
   if (!url) return;
   const kept = keptName(slug);
-  if (kept) nameThePage(kept.name, kept.label);
+  if (kept) nameThePage(kept.name);
 
-  const named = (name: string, label?: string) => {
-    nameThePage(name, label);
-    if (fullName) keepName({ slug, name: fullName, label: appName });
+  const named = (name: string) => {
+    nameThePage(name);
+    if (fullName) keepName({ slug, name: fullName });
   };
   try {
     const response = await fetch(url);
@@ -151,8 +163,8 @@ export async function applySchoolApp(readName?: (slug: string) => Promise<string
       const touch = touchIconFrom(manifest, url);
       const touchLink = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]');
       if (touch && touchLink) touchLink.href = touch;
-      const name = (manifest.name ?? "").trim();
-      if (name) return named(name, manifest.short_name);
+      const name = (manifest.school_name ?? manifest.name ?? "").trim();
+      if (name) return named(name);
     }
   } catch {
     // No school manifest to read: the XVS one stays, and the name is asked for below.

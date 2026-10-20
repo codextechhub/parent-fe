@@ -82,24 +82,28 @@ describe("naming the page after the school", () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it("takes the full name and the label from the school's manifest", async () => {
-    vi.stubGlobal("fetch", answer({ name: "Meridian Crest Academy", short_name: "Meridian" }));
+  it("names the app after the school's own name in its manifest", async () => {
+    vi.stubGlobal("fetch", answer({
+      name: "Meridian Crest Academy Parent", short_name: "Meridian Parent",
+      school_name: "Meridian Crest Academy",
+    }));
     const { applySchoolApp, schoolFullName, schoolAppName } = await load();
     const readName = vi.fn();
     await applySchoolApp(readName);
-    expect(document.title).toBe("Meridian Crest Academy");
-    expect(meta("apple-mobile-web-app-title")).toBe("Meridian");
-    expect(meta("application-name")).toBe("Meridian");
-    expect([schoolFullName(), schoolAppName()]).toEqual(["Meridian Crest Academy", "Meridian"]);
+    expect(document.title).toBe("Meridian Crest Academy Parent");
+    expect(meta("apple-mobile-web-app-title")).toBe("Meridian Parent");
+    expect(meta("application-name")).toBe("Meridian Parent");
+    expect([schoolFullName(), schoolAppName()]).toEqual(["Meridian Crest Academy", "Meridian Parent"]);
     expect(readName).not.toHaveBeenCalled();
   });
 
-  it("works the label out when the manifest gives none", async () => {
+  it("reads the school's name from a manifest that does not name it apart", async () => {
     vi.stubGlobal("fetch", answer({ name: "Bright Star" }));
-    const { applySchoolApp } = await load();
+    const { applySchoolApp, schoolFullName } = await load();
     await applySchoolApp();
-    expect(document.title).toBe("Bright Star");
-    expect(meta("apple-mobile-web-app-title")).toBe("Bright Star");
+    expect(document.title).toBe("Bright Star Parent");
+    expect(meta("apple-mobile-web-app-title")).toBe("Bright Star Parent");
+    expect(schoolFullName()).toBe("Bright Star");
   });
 
   it("falls back to the school's public name when the manifest cannot be had", async () => {
@@ -108,20 +112,20 @@ describe("naming the page after the school", () => {
     const readName = vi.fn(async () => "Meridian Crest Academy");
     await applySchoolApp(readName);
     expect(readName).toHaveBeenCalledWith("meridian-crest");
-    expect(document.title).toBe("Meridian Crest Academy");
-    expect(meta("apple-mobile-web-app-title")).toBe("Meridian");
-    expect(meta("application-name")).toBe("Meridian");
+    expect(document.title).toBe("Meridian Crest Academy Parent");
+    expect(meta("apple-mobile-web-app-title")).toBe("Meridian Parent");
+    expect(meta("application-name")).toBe("Meridian Parent");
   });
 
   it("names the next start at once, before anything is fetched", async () => {
-    vi.stubGlobal("fetch", answer({ name: "Meridian Crest Academy", short_name: "Meridian" }));
+    vi.stubGlobal("fetch", answer({ school_name: "Meridian Crest Academy" }));
     await (await load()).applySchoolApp();
     document.title = "XVS Parent";
 
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
     void (await load()).applySchoolApp();
-    expect(document.title).toBe("Meridian Crest Academy");
-    expect(meta("apple-mobile-web-app-title")).toBe("Meridian");
+    expect(document.title).toBe("Meridian Crest Academy Parent");
+    expect(meta("apple-mobile-web-app-title")).toBe("Meridian Parent");
   });
 
   it("does not carry one school's name to another school's address", async () => {

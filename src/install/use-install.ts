@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore } from "react";
 
-import { homeScreenLabel, schoolAppName, subscribeSchoolName } from "@/lib/school-app";
+import { appLabel, schoolAppName, subscribeSchoolName } from "@/lib/school-app";
 import { useSchoolNameQuery } from "@/redux/services/school-api";
 import { currentSchoolSlug } from "@/utils/school-host";
 
@@ -51,12 +51,12 @@ export function useInstallOffer() {
 }
 
 /**
- * What the app is called on the home screen ("Meridian"): the label the page
- * carries, else the school's name cut to one, else "the app".
+ * What the app is called on the home screen ("Meridian Parent"): the label
+ * the page carries, else one made from the school's name, else "the app".
  */
 export function useAppName(): string {
   const label = useSyncExternalStore(subscribeSchoolName, schoolAppName);
   const slug = currentSchoolSlug();
   const { data: schoolName } = useSchoolNameQuery(slug, { skip: !slug || !!label });
-  return label || (schoolName ? homeScreenLabel(schoolName) : "the app");
+  return label || (schoolName ? appLabel(schoolName) : "the app");
 }
