@@ -43,9 +43,38 @@ export type AuthState = {
    * Cleared on a fresh sign-in.
    */
   notAParent: boolean;
+  /**
+   * The child the parent last chose in the switcher, whatever screen they
+   * chose them on, so every per-child screen opens on that child. Null until
+   * they choose, and for a child no longer on their account.
+   */
+  focusChildId: number | null;
 };
 
-const initialState: AuthState = { checked: false, me: null, notAParent: false };
+/** Where the chosen child is kept on this device, so a reload opens on them too. */
+const FOCUS_KEY = "xvs.parent.focus-child";
+
+function rememberedChild(): number | null {
+  try {
+    const id = Number(localStorage.getItem(FOCUS_KEY));
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function remember(id: number | null) {
+  try {
+    if (id === null) localStorage.removeItem(FOCUS_KEY);
+    else localStorage.setItem(FOCUS_KEY, String(id));
+  } catch {
+    // Not kept on this device: the choice still holds until the app is closed.
+  }
+}
+
+const initialState: AuthState = {
+  checked: false, me: null, notAParent: false, focusChildId: rememberedChild(),
+};
 
 const authSlice = createSlice({
   name: "auth",
@@ -55,6 +84,14 @@ const authSlice = createSlice({
       state.me = action.payload;
       state.checked = true;
       state.notAParent = false;
+      // A child kept from another account on this device, or one since unlinked, is not this parent's.
+      if (!action.payload.children.some((child) => child.id === state.focusChildId)) {
+        state.focusChildId = null;
+      }
+    },
+    childFocused(state, action: PayloadAction<number>) {
+      state.focusChildId = action.payload;
+      remember(action.payload);
     },
     meRefused(state) {
       state.me = null;
@@ -65,6 +102,8 @@ const authSlice = createSlice({
       state.me = null;
       state.checked = true;
       state.notAParent = false;
+      state.focusChildId = null;
+      remember(null);
     },
     signInStarted(state) {
       state.notAParent = false;
@@ -72,5 +111,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { meLoaded, meRefused, sessionEnded, signInStarted } = authSlice.actions;
+export const { childFocused, meLoaded, meRefused, sessionEnded, signInStarted } = authSlice.actions;
 export const authReducer = authSlice.reducer;

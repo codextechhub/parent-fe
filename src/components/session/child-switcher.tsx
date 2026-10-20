@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, LogOut, UserRound, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 import { ChildAvatar } from "@/components/child-avatar";
 import { itemFor } from "@/components/shell/nav";
-import { useAppSelector } from "@/redux/hooks";
-import type { Child } from "@/redux/features/auth-slice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { childFocused, type Child } from "@/redux/features/auth-slice";
 import { useLogoutMutation } from "@/redux/services/portal-api";
 
 import "./child-switcher.css";
@@ -14,16 +14,38 @@ import "./child-switcher.css";
 /** The query key the active child's id is carried in. */
 export const CHILD_PARAM = "child";
 
-/** The child whose record is showing, else the first child, else null. */
+/**
+ * The child in focus: the one the address names (a link from a child's card,
+ * a notification), else the one the parent last chose in the switcher on any
+ * screen, else the first child, else null.
+ */
 export function useActiveChild(): Child | null {
   const children = useAppSelector((s) => s.auth.me?.children ?? []);
+  const focused = useAppSelector((s) => s.auth.focusChildId);
   const [params] = useSearchParams();
   const chosen = params.get(CHILD_PARAM);
   if (chosen) {
     const match = children.find((c) => String(c.id) === chosen);
     if (match) return match;
   }
-  return children[0] ?? null;
+  return children.find((c) => c.id === focused) ?? children[0] ?? null;
+}
+
+/**
+ * Keeps the remembered child in step with a child the address names, so a
+ * parent who follows a link to Tunde's results and then opens Attendance
+ * sees Tunde's attendance.
+ */
+export function useFollowAddressedChild(): void {
+  const dispatch = useAppDispatch();
+  const children = useAppSelector((s) => s.auth.me?.children ?? []);
+  const focused = useAppSelector((s) => s.auth.focusChildId);
+  const [params] = useSearchParams();
+  const named = Number(params.get(CHILD_PARAM));
+  const known = children.some((c) => c.id === named);
+  useEffect(() => {
+    if (known && named !== focused) dispatch(childFocused(named));
+  }, [known, named, focused, dispatch]);
 }
 
 /**
@@ -31,8 +53,10 @@ export function useActiveChild(): Child | null {
  * which child the per-child screens are reading, then the parent's own
  * account, with My profile and Sign out.
  *
- * It opens for every parent, one child or none included, because it is the
- * only way out of the app. The avatar is the showing child's, or the parent's
+ * Choosing a child on any screen puts them in focus for every screen: a
+ * family-wide screen such as Fees looks the same, and Results, Attendance
+ * and Timetable open on that child next. It opens for every parent, one
+ * child or none included, because it is the only way out of the app. The avatar is the showing child's, or the parent's
  * own initials when no child is linked.
  */
 export function ChildSwitcher() {
@@ -44,6 +68,7 @@ export function ChildSwitcher() {
   const active = useActiveChild();
   const [open, setOpen] = useState(false);
   const [logout, signingOut] = useLogoutMutation();
+  const dispatch = useAppDispatch();
 
   const signOut = async () => {
     await logout().unwrap().catch(() => {});
@@ -57,11 +82,10 @@ export function ChildSwitcher() {
   };
 
   const choose = (childId: number) => {
+    dispatch(childFocused(childId));
     const current = itemFor(location.pathname);
     const next = new URLSearchParams(location.search);
-    // Keep the child in the URL where a route uses it so a reload stays on
-    // the same child; drop it on a route that scopes to the family (Fees,
-    // Notices, Profile) so a stale segment does not travel with it.
+    // The choice is remembered either way; the address names the child only where the screen is about one.
     if (current?.perChild) next.set(CHILD_PARAM, String(childId));
     else next.delete(CHILD_PARAM);
     const query = next.toString();

@@ -1,7 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Provider } from "react-redux";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,7 +11,7 @@ import { baseApi } from "@/redux/services/base-api";
 // Side-effect: register the endpoints the slice reducer leans on.
 import "@/redux/services/portal-api";
 
-import { ChildSwitcher } from "./child-switcher";
+import { ChildSwitcher, useActiveChild } from "./child-switcher";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -63,7 +63,14 @@ function makeStore(me: MeData = ME) {
 function Probe({ onPath }: { onPath: (p: string, s: string) => void }) {
   const loc = useLocation();
   onPath(loc.pathname, loc.search);
-  return null;
+  const active = useActiveChild();
+  const navigate = useNavigate();
+  return (
+    <>
+      <output data-testid="focus">{active?.first_name}</output>
+      <button type="button" data-testid="open-results" onClick={() => navigate("/results")} />
+    </>
+  );
 }
 
 type Captured = { pathname: string; search: string };
@@ -135,6 +142,22 @@ describe("ChildSwitcher", () => {
     act(() => buttons[1].click());
     expect(captured.pathname).toBe("/fees");
     expect(captured.search).toBe("");
+  });
+
+  it("keeps the child chosen on a family screen in focus for the next screen", () => {
+    const captured = { pathname: "", search: "" };
+    last = render("/fees", captured);
+    const focus = () => last!.container.querySelector('[data-testid="focus"]')?.textContent;
+    expect(focus()).toBe("Tobi");
+    act(() => (last!.container.querySelector(".child-switcher-trigger") as HTMLButtonElement).click());
+    const buttons = Array.from(document.querySelectorAll(".child-switcher-list button")) as HTMLButtonElement[];
+    act(() => buttons[1].click());
+    // Fees is the family's: the address stays clean, but Somto is now in focus.
+    expect(captured.search).toBe("");
+    expect(focus()).toBe("Somto");
+    act(() => (last!.container.querySelector('[data-testid="open-results"]') as HTMLButtonElement).click());
+    expect(captured.pathname).toBe("/results");
+    expect(focus()).toBe("Somto");
   });
 
   it("opens for a parent with one child, so she can still sign out", async () => {

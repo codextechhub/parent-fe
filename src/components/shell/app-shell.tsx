@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { NavLink, Outlet, useLocation, useSearchParams } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 
 import { SchoolMark } from "@/components/school-mark";
-import { ChildSwitcher, CHILD_PARAM, useActiveChild } from "@/components/session/child-switcher";
+import {
+  ChildSwitcher, CHILD_PARAM, useActiveChild, useFollowAddressedChild,
+} from "@/components/session/child-switcher";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hooks";
 import { useNoticesQuery } from "@/redux/services/portal-api";
@@ -54,6 +56,7 @@ export function AppShell() {
       : current?.key === "profile" ? "My profile"
       : current?.label ?? "";
 
+  useFollowAddressedChild();
   // Names the crest to a screen reader: the school, and the showing child's branch where there are several.
   const active = useActiveChild();
   const where = me?.show_branch && active?.branch
@@ -100,10 +103,9 @@ function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> })
   const { tabs, more } = splitTabs(NAV);
   const [moreOpen, setMoreOpen] = useState(false);
   const { pathname } = useLocation();
-  const [params] = useSearchParams();
-  const chosenChild = params.get(CHILD_PARAM);
+  const focus = useActiveChild();
   const linkFor = (item: NavItem) =>
-    item.perChild && chosenChild ? `${item.path}?${CHILD_PARAM}=${chosenChild}` : item.path;
+    item.perChild && focus ? `${item.path}?${CHILD_PARAM}=${focus.id}` : item.path;
   const moreShowing = more.some((item) => item.key === itemFor(pathname)?.key);
   const activeIndex = moreShowing
     ? tabs.length
