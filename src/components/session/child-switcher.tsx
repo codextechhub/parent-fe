@@ -87,7 +87,7 @@ export function ChildSwitcher() {
                   className={active && child.id === active.id ? "is-current" : ""}
                 >
                   <ChildAvatar name={child.full_name} childId={child.id} size={38} />
-                  <span>
+                  <span className="child-switcher-text">
                     <strong>{child.full_name}</strong>
                     <small>
                       {[child.class_name, showBranch ? child.branch?.name : null]

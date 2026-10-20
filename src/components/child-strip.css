@@ -10,7 +10,7 @@
   background: #fff;
   box-shadow: 0 4px 14px #26385908;
 }
-.child-strip > div { min-width: 0; display: flex; flex-direction: column; }
+.child-strip-text { min-width: 0; display: flex; flex-direction: column; }
 .child-strip strong {
   color: #273956;
   font-size: 13.5px;
@@ -20,7 +20,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.child-strip span {
+.child-strip-text span {
   margin-top: 2px;
   color: #75849c;
   font-size: 11px;

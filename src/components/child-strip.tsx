@@ -23,7 +23,7 @@ export function ChildStrip() {
   return (
     <div className="child-strip" aria-label={`Showing ${child.full_name}'s record`}>
       <ChildAvatar name={child.full_name} childId={child.id} size={32} />
-      <div>
+      <div className="child-strip-text">
         <strong>{child.first_name}</strong>
         {meta && <span>{meta}</span>}
       </div>
