@@ -68,7 +68,7 @@ export function ChildSwitcher() {
           }
           disabled={onlyOne}
         >
-          {active && <ChildAvatar name={active.full_name} size={32} />}
+          {active && <ChildAvatar name={active.full_name} childId={active.id} size={32} />}
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -86,7 +86,7 @@ export function ChildSwitcher() {
                   onClick={() => choose(child.id)}
                   className={active && child.id === active.id ? "is-current" : ""}
                 >
-                  <ChildAvatar name={child.full_name} size={38} />
+                  <ChildAvatar name={child.full_name} childId={child.id} size={38} />
                   <span>
                     <strong>{child.full_name}</strong>
                     <small>

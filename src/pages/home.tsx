@@ -201,7 +201,7 @@ function ChildCard({ child, showBranchName }: { child: ChildHomeBlock; showBranc
   return (
     <article className="home-surface home-child" aria-label={`${child.first_name}'s card`}>
       <header className="home-child-head">
-        <ChildAvatar name={child.first_name} size={38} />
+        <ChildAvatar name={child.first_name} childId={child.id} size={38} />
         <div className="home-child-name">
           <strong>{child.first_name}</strong>
           <span>{child.class_name || "No class yet"}</span>

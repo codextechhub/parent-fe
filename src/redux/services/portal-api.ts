@@ -750,6 +750,23 @@ export const parentApi = baseApi.injectEndpoints({
       }),
       transformResponse: (res: Envelope<{ as_of: string; deposits: Deposit[] }>) => res.data,
     }),
+    /**
+     * A picture the API serves only to a signed-in reader (the school's crest,
+     * a child's photograph), fetched with the parent's token and shown from a
+     * local `blob:` address, because an `<img>` cannot send the token itself.
+     * `url` is the full address (`apiAddress`).
+     */
+    authImage: builder.query<string, string>({
+      queryFn: async (url, _api, _extra, baseQuery) => {
+        const result = await baseQuery({
+          url,
+          responseHandler: async (r) => (r.ok ? r.blob() : r.text()),
+        });
+        if (result.error) return { error: result.error };
+        return { data: URL.createObjectURL(result.data as Blob) };
+      },
+      keepUnusedDataFor: 3600,
+    }),
   }),
 });
 
@@ -779,6 +796,7 @@ export const {
   useChildTransferAccountQuery,
   useOpenChildTransferAccountMutation,
   useChildDepositsQuery,
+  useAuthImageQuery,
 } = parentApi;
 
 /** The sentence a mutation refused for one field, as the backend wraps it. */

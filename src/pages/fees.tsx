@@ -244,7 +244,7 @@ function ChildFeesCard({
     return (
       <article className="fees-child-card">
         <header className="fees-child-head">
-          <ChildAvatar name={entry.child.full_name} size={36} />
+          <ChildAvatar name={entry.child.full_name} childId={entry.child.id} size={36} />
           <div>
             <strong>{entry.child.first_name}</strong>
             <small>Fees unavailable</small>
@@ -259,7 +259,7 @@ function ChildFeesCard({
   return (
     <article className="fees-child-card">
       <header className="fees-child-head">
-        <ChildAvatar name={entry.child.full_name} size={36} />
+        <ChildAvatar name={entry.child.full_name} childId={entry.child.id} size={36} />
         <div className="fees-child-name">
           <strong>{entry.child.first_name}</strong>
           <small>

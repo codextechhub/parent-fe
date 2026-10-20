@@ -294,7 +294,7 @@ function LinkedChildren({ profile, showBranch }: { profile: ProfileData; showBra
           {children.map((child) => (
             <li key={child.id}>
               <Link to={`/results?child=${child.id}`} className="profile-linked-row">
-                <ChildAvatar name={child.full_name} size={38} />
+                <ChildAvatar name={child.full_name} childId={child.id} size={38} />
                 <span className="profile-linked-main">
                   <strong>{child.full_name}</strong>
                   <small>

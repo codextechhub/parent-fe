@@ -9,6 +9,7 @@ import { ReportCardSheet } from "@/components/report-card/report-card";
 import { useReportCardPrint } from "@/components/report-card/print-page";
 import { useActiveChild } from "@/components/session/child-switcher";
 import { CHILD_PARAM } from "@/components/session/child-switcher";
+import { useShownImage } from "@/lib/shown-image";
 import { useChildReportCardQuery } from "@/redux/services/portal-api";
 
 import "./report-card.css";
@@ -35,6 +36,7 @@ export function ReportCardPage() {
   const [report, setReport] = useState<"term" | "year">("term");
   useReportCardPrint();
 
+  const letterheadCrest = useShownImage(card?.letterhead.logo_url);
   const released = card && !card.held ? card : null;
   const annual = report === "year" && !!released?.cumulative;
   const resultsLink = `/results${params.has(CHILD_PARAM) ? `?${CHILD_PARAM}=${params.get(CHILD_PARAM)}` : ""}`;
@@ -95,7 +97,7 @@ export function ReportCardPage() {
               </div>
             )}
             <div className={"print-area report-paper" + (view !== "paper" ? " is-hidden-screen" : "")}>
-              <ReportCardSheet card={released} />
+              <ReportCardSheet card={{ ...released, letterhead: { ...released.letterhead, logo_url: letterheadCrest.src || null } }} />
             </div>
           </>
         )}

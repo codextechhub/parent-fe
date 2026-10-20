@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 
+import { useShownImage } from "@/lib/shown-image";
 import { cn } from "@/lib/utils";
 import { INK, PEN, WORDMARK_RATIO, WORDMARK_VIEWBOX } from "./xvs-wordmark";
 
@@ -21,6 +22,10 @@ import { INK, PEN, WORDMARK_RATIO, WORDMARK_VIEWBOX } from "./xvs-wordmark";
  * reverse from wherever they had got to, so flicking the pointer across the mark
  * never leaves it stranded mid-spin, and the letters un-write in the reverse
  * order they were written. No JS, no timers, no state.
+ *
+ * `logo` may be the crest the API stores, which is served only to a signed-in
+ * reader: it is fetched with the app's token (`useShownImage`), and the space
+ * is held empty until it arrives, so the XVS crest never flashes in its place.
  */
 
 /** Height of the crest, in px, where the caller names none. */
@@ -79,8 +84,14 @@ export function SchoolMark({
   // for a slug that is not a school. Both land on the product's own mark, so
   // neither leaves a blank space where a badge belongs.
   const [failed, setFailed] = useState(false);
+  const shown = useShownImage(logo);
   const fallback = surface === "blue" ? FALLBACK_SRC.white : FALLBACK_SRC.blue;
-  const src = failed || !logo ? fallback : logo;
+  const src = failed || !shown.src ? fallback : shown.src;
+
+  // The school's crest is on its way: hold its space rather than flash the XVS one.
+  if (shown.pending && !failed) {
+    return <span aria-hidden="true" className={cn("inline-block shrink-0", className)} style={{ height: size, width: size }} />;
+  }
 
   const crest = (className?: string) => (
     <img
