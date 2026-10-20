@@ -7,6 +7,7 @@ import {
 } from "@reduxjs/toolkit/query/react";
 
 import { getAccessToken } from "@/auth/access-token";
+import { getCsrfToken } from "@/auth/csrf";
 import {
   markSessionInvalidated,
   refreshTokenSingleFlight,
@@ -57,13 +58,23 @@ const injectTenant = (args: string | FetchArgs): string | FetchArgs => {
   return { ...args, params: { ...(args.params as object), tenant: slug } };
 };
 
+/**
+ * Every call carries the parent's access token (except signing in and out,
+ * which run on the session cookie) and every write carries the CSRF token.
+ * Signing out is refused without it, so a write that skipped it would leave
+ * the server's session open while this app showed the sign-in page.
+ */
 export const baseQuery = fetchBaseQuery({
   baseUrl,
   credentials: "include",
-  prepareHeaders: (headers, { endpoint }) => {
+  prepareHeaders: async (headers, { endpoint, type }) => {
     const accessToken = getAccessToken();
     if (accessToken && endpoint !== "login" && endpoint !== "logout") {
       headers.set("Authorization", `Bearer ${accessToken}`);
+    }
+    if (type === "mutation") {
+      const csrf = await getCsrfToken();
+      if (csrf) headers.set("X-CSRFToken", csrf);
     }
     headers.set("accept", "application/json");
     return headers;
