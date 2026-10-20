@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { authReducer, meLoaded, type MeData } from "@/redux/features/auth-slice";
 import { connectivityReducer } from "@/redux/features/connectivity-slice";
@@ -47,7 +47,7 @@ const ME: MeData = {
   ],
 };
 
-function makeStore() {
+function makeStore(me: MeData = ME) {
   const store = configureStore({
     reducer: {
       [baseApi.reducerPath]: baseApi.reducer,
@@ -56,7 +56,7 @@ function makeStore() {
     },
     middleware: (gd) => gd().concat(baseApi.middleware),
   });
-  store.dispatch(meLoaded(ME));
+  store.dispatch(meLoaded(me));
   return store;
 }
 
@@ -68,11 +68,11 @@ function Probe({ onPath }: { onPath: (p: string, s: string) => void }) {
 
 type Captured = { pathname: string; search: string };
 
-function render(initial: string, captured: Captured) {
+function render(initial: string, captured: Captured, me: MeData = ME) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
-  const store = makeStore();
+  const store = makeStore(me);
   const onPath = (p: string, s: string) => {
     captured.pathname = p;
     captured.search = s;
@@ -137,30 +137,39 @@ describe("ChildSwitcher", () => {
     expect(captured.search).toBe("");
   });
 
-  it("stays disabled when there is only one child", () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const root = createRoot(container);
-    const store = configureStore({
-      reducer: {
-        [baseApi.reducerPath]: baseApi.reducer,
-        auth: authReducer,
-        connectivity: connectivityReducer,
-      },
-      middleware: (gd) => gd().concat(baseApi.middleware),
-    });
-    store.dispatch(meLoaded({ ...ME, children: [ME.children[0]] }));
-    last = { container, root };
-    act(() =>
-      root.render(
-        <Provider store={store}>
-          <MemoryRouter initialEntries={["/results"]}>
-            <ChildSwitcher />
-          </MemoryRouter>
-        </Provider>,
-      ),
-    );
-    const trigger = container.querySelector(".child-switcher-trigger") as HTMLButtonElement;
-    expect(trigger.disabled).toBe(true);
+  it("opens for a parent with one child, so she can still sign out", async () => {
+    globalThis.fetch = vi.fn(async () => new Response("{}", { status: 200 })) as unknown as typeof fetch;
+    const captured = { pathname: "", search: "" };
+    last = render("/results", captured, { ...ME, children: [ME.children[0]] });
+    const trigger = last.container.querySelector(".child-switcher-trigger") as HTMLButtonElement;
+    expect(trigger.disabled).toBe(false);
+    act(() => trigger.click());
+    const signOut = Array.from(document.querySelectorAll(".child-switcher-actions button")).find(
+      (b) => b.textContent === "Sign out",
+    ) as HTMLButtonElement;
+    expect(signOut).toBeDefined();
+    await act(async () => signOut.click());
+    expect(captured.pathname).toBe("/sign-in");
+  });
+
+  it("takes the parent to her profile from the sheet", () => {
+    const captured = { pathname: "", search: "" };
+    last = render("/results", captured);
+    act(() => (last!.container.querySelector(".child-switcher-trigger") as HTMLButtonElement).click());
+    const profile = Array.from(document.querySelectorAll(".child-switcher-actions button")).find(
+      (b) => b.textContent?.startsWith("My profile"),
+    ) as HTMLButtonElement;
+    expect(profile.textContent).toContain("Patricia Okafor");
+    act(() => profile.click());
+    expect(captured.pathname).toBe("/profile");
+  });
+
+  it("shows the parent's initials when no child is linked, and still opens", () => {
+    const captured = { pathname: "", search: "" };
+    last = render("/", captured, { ...ME, children: [] });
+    const trigger = last.container.querySelector(".child-switcher-trigger") as HTMLButtonElement;
+    expect(trigger.textContent).toBe("PO");
+    act(() => trigger.click());
+    expect(document.querySelector(".child-switcher-sheet h2")?.textContent).toBe("Your account");
   });
 });

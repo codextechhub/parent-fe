@@ -104,7 +104,7 @@
   background: #f0f4ff;
 }
 
-.child-switcher-list .child-switcher-text {
+.child-switcher-sheet .child-switcher-text {
   min-width: 0;
   flex: 1;
   display: flex;
@@ -112,12 +112,12 @@
   gap: 2px;
 }
 
-.child-switcher-list .child-switcher-text > strong {
+.child-switcher-sheet .child-switcher-text > strong {
   overflow-wrap: anywhere;
   font-weight: 650;
 }
 
-.child-switcher-list .child-switcher-text > small {
+.child-switcher-sheet .child-switcher-text > small {
   color: #6a7a97;
   font-size: 11.5px;
   font-weight: 500;
@@ -163,4 +163,24 @@
     border-radius: 99px;
     background: #cfd8e8;
   }
+}
+
+/* The parent's own account under the children: My profile, then Sign out. */
+.child-switcher-actions { margin-top: 13px; padding-top: 13px; border-top: 1px solid #e9edf5; display: grid; gap: 4px; }
+.child-switcher-actions button {
+  display: flex; align-items: center; gap: 11px; width: 100%; min-height: 48px; padding: 7px 8px;
+  border: 0; border-radius: 12px; background: transparent; color: #314464; text-align: left;
+  font-size: 13px; font-weight: 650; cursor: pointer;
+}
+.child-switcher-actions button:hover:not(:disabled) { background: #f3f6fc; }
+.child-switcher-actions button > svg { flex: none; color: #7186a7; }
+.child-switcher-actions button.is-signout,
+.child-switcher-actions button.is-signout > svg { color: #a34f49; }
+.child-switcher-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.child-switcher-actions button:focus-visible { outline: 3px solid #6b84e8; outline-offset: 2px; }
+
+/* The parent's initials in the header when no child is linked. */
+.child-switcher-initials {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: #4a659d; color: #fff; font-size: 12px; font-weight: 650;
 }
