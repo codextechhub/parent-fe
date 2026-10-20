@@ -9,7 +9,7 @@
 .school-calendar-weekday { display: grid; place-items: center; height: 27px; color: #7d8da3; font-size: 11px; }
 .school-calendar-grid button { display: grid; place-items: center; aspect-ratio: 1; min-width: 0; border: 0; border-radius: 8px; background: transparent; color: #2e4265; font: inherit; font-size: 12px; cursor: pointer; }
 .school-calendar-grid button.is-outside { color: #aeb9c8; }
-.school-calendar-grid button[data-today="true"] { background: #eef2f9; color: #3e5d94; font-weight: 750; }
-.school-calendar-grid button[aria-pressed="true"] { background: #4a659d; color: #fff; font-weight: 750; }
+.school-calendar-grid button[data-today="true"] { background: #eef2f9; color: #3e5d94; font-weight: 700; }
+.school-calendar-grid button[aria-pressed="true"] { background: #4a659d; color: #fff; font-weight: 700; }
 .school-calendar-today { width: 100%; margin-top: 12px; padding: 9px; border: 0; border-top: 1px solid #e7ecf4; background: transparent; color: #4a659d; font: inherit; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; }
 .school-calendar :is(button, select):focus-visible { outline: 3px solid #7895c5; outline-offset: 2px; }

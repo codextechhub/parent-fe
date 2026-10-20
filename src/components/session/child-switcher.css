@@ -49,9 +49,9 @@
 .child-switcher-sheet h2 {
   margin: 2px 35px 13px 4px;
   color: #2d4062;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -.03em;
 }
 
 .child-switcher-close {
@@ -119,7 +119,7 @@
 
 .child-switcher-sheet .child-switcher-text > small {
   color: #6a7a97;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
 }
 

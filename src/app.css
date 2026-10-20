@@ -8,3 +8,10 @@ html,
 body {
   overscroll-behavior-y: none;
 }
+
+/* The app's four weights are 400, 500, 650 and 700, with 650 the weight of
+   every title (the greeting's). Tailwind's semibold is pointed at it, so a
+   `font-semibold` heading matches the stylesheet ones. */
+:root {
+  --font-weight-semibold: 650;
+}

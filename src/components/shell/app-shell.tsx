@@ -143,7 +143,7 @@ function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> })
               <span className="relative">
                 <Icon className="size-5" />
                 {!!count && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] leading-4 font-semibold text-primary-foreground">
+                  <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-primary px-1 text-center text-[11px] leading-4 font-semibold text-primary-foreground">
                     {count > 9 ? "9+" : count}
                   </span>
                 )}

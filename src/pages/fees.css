@@ -6,10 +6,10 @@
 .fees-filter-active { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #4a659d; box-shadow: 0 0 0 2px white; }
 .fees-filter-popover { z-index: 40; width: min(310px, calc(100vw - 32px)); padding: 17px; border: 1px solid #dbe3f0; border-radius: 17px; background: #fff; box-shadow: 0 20px 48px #24365629; color: #263b5a; }
 .fees-filter-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.fees-filter-header strong { font-size: 16px; font-weight: 700; }
+.fees-filter-header strong { font-size: 16px; font-weight: 650; }
 .fees-filter-header button { border: 0; background: none; color: #4a659d; font-size: 12px; font-weight: 700; cursor: pointer; }
 .fees-filter-popover fieldset { display: grid; gap: 11px; margin: 15px 0 0; padding: 14px 0 0; border: 0; border-top: 1px solid #e7ecf4; }
-.fees-filter-popover legend { float: left; width: 100%; margin-bottom: 10px; color: #263b5a; font-size: 12px; font-weight: 750; }
+.fees-filter-popover legend { float: left; width: 100%; margin-bottom: 10px; color: #263b5a; font-size: 12px; font-weight: 700; }
 .fees-filter-popover label { display: grid; gap: 5px; color: #718097; font-size: 11px; font-weight: 650; }
 .fees-filter-popover label > span { position: relative; display: flex; align-items: center; }
 .fees-filter-popover select { width: 100%; min-height: 40px; padding: 7px 34px 7px 11px; appearance: none; border: 1px solid #d8e1ef; border-radius: 10px; background: #f7f9fc; color: #263b5a; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
@@ -22,18 +22,18 @@
 .fees-hero::before { content: ""; position: absolute; z-index: -1; inset: 0; background-image: radial-gradient(#c2d7ff 1px, transparent 1px); background-size: 28px 28px; opacity: .16; -webkit-mask-image: linear-gradient(110deg, transparent 22%, #000 90%); mask-image: linear-gradient(110deg, transparent 22%, #000 90%); }
 .fees-hero::after { content: ""; position: absolute; z-index: -1; width: 300px; height: 300px; right: -90px; top: -155px; border: 1px solid #ffffff30; border-radius: 50%; box-shadow: 0 0 0 50px #ffffff0c, 0 0 0 100px #ffffff08; }
 .fees-hero-label { color: #d3e0f6; font-size: 12px; font-weight: 650; }
-.fees-hero-value { display: block; overflow-wrap: anywhere; margin-top: 12px; font-size: clamp(30px, 8vw, 39px); line-height: 1.05; font-weight: 650; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.fees-hero-value { display: block; overflow-wrap: anywhere; margin-top: 12px; font-size: clamp(30px, 8vw, 39px); line-height: 1.05; font-weight: 650; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
 .fees-progress-label { display: flex; justify-content: space-between; gap: 8px; margin-top: 15px; color: #e9edff; font-size: 11px; font-weight: 650; }
 .fees-progress-label span:last-child { text-align: right; }
 .fees-progress { height: 5px; overflow: hidden; margin-top: 6px; border-radius: 10px; background: #ffffff36; }
 .fees-progress span { display: block; height: 100%; border-radius: inherit; background: #d3dfff; }
-.fees-hero-note { display: inline-flex; align-items: center; max-width: 100%; margin-top: 12px; padding: 5px 9px; border: 1px solid #ffffff55; border-radius: 8px; background: #ffffff22; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 10px; font-weight: 600; line-height: 1.2; }
+.fees-hero-note { display: inline-flex; align-items: center; max-width: 100%; margin-top: 12px; padding: 5px 9px; border: 1px solid #ffffff55; border-radius: 8px; background: #ffffff22; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 11px; font-weight: 650; line-height: 1.2; }
 .fees-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .fees-stat { min-width: 0; padding: 10px 11px; border: 1px solid #ebeff6; border-radius: 13px; background: white; box-shadow: 0 7px 20px #2638590c; }
 .fees-stat span { display: block; color: #75839a; font-size: 12px; font-weight: 700; }
-.fees-stat strong { display: block; margin-top: 3px; overflow-wrap: anywhere; color: #223153; font-size: 17px; font-weight: 750; letter-spacing: -.035em; }
+.fees-stat strong { display: block; margin-top: 3px; overflow-wrap: anywhere; color: #223153; font-size: 18px; font-weight: 650; letter-spacing: -.03em; }
 .fees-section-heading { margin: 26px 2px 12px; }
-.fees-section-heading h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.04em; }
+.fees-section-heading h2 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.03em; }
 .fees-section-heading p { margin: 4px 0 0; color: #8491a5; font-size: 13px; }
 .fees-surface, .student-transfer-card { border: 1px solid #ebeff6; border-radius: 22px; background: white; box-shadow: 0 7px 20px #2638590c; }
 .fees-guardian { display: flex; align-items: start; gap: 10px; margin-top: 13px; padding: 13px 14px; border: 1px solid #dbe4fa; border-radius: 16px; background: #eef3ff; color: #425885; }
@@ -45,9 +45,9 @@
 .fees-invoice-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 81px; padding: 16px; border: 0; background: none; text-align: left; cursor: pointer; }
 .fees-invoice-title { min-width: 0; flex: 1; }
 .fees-invoice-title strong, .fees-invoice-title small { display: block; }
-.fees-invoice-title strong { color: #243656; font-size: 15px; }
+.fees-invoice-title strong { color: #243656; font-size: 16px; font-weight: 650; }
 .fees-invoice-title small { margin-top: 4px; overflow: hidden; color: #8491a5; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.fees-invoice-status { flex: none; padding: 7px 9px; border-radius: 10px; font-size: 11px; font-weight: 800; }
+.fees-invoice-status { flex: none; padding: 7px 9px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .fees-invoice-status.is-paid { background: #e9f8f2; color: #227956; }
 .fees-invoice-status.is-partial { background: #fff3e7; color: #9b6527; }
 .fees-invoice-status.is-due { background: #fff0ee; color: #a5483e; }
@@ -57,11 +57,11 @@
 .fees-invoice-detail dl { margin: 0; }
 .fees-invoice-line { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; color: #5f6e86; font-size: 12px; }
 .fees-invoice-line dt { min-width: 0; }
-.fees-invoice-line dd { flex: none; margin: 0; color: #2c3e60; font-weight: 750; white-space: nowrap; }
-.fees-invoice-line.is-total { padding-top: 13px; border-top: 1px solid #edf1f7; color: #263b64; font-weight: 800; }
-.fees-invoice-line.is-balance, .fees-invoice-line.is-balance dd { color: #314caa; font-weight: 800; }
-.fees-pay-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 17px; padding: 13px 15px; border-radius: 13px; background: #2f50bc; color: white; font-size: 14px; font-weight: 800; text-decoration: none; }
-.fees-invoice-note { margin: 15px 0 0; color: #687890; font-size: 12px; font-weight: 750; }
+.fees-invoice-line dd { flex: none; margin: 0; color: #2c3e60; font-weight: 700; white-space: nowrap; }
+.fees-invoice-line.is-total { padding-top: 13px; border-top: 1px solid #edf1f7; color: #263b64; font-weight: 650; }
+.fees-invoice-line.is-balance, .fees-invoice-line.is-balance dd { color: #314caa; font-weight: 650; }
+.fees-pay-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 17px; padding: 13px 15px; border-radius: 13px; background: #2f50bc; color: white; font-size: 14px; font-weight: 700; text-decoration: none; }
+.fees-invoice-note { margin: 15px 0 0; color: #687890; font-size: 12px; font-weight: 700; }
 .fees-invoice-note.is-paid { display: flex; align-items: center; gap: 5px; color: #227956; }
 .fees-history { overflow: hidden; padding: 3px 16px; }
 .fees-history ul { gap: 0; }
@@ -75,21 +75,21 @@
 .fees-payment-side { text-align: right; }
 .fees-payment-side b { display: block; color: #227956; font-size: 11px; }
 .fees-payment-side b.is-pending { color: #a46a25; }
-.fees-payment-side a { display: inline-flex; align-items: center; gap: 3px; margin-top: 5px; color: #3d59bf; font-size: 11px; font-weight: 800; text-decoration: none; }
+.fees-payment-side a { display: inline-flex; align-items: center; gap: 3px; margin-top: 5px; color: #3d59bf; font-size: 11px; font-weight: 700; text-decoration: none; }
 .fees-payment-side small { display: block; margin-top: 5px; color: #99a5b6; font-size: 11px; }
 .fees-empty { margin: 0; padding: 23px; color: #75839a; font-size: 13px; text-align: center; }
 .fees-notice { padding: 24px; border: 1px solid #ebeff6; border-radius: 21px; background: white; color: #53627a; font-size: 14px; text-align: center; }
-.fees-notice button { border: 0; background: none; color: #3e59ca; font: inherit; font-weight: 800; cursor: pointer; }
+.fees-notice button { border: 0; background: none; color: #3e59ca; font: inherit; font-weight: 700; cursor: pointer; }
 .fees-loading { height: 225px; border-radius: 29px; background: #e9edfa; animation: fees-pulse 1.4s ease-in-out infinite alternate; }
 @keyframes fees-pulse { to { opacity: .48; } }
 .student-transfer-card { min-width: 0; padding: 18px; }
 .student-transfer-top { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
 .student-transfer-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; background: #e9edff; color: #5268c9; }
-.student-transfer-status { padding: 7px 9px; border-radius: 10px; background: #e9f8f2; color: #227956; font-size: 11px; font-weight: 800; }
+.student-transfer-status { padding: 7px 9px; border-radius: 10px; background: #e9f8f2; color: #227956; font-size: 11px; font-weight: 700; }
 .student-transfer-label { margin: 0; color: #75839a; font-size: 12px; font-weight: 700; }
-.student-transfer-name { margin: 5px 0 0; color: #253753; font-size: 19px; line-height: 1.2; font-weight: 800; letter-spacing: -.035em; }
+.student-transfer-name { margin: 5px 0 0; color: #253753; font-size: 21px; line-height: 1.2; font-weight: 650; letter-spacing: -.03em; }
 .student-transfer-number { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 13px; padding: 12px 13px; border: 1px solid #d9e2fb; border-radius: 14px; background: #f4f6ff; color: #243b81; text-align: left; }
-.student-transfer-number span { min-width: 0; overflow-wrap: anywhere; font-size: clamp(20px, 6vw, 27px); font-weight: 800; letter-spacing: .035em; font-variant-numeric: tabular-nums; }
+.student-transfer-number span { min-width: 0; overflow-wrap: anywhere; font-size: clamp(20px, 6vw, 27px); font-weight: 650; letter-spacing: .035em; font-variant-numeric: tabular-nums; }
 .student-transfer-number svg { flex: none; width: 16px; height: 16px; color: #2d4aab; }
 .student-transfer-bank { margin: 11px 0 0; color: #5e6e85; font-size: 12px; }
 .student-transfer-hint { margin: 14px 0 0; padding: 11px 12px; border-radius: 12px; background: #f6f8fc; color: #6d7b91; font-size: 12px; line-height: 1.5; }
@@ -99,8 +99,8 @@
 @media (prefers-reduced-motion: reduce) { .fees-loading { animation: none; } .fees-invoice-chevron { transition: none; } }
 
 .fees-get-account { min-width: 0; padding: 16px; border: 1px solid #ebeff6; border-radius: 18px; background: white; box-shadow: 0 7px 20px #2638590c; }
-.fees-get-account h3 { margin: 0; color: #233757; font-size: 17px; font-weight: 800; letter-spacing: -.025em; }
+.fees-get-account h3 { margin: 0; color: #233757; font-size: 18px; font-weight: 650; letter-spacing: -.03em; }
 .fees-get-account p { margin: 5px 0 0; color: #718097; font-size: 12px; line-height: 1.45; }
-.fees-get-account .fees-get-account-error { margin-top: 8px; color: #b33e35; font-weight: 750; }
-.fees-get-account-action { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 49px; margin-top: 17px; padding: 11px 14px; border-radius: 14px; background: #2d4778; color: white; font-size: 14px; font-weight: 800; }
+.fees-get-account .fees-get-account-error { margin-top: 8px; color: #b33e35; font-weight: 700; }
+.fees-get-account-action { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 49px; margin-top: 17px; padding: 11px 14px; border-radius: 14px; background: #2d4778; color: white; font-size: 14px; font-weight: 700; }
 .fees-get-account-action:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }

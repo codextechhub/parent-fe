@@ -1,39 +1,39 @@
 .paid-page{min-height:calc(100dvh - 8rem);padding:18px 20px 44px;background:radial-gradient(circle at 12% 0%,#e9eafe,transparent 34rem),#f5f7fc;color:#243453}
 .paid-wrap{width:100%}
-.paid-back{display:inline-flex;align-items:center;gap:7px;margin:2px 0 19px;color:#647695;font-size:14px;font-weight:750;text-decoration:none}
+.paid-back{display:inline-flex;align-items:center;gap:7px;margin:2px 0 19px;color:#647695;font-size:14px;font-weight:700;text-decoration:none}
 .paid-layout{display:grid;gap:16px;min-width:0}
 .paid-cover{position:relative;isolation:isolate;overflow:hidden;padding:20px 22px;border-radius:22px;background:linear-gradient(135deg,#2d4778 0%,#4a659d 60%,#6d84ae 100%);box-shadow:0 18px 42px #1b356d20;color:white}
 .paid-cover:before{position:absolute;z-index:-1;content:"";inset:0;background-image:radial-gradient(#c2d7ff 1px,transparent 1px);background-size:28px 28px;opacity:.16;-webkit-mask-image:linear-gradient(110deg,transparent 22%,#000 90%);mask-image:linear-gradient(110deg,transparent 22%,#000 90%)}
 .paid-cover:after{position:absolute;z-index:-1;content:"";width:300px;height:300px;right:-90px;top:-155px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 50px #ffffff0c,0 0 0 100px #ffffff08}
 .paid-cover-top{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .paid-cover-top>span:first-child{color:#d3e0f6;font-size:12px;font-weight:650;letter-spacing:.02em}
-.paid-status-chip{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:5px 9px;border:1px solid #ffffff55;border-radius:8px;background:#ffffff22;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:10px;font-weight:600;white-space:nowrap}
+.paid-status-chip{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:5px 9px;border:1px solid #ffffff55;border-radius:8px;background:#ffffff22;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:11px;font-weight:650;white-space:nowrap}
 .paid-cover-icon{display:grid;place-items:center;width:46px;height:46px;margin-top:18px;border:1px solid #ffffff91;border-radius:14px;background:#ffffff31;box-shadow:inset 0 1px #ffffff65;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .paid-cover-icon svg{width:25px;height:25px}
 .paid-cover h2{margin:12px 0 0;color:white;font-size:clamp(27px,6.3vw,35px);line-height:1.09;font-weight:650;letter-spacing:-.05em}
 .paid-cover-text{max-width:510px;margin:7px 0 0;color:#edf2ff;font-size:13px;line-height:1.45;font-weight:500}
 .paid-amount{display:flex;align-items:baseline;flex-wrap:wrap;gap:7px 11px;margin:14px 0 0}
-.paid-amount strong{overflow-wrap:anywhere;font-size:clamp(30px,8vw,39px);line-height:1.05;letter-spacing:-.055em;font-weight:650;font-variant-numeric:tabular-nums}
+.paid-amount strong{overflow-wrap:anywhere;font-size:clamp(30px,8vw,39px);line-height:1.05;letter-spacing:-.05em;font-weight:650;font-variant-numeric:tabular-nums}
 .paid-amount span{color:#e0e8ff;font-size:13px;font-weight:650}
 .paid-card{min-width:0;padding:18px;border:1px solid #e7ecf5;border-radius:18px;background:white;box-shadow:0 7px 20px #2638590c}
-.paid-card h2{display:flex;align-items:center;gap:10px;margin:0 0 18px;color:#263a5c;font-size:18px;font-weight:820;letter-spacing:-.035em}
+.paid-card h2{display:flex;align-items:center;gap:10px;margin:0 0 18px;color:#263a5c;font-size:18px;font-weight:650;letter-spacing:-.03em}
 .paid-card h2 svg{color:#4a659d}
 .paid-details{display:grid;margin:0}
 .paid-details>div{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:13px 0;border-bottom:1px solid #edf0f6}
 .paid-details>div:first-child{padding-top:0}
 .paid-details>div:last-child{border-bottom:0}
 .paid-details dt{color:#7a899f;font-size:13px;font-weight:650}
-.paid-details dd{max-width:65%;margin:0;color:#263a5b;font-size:14px;font-weight:780;text-align:right;overflow-wrap:anywhere}
-.paid-details dd.is-money{font-size:16px;font-weight:850}
-.paid-details dd.is-positive{color:#247857;font-size:16px;font-weight:850}
+.paid-details dd{max-width:65%;margin:0;color:#263a5b;font-size:14px;font-weight:700;text-align:right;overflow-wrap:anywhere}
+.paid-details dd.is-money{font-size:16px;font-weight:650}
+.paid-details dd.is-positive{color:#247857;font-size:16px;font-weight:650}
 .paid-note{display:flex;align-items:flex-start;gap:10px;margin:18px 0 0;padding:13px 14px;border:1px solid #e3e9f5;border-radius:14px;background:#f4f7fc;color:#61738e;font-size:13px;line-height:1.5;font-weight:650}
 .paid-note svg{width:18px;height:18px;flex:none;margin-top:1px}
 .paid-note.is-confirmed{border-color:#dcece5;background:#eff9f4;color:#35775a}
 .paid-note.is-pending{border-color:#f3e5c8;background:#fff8ea;color:#90672c}
 .paid-note.is-failed{border-color:#f1dddb;background:#fff4f2;color:#9b5149}
 .paid-actions{display:grid;gap:11px;margin-top:19px}
-.paid-primary{display:flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:10px 14px;border:0;border-radius:15px;background:#2d4778;box-shadow:0 9px 19px #1b356d20;color:white;font-size:14px;font-weight:820;text-align:center;text-decoration:none;cursor:pointer}
-.paid-secondary{display:flex;align-items:center;justify-content:center;min-height:44px;color:#4a659d;font-size:14px;font-weight:780;text-decoration:none}
+.paid-primary{display:flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:10px 14px;border:0;border-radius:15px;background:#2d4778;box-shadow:0 9px 19px #1b356d20;color:white;font-size:14px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}
+.paid-secondary{display:flex;align-items:center;justify-content:center;min-height:44px;color:#4a659d;font-size:14px;font-weight:700;text-decoration:none}
 .paid-hint{margin:16px 2px 0;color:#8a97a9;font-size:12px;line-height:1.45;text-align:center}
 .paid-back:focus-visible,.paid-primary:focus-visible,.paid-secondary:focus-visible{outline:3px solid #5576ef;outline-offset:3px}
 @media(min-width:760px){.paid-layout{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;gap:20px}.paid-card{padding:22px}}
