@@ -30,6 +30,17 @@ export function FeesPage() {
     useFamilyPaymentsQuery(undefined, { skip: !historyOpen });
   const offline = useAppSelector((s) => s.connectivity.offline);
   const children = fees?.children ?? [];
+  const orderedChildren = [...children].sort((left, right) => {
+    const leftGroup = !left.available ? 2 : left.balance > 0 ? 0 : 1;
+    const rightGroup = !right.available ? 2 : right.balance > 0 ? 0 : 1;
+    if (leftGroup !== rightGroup) return leftGroup - rightGroup;
+    if (leftGroup !== 0) return 0;
+    const leftDue = earliestUnpaidDue(left);
+    const rightDue = earliestUnpaidDue(right);
+    if (!leftDue) return rightDue ? 1 : 0;
+    if (!rightDue) return -1;
+    return leftDue.localeCompare(rightDue);
+  });
 
   return (
     <PageShell className="fees-page">
@@ -59,7 +70,7 @@ export function FeesPage() {
                 <div className="fees-surface fees-empty">No children on your account yet.</div>
               ) : (
                 <ul className="fees-simple-children">
-                  {children.map((entry) => <li key={entry.child.id}><ChildFeesRow entry={entry} offline={offline} /></li>)}
+                  {orderedChildren.map((entry) => <li key={entry.child.id}><ChildFeesRow entry={entry} offline={offline} /></li>)}
                 </ul>
               )}
             </section>
@@ -89,6 +100,14 @@ export function FeesPage() {
       </div>
     </PageShell>
   );
+}
+
+function earliestUnpaidDue(entry: ChildFeesEntry): string | null {
+  if (!entry.available) return null;
+  return entry.invoices
+    .filter((invoice) => invoice.balance > 0 && invoice.due_date)
+    .map((invoice) => invoice.due_date as string)
+    .sort()[0] ?? null;
 }
 
 function FamilySummary({ combined, payAll, childCount, owingCount, offline }: {

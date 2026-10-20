@@ -262,4 +262,20 @@ describe("FeesPage", () => {
     expect(r.container.querySelector('a[href="/fees/pay/101"]')).not.toBeNull();
     expect(r.container.querySelector('a[href="/fees/pay/102"]')).not.toBeNull();
   });
+
+  it("puts balances due first in due-date order, then paid children", async () => {
+    const tobi = fees().data.children[0];
+    const somto = fees().data.children[1];
+    const withDue = (id: number, name: string, dueDate: string) => ({
+      ...tobi,
+      child: { id, first_name: name, full_name: `${name} O` },
+      invoices: [{ ...tobi.invoices[0], invoice_ref: id, due_date: dueDate }],
+    });
+    const r = render(stub(fees({ children: [somto, tobi, withDue(33, "Kemi", "2026-12-01"), withDue(44, "Ada", "2026-10-25")] })) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    const names = [...r.container.querySelectorAll(".fees-simple-children > li .fees-child-identity strong")]
+      .map((node) => node.textContent);
+    expect(names).toEqual(["Ada", "Tobi", "Kemi", "Somto"]);
+  });
 });
