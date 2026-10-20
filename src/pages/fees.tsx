@@ -143,7 +143,7 @@ function FamilySummary({ combined, payAll, children, offline }: {
             ? `${owingCount} of your ${children.length} children ${owingCount === 1 ? "has" : "have"} a balance.`
             : "One child has a balance."
           : combined.billed > 0 ? "No bills left to pay right now." : "No bills on your family account yet."}</p>
-        {credit > 0 && <p className="fees-summary-credit">{formatNaira(credit)} in credit across child accounts. Credit does not settle another child&apos;s bill until the school transfers it.</p>}
+        {credit > 0 && <p className="fees-summary-credit">{formatNaira(credit)} in credit across child accounts.</p>}
       </div>
       {canPayAll && <div className="fees-summary-action">
         {offline ? <span className="fees-summary-offline">You can pay when you&apos;re back online.</span>
