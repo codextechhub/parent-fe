@@ -29,17 +29,27 @@ import "./home.css";
  * zero figure is never shown for an unavailable block. Follow-ups, messages
  * and open-work counts are parked (plan 2.3 point 5).
  */
+/**
+ * Where the family's children are, at a school with several branches: "2
+ * children at Lekki Branch" when they share one, "3 children across 2
+ * branches" when they do not.
+ */
+function familyLine(children: { branch?: { id: number; name: string } }[]): string {
+  if (children.length === 0) return "";
+  const count = `${children.length} child${children.length === 1 ? "" : "ren"}`;
+  const branches = new Map(children.map((c) => [c.branch?.id ?? 0, c.branch?.name ?? ""]));
+  if (branches.size === 1) {
+    const [name] = branches.values();
+    return name ? `${count} at ${name}` : count;
+  }
+  return `${count} across ${branches.size} branches`;
+}
+
 export function HomePage() {
   const me = useAppSelector((s) => s.auth.me);
   const { data: home, isLoading, isError, refetch } = useHomeQuery();
   const schoolYear = [me?.term?.name, me?.session?.name].filter(Boolean).join(" · ");
-  const branchLine = me?.show_branch
-    ? me.children.length === 0
-      ? ""
-      : `${me.children.length} child${me.children.length === 1 ? "" : "ren"} across ${
-          new Set(me.children.map((c) => c.branch?.id ?? 0)).size
-        } branches`
-    : me?.school.name ?? "";
+  const branchLine = me?.show_branch ? familyLine(me.children) : me?.school.name ?? "";
   const greeting = me?.parent.first_name
     ? `Welcome, ${me.parent.first_name}`
     : "Welcome";

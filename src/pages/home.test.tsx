@@ -99,7 +99,7 @@ function homePayload(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function render(fetchImpl: typeof fetch) {
+function render(fetchImpl: typeof fetch, me: MeData = ME) {
   globalThis.fetch = fetchImpl;
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -112,7 +112,7 @@ function render(fetchImpl: typeof fetch) {
     },
     middleware: (gd) => gd().concat(baseApi.middleware),
   });
-  store.dispatch(meLoaded(ME));
+  store.dispatch(meLoaded(me));
   act(() =>
     root.render(
       <Provider store={store}>
@@ -156,12 +156,29 @@ describe("HomePage", () => {
     await act(() => new Promise((r) => setTimeout(r, 20)));
     expect(r.container.textContent).toContain("outstanding");
     expect(r.container.textContent).toContain("Welcome, Patricia");
+    expect(r.container.textContent).toContain("2 children across 2 branches");
     expect(r.container.textContent).toContain("Tobi");
     expect(r.container.textContent).toContain("Somto");
     // The unavailable attendance block shows its sentence instead of a zero.
     expect(r.container.textContent).toContain("Somto's attendance cannot be shown right now.");
     // "All paid" copy must NOT show when there is still outstanding money.
     expect(r.container.textContent).not.toContain("All fees are paid");
+  });
+
+  it("names the one branch a family's children share, rather than counting branches", async () => {
+    const payload = homePayload();
+    const fetchStub = vi.fn(async () =>
+      new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    const oneChild = { ...ME, children: [ME.children[0]] };
+    const r = render(fetchStub as unknown as typeof fetch, oneChild);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 20)));
+    expect(r.container.textContent).toContain("1 child at Lekki");
+    expect(r.container.textContent).not.toContain("1 branches");
   });
 
   it("says all fees are paid when outstanding is zero", async () => {
