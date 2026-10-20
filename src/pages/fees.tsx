@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { ChildAvatar } from "@/components/child-avatar";
 import { TransferCardsForChildren } from "@/components/fees/transfer-cards-for-children";
 import { PageShell } from "@/components/layout/page-shell";
+import { clearPayAllQueue } from "@/pages/pay-all-queue";
 import { formatDate, formatNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hooks";
@@ -147,7 +148,7 @@ function FamilySummary({ combined, payAll, children, offline }: {
       </div>
       {canPayAll && <div className="fees-summary-action">
         {offline ? <span className="fees-summary-offline">You can pay when you&apos;re back online.</span>
-          : <Link to="/fees/pay-all" className="fees-summary-pay"><CreditCard size={17} aria-hidden="true" /> Pay all balances <span aria-hidden="true">→</span></Link>}
+          : <Link to="/fees/pay-all" onClick={clearPayAllQueue} className="fees-summary-pay"><CreditCard size={17} aria-hidden="true" /> Pay all balances <span aria-hidden="true">→</span></Link>}
         <small>{payAll.steps.length} {payAll.steps.length === 1 ? "payment" : "payments"}, confirmed one at a time</small>
       </div>}
     </section>

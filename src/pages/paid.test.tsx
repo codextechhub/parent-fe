@@ -147,6 +147,35 @@ describe("PaidPage", () => {
     expect(r.container.textContent).toContain("View receipt");
   });
 
+  it("still shows a child's bill after payment when another child has matching credit", async () => {
+    const stub = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("/payments/public/collections/")) {
+        return new Response(JSON.stringify(statusResponse("CONFIRMED")), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      if (url.includes("/portal/parent/fees/payments/")) {
+        return new Response(JSON.stringify({ success: true, message: "", data: [] }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      if (url.includes("/portal/parent/fees/")) {
+        return new Response(JSON.stringify({ success: true, message: "", data: {
+          children: [
+            { available: true, child: { id: 11, first_name: "Musa", full_name: "Musa" }, balance: 50000, total_billed: 50000, total_paid: 0, invoices: [] },
+            { available: true, child: { id: 22, first_name: "Ada", full_name: "Ada" }, balance: -50000, total_billed: 50000, total_paid: 100000, invoices: [] },
+          ],
+          combined: { available: true, billed: 100000, paid: 100000, outstanding: 0 },
+          min_part_payment: 10000,
+          pay_all: { total: 0, steps: [], complete: true },
+        } }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response("{}", { status: 200 });
+    });
+    const r = render("/fees/paid?reference=CXP-REF-CREDIT", stub as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 60)));
+    expect(r.container.textContent).toContain("The family still owes ₦500.00");
+    expect(r.container.textContent).not.toContain("Your family has nothing outstanding");
+  });
+
   it("says still confirming on PENDING", async () => {
     const stub = vi.fn(async () =>
       new Response(JSON.stringify(statusResponse("PENDING")), {

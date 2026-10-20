@@ -1,9 +1,8 @@
 import { useEffect } from "react";
-import { ArrowLeft, Check } from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { Navigate, useNavigate } from "react-router";
 
 import { PageShell } from "@/components/layout/page-shell";
-import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { useFamilyFeesQuery } from "@/redux/services/portal-api";
 import {
@@ -27,17 +26,18 @@ import "./pay.css";
  */
 export function PayAllPage() {
   const navigate = useNavigate();
-  const { data: fees, isLoading } = useFamilyFeesQuery();
+  const { data: fees, isLoading, isFetching } = useFamilyFeesQuery(undefined, { refetchOnMountOrArgChange: true });
   const existing = readPayAllQueue();
 
   useEffect(() => {
     if (existing) return;
     if (!fees) return;
+    if (isFetching) return;
     if (fees.pay_all.steps.length === 0) return;
     savePayAllQueue({ steps: fees.pay_all.steps, index: 0 });
-  }, [fees, existing]);
+  }, [fees, existing, isFetching]);
 
-  if (isLoading && !fees) {
+  if ((isLoading || isFetching) && !existing) {
     return (
       <PageShell className="pay-page">
         <div className="pay-wrap">
@@ -66,74 +66,29 @@ export function PayAllPage() {
   };
 
   return (
-    <PageShell className="pay-page">
-      <div className="pay-wrap">
-        <Link to="/fees" className="pay-back">
+    <PageShell className="pay-page pay-all-page">
+      <div className="pay-wrap pay-all-wrap">
+        <button type="button" onClick={stop} className="pay-back">
           <ArrowLeft size={17} aria-hidden="true" />
-          Fees
-        </Link>
-        <div className="pay-layout">
-          <div className="pay-overview">
-            <section className="pay-bill" aria-label="Pay all - current step">
-              <span className="pay-bill-label">
-                Payment {queue.index + 1} of {queue.steps.length}
-              </span>
-              <h2>
-                {step.first_name}
-                {step.title ? ` · ${step.title}` : ""}
-              </h2>
-              {step.number && <p>{step.number}</p>}
-              <strong>{formatNaira(step.amount)}</strong>
-              <div className="pay-bill-chips">
-                <span>Full balance on this bill</span>
-              </div>
+          Back to Fees
+        </button>
+        <div className="pay-all-layout">
+          <div className="pay-all-main">
+            <section className="pay-all-summary" aria-labelledby="pay-all-title">
+              <div className="pay-all-summary-top"><span>Pay all balances</span><span>Step {queue.index + 1} of {queue.steps.length}</span></div>
+              <h1 id="pay-all-title">Remaining to pay</h1>
+              <strong>{formatNaira(remainingTotal)}</strong>
+              <p>{remaining.length === 1 ? "One bill left in this payment flow." : `${remaining.length} bills left, paid one at a time.`}</p>
+            </section>
+            <section className="pay-all-current" aria-labelledby="pay-all-current-title">
+              <div className="pay-all-current-heading"><span className="pay-all-step-number">{queue.index + 1}</span><div><small>Paying now</small><h2 id="pay-all-current-title">{step.first_name}{step.title ? ` · ${step.title}` : ""}</h2>{step.number && <p>{step.number}</p>}</div></div>
+              <div className="pay-all-step-amount"><span>Amount for this bill</span><strong>{formatNaira(step.amount)}</strong></div>
+              <p className="pay-all-help">You&apos;ll confirm this payment first, then move to the next bill.</p>
+              <button type="button" className="pay-all-primary" onClick={start}>Continue to payment <ArrowRight size={18} aria-hidden="true" /></button>
+              <button type="button" className="pay-all-cancel" onClick={stop}><X size={16} aria-hidden="true" /> Stop all and return to Fees</button>
             </section>
           </div>
-          <div className="pay-detail">
-            <section className="pay-card-panel">
-              <h3>Pay this bill</h3>
-              <p className="pay-help">
-                You&apos;ll pay <strong>{formatNaira(step.amount)}</strong> for{" "}
-                {step.first_name}&apos;s <b>{step.title}</b>. After confirmation you&apos;ll be
-                offered the next payment in the queue.
-              </p>
-              <dl className="pay-review">
-                <div>
-                  <dt>Remaining in this queue</dt>
-                  <dd>
-                    {queue.steps.length - queue.index}{" "}
-                    {queue.steps.length - queue.index === 1 ? "step" : "steps"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Totalling</dt>
-                  <dd>{formatNaira(remainingTotal)}</dd>
-                </div>
-              </dl>
-              <Button className="pay-primary-action" onClick={start}>
-                <Check size={17} aria-hidden="true" />
-                Start this step
-              </Button>
-              <button type="button" className="pay-secondary-action" onClick={stop}>
-                Stop pay all and return to Fees
-              </button>
-            </section>
-            <section className="pay-watch" aria-label="Upcoming payments in this queue">
-              <h3>Also in this queue</h3>
-              {remaining.length <= 1 ? (
-                <p className="pay-watch-message">This is the last step.</p>
-              ) : (
-                <ul>
-                  {remaining.slice(1).map((item, index) => (
-                    <li key={item.invoice_ref} className="pay-watch-message is-pending">
-                      Step {queue.index + 2 + index}: {item.first_name} ·{" "}
-                      {item.title || item.number} · {formatNaira(item.amount)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
+          {remaining.length > 1 && <aside className="pay-all-upcoming" aria-label="Upcoming bills"><h2>Coming up next</h2><ul>{remaining.slice(1).map((item, index) => <li key={item.invoice_ref}><span className="pay-all-upcoming-number">{queue.index + 2 + index}</span><span><strong>{item.first_name}</strong><small>{item.title || item.number}</small></span><b>{formatNaira(item.amount)}</b></li>)}</ul></aside>}
         </div>
       </div>
     </PageShell>

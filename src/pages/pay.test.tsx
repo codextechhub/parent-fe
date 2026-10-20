@@ -14,6 +14,7 @@ import { baseApi } from "@/redux/services/base-api";
 import "@/redux/services/portal-api";
 
 import { PayPage } from "./pay";
+import { clearPayAllQueue, savePayAllQueue } from "./pay-all-queue";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -73,7 +74,8 @@ function stubWithPayResponse(payResult: (body: unknown) => { status: number; bod
     const url = input instanceof Request ? input.url : String(input);
     const method = (input instanceof Request ? input.method : init?.method) ?? "GET";
     if (url.includes("/invoices/101/pay/") && method === "POST") {
-      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      const rawBody = input instanceof Request ? await input.clone().text() : String(init?.body ?? "");
+      const body = rawBody ? JSON.parse(rawBody) : {};
       const { status, body: resBody } = payResult(body);
       return new Response(JSON.stringify(resBody), {
         status,
@@ -109,7 +111,7 @@ function makeStore() {
   return store;
 }
 
-function render(fetchImpl: typeof fetch) {
+function render(fetchImpl: typeof fetch, path = "/fees/pay/101") {
   globalThis.fetch = fetchImpl;
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -117,7 +119,7 @@ function render(fetchImpl: typeof fetch) {
   act(() =>
     root.render(
       <Provider store={makeStore()}>
-        <MemoryRouter initialEntries={["/fees/pay/101"]}>
+        <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/fees/pay/:invoiceRef" element={<PayPage />} />
           </Routes>
@@ -130,6 +132,7 @@ function render(fetchImpl: typeof fetch) {
 
 let last: { container: HTMLDivElement; root: Root } | null = null;
 beforeEach(() => {
+  clearPayAllQueue();
   document.cookie = "csrftoken=abc; path=/";
   _resetCsrfCache();
   _resetRefreshForTests();
@@ -138,6 +141,7 @@ beforeEach(() => {
   happy?.setURL("http://lagoon-view.localhost:5176/parent/");
 });
 afterEach(() => {
+  clearPayAllQueue();
   if (last) {
     act(() => last!.root.unmount());
     last.container.remove();
@@ -146,6 +150,32 @@ afterEach(() => {
 });
 
 describe("PayPage", () => {
+  it("does not fall back to a full bill charge when the pay-all queue is missing", async () => {
+    const r = render(stubWithPayResponse(() => ({ status: 200, body: {} })) as unknown as typeof fetch, "/fees/pay/101?pay-all=1");
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    expect(r.container.textContent).toContain("This payment step has changed");
+    expect(r.container.textContent).not.toContain("Continue to secure payment");
+  });
+
+  it("charges the queued amount instead of the invoice's full balance in pay all", async () => {
+    savePayAllQueue({ steps: [{ child_id: 11, first_name: "Tobi", invoice_ref: 101, number: "IV-1", title: "First Term", amount: 100000 }], index: 0 });
+    const amounts: number[] = [];
+    const stub = stubWithPayResponse((body) => {
+      amounts.push((body as { amount: number }).amount);
+      return { status: 409, body: { success: false, message: "Gateway unavailable" } };
+    });
+    const r = render(stub as unknown as typeof fetch, "/fees/pay/101?pay-all=1");
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    expect(r.container.querySelector(".pay-bill > strong")?.textContent).toBe("₦1,000.00");
+    expect(r.container.textContent).toContain("Bill balance ₦5,000.00");
+    expect(r.container.textContent).not.toContain("Pay in full");
+    const go = [...r.container.querySelectorAll("button")].find((button) => button.textContent?.includes("Continue to secure payment"));
+    await act(async () => { go?.click(); await new Promise((resolve) => setTimeout(resolve, 30)); });
+    expect(amounts).toEqual([100000]);
+  });
+
   it("renders the bill with the child's name and the Pay in full option", async () => {
     const r = render(
       stubWithPayResponse(() => ({ status: 200, body: {} })) as unknown as typeof fetch,

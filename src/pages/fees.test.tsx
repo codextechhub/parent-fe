@@ -14,6 +14,7 @@ import { baseApi } from "@/redux/services/base-api";
 import "@/redux/services/portal-api";
 
 import { FeesPage } from "./fees";
+import { readPayAllQueue, savePayAllQueue } from "./pay-all-queue";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -153,6 +154,17 @@ afterEach(() => {
 });
 
 describe("FeesPage", () => {
+  it("starts Pay all balances with a fresh queue", async () => {
+    savePayAllQueue({ steps: [{ child_id: 99, first_name: "Old", invoice_ref: 999, number: "IV-OLD", title: "Old bill", amount: 999999 }], index: 0 });
+    const r = render(stub(fees()) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    const payAll = r.container.querySelector<HTMLAnchorElement>('a[href="/fees/pay-all"]');
+    expect(payAll).not.toBeNull();
+    await act(async () => payAll?.click());
+    expect(readPayAllQueue()).toBeNull();
+  });
+
   it("shows the combined outstanding and the per-child cards", async () => {
     const r = render(stub(fees()) as unknown as typeof fetch);
     last = r;
