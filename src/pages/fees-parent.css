@@ -187,6 +187,9 @@
 .fees-page .fees-wrap { width: min(100%, 850px); }
 .fees-simple-layout { display: grid; gap: 0; min-width: 0; }
 .fees-simple-summary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -194,15 +197,38 @@
   min-width: 0;
   padding: 27px 30px;
   border-radius: 21px;
-  background: #2d4778;
+  background: linear-gradient(135deg, #2d4778 0%, #4a659d 60%, #6d84ae 100%);
   color: white;
-  box-shadow: 0 16px 34px #1b356d1f;
+  box-shadow: 0 18px 42px #1b356d20;
 }
-.fees-simple-summary.is-unavailable { background: #9b692f; }
+.fees-simple-summary::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: radial-gradient(#c2d7ff 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: .16;
+  -webkit-mask-image: linear-gradient(110deg, transparent 22%, #000 90%);
+  mask-image: linear-gradient(110deg, transparent 22%, #000 90%);
+}
+.fees-simple-summary::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 300px;
+  height: 300px;
+  right: -90px;
+  top: -155px;
+  border: 1px solid #ffffff30;
+  border-radius: 50%;
+  box-shadow: 0 0 0 50px #ffffff0c, 0 0 0 100px #ffffff08;
+}
+.fees-simple-summary.is-unavailable { background: linear-gradient(135deg, #935908 0%, #c08427 60%, #e5a650 100%); }
 .fees-summary-label { display: block; color: #d8e4f7; font-size: 13px; font-weight: 650; }
 .fees-summary-amount { display: block; margin-top: 6px; overflow-wrap: anywhere; font-size: clamp(35px, 5vw, 46px); line-height: 1.08; font-weight: 700; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
 .fees-simple-summary p { margin: 9px 0 0; color: #dbe6f7; font-size: 13px; }
-.fees-simple-summary .fees-summary-credit { max-width: 470px; margin-top: 15px; padding-top: 13px; border-top: 1px solid #ffffff35; }
+.fees-simple-summary .fees-summary-credit { display: inline-flex; max-width: 470px; margin-top: 15px; padding: 7px 10px; border: 1px solid #ffffff55; border-radius: 9px; background: #ffffff22; }
 .fees-summary-action { display: grid; justify-items: center; gap: 8px; flex: none; }
 .fees-summary-pay { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 17px; border-radius: 11px; background: white; color: #2d4778; font-size: 13px; font-weight: 700; text-decoration: none; box-shadow: 0 3px 10px #162d5240; }
 .fees-summary-pay:hover { background: #eaf0ff; }
