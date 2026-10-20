@@ -263,7 +263,7 @@ describe("FeesPage", () => {
     expect(r.container.querySelector('a[href="/fees/pay/102"]')).not.toBeNull();
   });
 
-  it("puts balances due first in due-date order, then paid children", async () => {
+  it("puts balances due by due date, then credit and other non-paid states, then paid children", async () => {
     const tobi = fees().data.children[0];
     const somto = fees().data.children[1];
     const withDue = (id: number, name: string, dueDate: string) => ({
@@ -271,11 +271,14 @@ describe("FeesPage", () => {
       child: { id, first_name: name, full_name: `${name} O` },
       invoices: [{ ...tobi.invoices[0], invoice_ref: id, due_date: dueDate }],
     });
-    const r = render(stub(fees({ children: [somto, tobi, withDue(33, "Kemi", "2026-12-01"), withDue(44, "Ada", "2026-10-25")] })) as unknown as typeof fetch);
+    const paid = { ...somto, child: { id: 55, first_name: "Chika", full_name: "Chika O" }, invoices: [{ ...tobi.invoices[0], invoice_ref: 55, paid: 1000000, balance: 0, status: "PAID", status_label: "Paid" }] };
+    const credit = { ...tobi, child: { id: 66, first_name: "Zara", full_name: "Zara O" }, balance: -50000, invoices: [{ ...tobi.invoices[0], invoice_ref: 66, paid: 1050000, balance: -50000 }] };
+    const unavailable = { available: false, child: { id: 77, first_name: "Nneka", full_name: "Nneka O" }, message: "Fees unavailable" };
+    const r = render(stub(fees({ children: [paid, unavailable, somto, credit, tobi, withDue(33, "Kemi", "2026-12-01"), withDue(44, "Ada", "2026-10-25")] })) as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
     const names = [...r.container.querySelectorAll(".fees-simple-children > li .fees-child-identity strong")]
       .map((node) => node.textContent);
-    expect(names).toEqual(["Ada", "Tobi", "Kemi", "Somto"]);
+    expect(names).toEqual(["Ada", "Tobi", "Kemi", "Zara", "Somto", "Nneka", "Chika"]);
   });
 });

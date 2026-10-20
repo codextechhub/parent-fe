@@ -31,8 +31,8 @@ export function FeesPage() {
   const offline = useAppSelector((s) => s.connectivity.offline);
   const children = fees?.children ?? [];
   const orderedChildren = [...children].sort((left, right) => {
-    const leftGroup = !left.available ? 2 : left.balance > 0 ? 0 : 1;
-    const rightGroup = !right.available ? 2 : right.balance > 0 ? 0 : 1;
+    const leftGroup = childFeesOrder(left);
+    const rightGroup = childFeesOrder(right);
     if (leftGroup !== rightGroup) return leftGroup - rightGroup;
     if (leftGroup !== 0) return 0;
     const leftDue = earliestUnpaidDue(left);
@@ -100,6 +100,13 @@ export function FeesPage() {
       </div>
     </PageShell>
   );
+}
+
+function childFeesOrder(entry: ChildFeesEntry): number {
+  if (!entry.available) return 3;
+  if (entry.balance > 0) return 0;
+  if (entry.balance < 0) return 1;
+  return entry.invoices.length === 0 ? 2 : 4;
 }
 
 function earliestUnpaidDue(entry: ChildFeesEntry): string | null {
