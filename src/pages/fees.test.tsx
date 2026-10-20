@@ -157,14 +157,21 @@ describe("FeesPage", () => {
     const r = render(stub(fees()) as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
-    expect(r.container.textContent).toContain("Outstanding across your children");
+    expect(r.container.textContent).toContain("Total left to pay");
     expect(r.container.textContent).toContain("₦5,000.00");
     expect(r.container.textContent).toContain("Tobi");
     expect(r.container.textContent).toContain("Somto");
     // Somto has no invoices - "No bills yet" rather than "All paid".
     expect(r.container.textContent).toContain("No bills yet");
-    // Pay-all CTA shows since there is an outstanding step.
-    expect(r.container.textContent).toContain("Start pay all");
+    expect(r.container.textContent).toContain("Pay all balances");
+    // Bill details stay out of the initial view.
+    expect(r.container.textContent).not.toContain("Tuition");
+    const bills = r.container.querySelector<HTMLButtonElement>('[aria-controls="fees-child-bills-11"]');
+    expect(bills?.getAttribute("aria-expanded")).toBe("false");
+    await act(async () => bills?.click());
+    expect(bills?.getAttribute("aria-expanded")).toBe("true");
+    expect(r.container.textContent).toContain("First Term");
+    expect(r.container.querySelector('a[href="/fees/invoices/101"]')).not.toBeNull();
   });
 
   it("shows the sentence instead of a figure when combined is unavailable", async () => {
@@ -226,5 +233,33 @@ describe("FeesPage", () => {
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
     expect(r.container.textContent).toContain("in credit");
+  });
+
+  it("lets a parent choose among multiple bills for one child", async () => {
+    const first = fees().data.children[0];
+    const r = render(
+      stub(fees({
+        children: [
+          {
+            ...first,
+            balance: 650000,
+            invoices: [
+              ...first.invoices,
+              { ...first.invoices[0], invoice_ref: 102, number: "IV-2", title: "Transport", balance: 150000 },
+            ],
+          },
+          fees().data.children[1],
+        ],
+        combined: { available: true, billed: 1650000, paid: 1000000, outstanding: 650000 },
+      })) as unknown as typeof fetch,
+    );
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    expect(r.container.textContent).toContain("Choose bill");
+    expect(r.container.querySelector('a[href="/fees/pay/101"]')).toBeNull();
+    const choose = r.container.querySelector<HTMLButtonElement>('[aria-controls="fees-child-bills-11"]');
+    await act(async () => choose?.click());
+    expect(r.container.querySelector('a[href="/fees/pay/101"]')).not.toBeNull();
+    expect(r.container.querySelector('a[href="/fees/pay/102"]')).not.toBeNull();
   });
 });
