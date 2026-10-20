@@ -1,3 +1,11 @@
-/* The parent app's shell carries no backdrop treatment yet. Phase 3 adds
-   the Home hero and this file picks up a `.app-shell--design` class the
-   way student-fe's does. For now the frame is a plain surface. */
+.app-shell--design {
+  background: radial-gradient(circle at 12% 0%, #e9eafe 0, transparent 31rem), #f5f7fc;
+}
+
+.app-shell--design :is(.home-page, .timetable-page, .results-page, .fees-page, .pay-page, .paid-page, .receipt-page, .attendance-page, .notices-page, .profile-page, .report-page) {
+  background: transparent;
+}
+
+.app-shell--design :is(.report-hero, .attendance-hero, .receipt-summary, .paid-cover) {
+  min-height: 0;
+}

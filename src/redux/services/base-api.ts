@@ -117,3 +117,6 @@ export const baseApi = createApi({
   tagTypes: ["Me", "Profile", "Fees", "Payments", "Notices", "Timetable", "Attendance", "Results"],
   endpoints: () => ({}),
 });
+
+/** Every tag the API's reads carry, so a pull to refresh can read them all again. */
+export const ALL_TAGS = ["Me", "Profile", "Fees", "Payments", "Notices", "Timetable", "Attendance", "Results"] as const;

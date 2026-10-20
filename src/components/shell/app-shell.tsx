@@ -11,16 +11,19 @@ import { useNoticesQuery } from "@/redux/services/portal-api";
 
 import { itemFor, NAV, splitTabs, type NavItem } from "./nav";
 import { OfflineBar } from "./offline-bar";
+import { PullToRefresh } from "./pull-to-refresh";
 import "./app-shell.css";
 
 /**
  * The frame every signed-in parent screen sits in.
  *
- * A floating tab bar at every size (student-fe's pattern); the owner's
- * choice between a desktop sidebar and this bar is still open and the plan
- * says to default to the bar. The header carries the school's crest, the
- * screen title, a branch line and the child switcher. The offline bar sits
- * under the header whenever the app cannot reach the school.
+ * The student app's frame: a floating tab bar at the bottom at every size,
+ * and a header carrying the school's crest, the screen title and the child
+ * switcher. The header is clear over the page's own tinted background, so
+ * the two read as one surface, and turns frosted once the page scrolls under
+ * it. The offline bar sits under the header whenever the app cannot reach
+ * the school, and a pull down from the top of a screen reads everything on
+ * it again.
  */
 export function AppShell() {
   const { pathname } = useLocation();
@@ -51,40 +54,38 @@ export function AppShell() {
       : current?.key === "profile" ? "My profile"
       : current?.label ?? "";
 
-  // The branch line names the showing child's branch, so a parent with
-  // children at two branches can tell which branch the current screen is
-  // scoped to. It recedes at a one-branch school.
+  // Names the crest to a screen reader: the school, and the showing child's branch where there are several.
   const active = useActiveChild();
-  const branchLine = me?.show_branch && active?.branch
+  const where = me?.show_branch && active?.branch
     ? `${me.school.name} · ${active.branch.name}`
     : me?.school.name ?? "";
 
   return (
-    <div className="app-shell flex min-h-dvh min-w-0 flex-col bg-background pb-[calc(6rem+env(safe-area-inset-bottom))]">
+    <div className="app-shell app-shell--design flex min-h-dvh min-w-0 flex-col bg-background pb-[calc(6rem+env(safe-area-inset-bottom))]">
       <header
         className={cn(
           "sticky top-0 z-30 flex min-h-[58px] min-w-0 items-center gap-3 border-b px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 transition-[background-color,backdrop-filter,border-color] duration-200 sm:min-h-[66px] lg:px-6",
           scrolled
-            ? "border-border bg-background/75 backdrop-blur-xl"
-            : "border-border bg-background",
+            ? "border-[#dbe0eb] bg-[#f5f7fc]/70 backdrop-blur-xl backdrop-saturate-150"
+            : "border-transparent bg-transparent",
         )}
       >
         <SchoolMark
           logo={me?.school.logo_url || null}
-          size={30}
+          size={34}
           animate={false}
-          alt={branchLine}
+          alt={where}
+          className="max-h-7 sm:max-h-[34px]"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground">{screenTitle}</p>
-          {branchLine && (
-            <p className="truncate text-[11px] font-medium text-gray-05">{branchLine}</p>
-          )}
+          <p className="truncate text-base font-semibold text-foreground">{screenTitle}</p>
         </div>
         <ChildSwitcher />
       </header>
       <OfflineBar />
-      <Outlet />
+      <PullToRefresh>
+        <Outlet />
+      </PullToRefresh>
       <TabBar badges={{ notices: unreadNotices }} />
     </div>
   );

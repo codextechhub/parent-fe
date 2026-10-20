@@ -68,8 +68,15 @@ function ProfileHero({ profile, schoolName }: { profile: ProfileData; schoolName
   const name = profile.managed_by_school.full_name;
   const count = profile.managed_by_school.children.length;
   const childWord = count === 1 ? "child" : "children";
+  // The server's initials: a title such as "Mrs." is not the parent's first initial.
+  const initials = useAppSelector((s) => s.auth.me?.parent.initials) ?? "";
   return (
     <section className="profile-hero" aria-label="Parent identity">
+      <div className="profile-hero-photo">
+        <div className="profile-hero-avatar">
+          <span aria-hidden="true" className="profile-hero-initials">{initials}</span>
+        </div>
+      </div>
       <div className="profile-hero-content">
         <h2>{name}</h2>
         <p className="profile-hero-school">
