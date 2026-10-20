@@ -98,7 +98,7 @@ export function HomePage() {
             <>
               <InstallOffer />
               <PushOffer />
-              <FamilyFeesBanner block={home.fees} />
+              <FamilyFeesBanner block={home.fees} children={home.children} />
               <section aria-labelledby="home-children-title">
                 <SectionHeading
                   title="Your children"
@@ -161,7 +161,7 @@ function Unavailably({ block }: { block: Unavailable }) {
   return <p className="home-empty">{block.message}</p>;
 }
 
-function FamilyFeesBanner({ block }: { block: FamilyFees }) {
+function FamilyFeesBanner({ block, children }: { block: FamilyFees; children: ChildHomeBlock[] }) {
   if (!block.available) {
     return (
       <section className="home-surface home-banner home-banner--amber" role="status">
@@ -178,7 +178,12 @@ function FamilyFeesBanner({ block }: { block: FamilyFees }) {
       </section>
     );
   }
-  if (block.outstanding <= 0) {
+  const availableChildren = children.filter((child) => child.fees.available);
+  const due = availableChildren.length
+    ? availableChildren.reduce((total, child) => total + Math.max(0, child.fees.available ? child.fees.balance : 0), 0)
+    : Math.max(0, block.outstanding);
+  const credit = availableChildren.reduce((total, child) => total + Math.max(0, child.fees.available ? -child.fees.balance : 0), 0);
+  if (due <= 0) {
     return (
       <section className="home-surface home-banner home-banner--green" aria-label="Family fees status">
         <div className="home-banner-icon">
@@ -197,8 +202,8 @@ function FamilyFeesBanner({ block }: { block: FamilyFees }) {
         <Wallet size={21} aria-hidden="true" />
       </div>
       <div className="home-banner-text">
-        <strong>{formatNaira(block.outstanding)} outstanding</strong>
-        <p>Across your children, with {formatNaira(block.pay_all_total)} ready to pay.</p>
+        <strong>{formatNaira(due)} still due on bills</strong>
+        <p>{credit > 0 ? `${formatNaira(credit)} in credit on another child's account. Open Fees to see each balance.` : "Across your children."}</p>
       </div>
       <Link to="/fees" className="home-banner-cta">
         Open Fees

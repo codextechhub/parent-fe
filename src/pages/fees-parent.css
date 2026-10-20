@@ -202,6 +202,7 @@
 .fees-summary-label { display: block; color: #d8e4f7; font-size: 13px; font-weight: 650; }
 .fees-summary-amount { display: block; margin-top: 6px; overflow-wrap: anywhere; font-size: clamp(35px, 5vw, 46px); line-height: 1.08; font-weight: 700; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
 .fees-simple-summary p { margin: 9px 0 0; color: #dbe6f7; font-size: 13px; }
+.fees-simple-summary .fees-summary-credit { max-width: 470px; margin-top: 15px; padding-top: 13px; border-top: 1px solid #ffffff35; }
 .fees-summary-action { display: grid; justify-items: center; gap: 8px; flex: none; }
 .fees-summary-pay { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 17px; border-radius: 11px; background: white; color: #2d4778; font-size: 13px; font-weight: 700; text-decoration: none; box-shadow: 0 3px 10px #162d5240; }
 .fees-summary-pay:hover { background: #eaf0ff; }

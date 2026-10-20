@@ -157,7 +157,7 @@ describe("FeesPage", () => {
     const r = render(stub(fees()) as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
-    expect(r.container.textContent).toContain("Total left to pay");
+    expect(r.container.textContent).toContain("Bills still to pay");
     expect(r.container.textContent).toContain("₦5,000.00");
     expect(r.container.textContent).toContain("Tobi");
     expect(r.container.textContent).toContain("Somto");
@@ -233,6 +233,24 @@ describe("FeesPage", () => {
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
     expect(r.container.textContent).toContain("in credit");
+  });
+
+  it("shows a child's unpaid balance even when another child's credit makes the family net zero", async () => {
+    const [tobi, somto] = fees().data.children;
+    const r = render(stub(fees({
+      children: [
+        { ...tobi, balance: 50000, invoices: [{ ...tobi.invoices[0], balance: 50000 }] },
+        { ...somto, balance: -50000 },
+      ],
+      combined: { available: true, billed: 1000000, paid: 1000000, outstanding: 0 },
+      pay_all: { total: 0, steps: [], complete: true },
+    })) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    expect(r.container.querySelector(".fees-summary-amount")?.textContent).toBe("₦500.00");
+    expect(r.container.querySelector(".fees-summary-credit")?.textContent).toContain("₦500.00 in credit");
+    expect(r.container.textContent).not.toContain("No bills left to pay");
+    expect(r.container.querySelector('a[href="/fees/pay/101"]')).not.toBeNull();
   });
 
   it("lets a parent choose among multiple bills for one child", async () => {

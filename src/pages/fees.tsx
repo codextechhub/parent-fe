@@ -57,8 +57,7 @@ export function FeesPage() {
             <FamilySummary
               combined={fees.combined}
               payAll={fees.pay_all}
-              childCount={children.length}
-              owingCount={children.filter((entry) => entry.available && entry.balance > 0).length}
+              children={children}
               offline={offline}
             />
             <section aria-labelledby="fees-children-heading">
@@ -117,8 +116,8 @@ function earliestUnpaidDue(entry: ChildFeesEntry): string | null {
     .sort()[0] ?? null;
 }
 
-function FamilySummary({ combined, payAll, childCount, owingCount, offline }: {
-  combined: FamilyFeesBlock; payAll: PayAll; childCount: number; owingCount: number; offline: boolean;
+function FamilySummary({ combined, payAll, children, offline }: {
+  combined: FamilyFeesBlock; payAll: PayAll; children: ChildFeesEntry[]; offline: boolean;
 }) {
   if (!combined.available) {
     return <section className="fees-simple-summary is-unavailable" role="status" aria-label="Fee balance">
@@ -127,18 +126,24 @@ function FamilySummary({ combined, payAll, childCount, owingCount, offline }: {
       <p>{combined.message}</p>
     </section>;
   }
-  const due = Math.max(0, combined.outstanding);
+  const availableChildren = children.filter((entry) => entry.available);
+  const due = availableChildren.length
+    ? availableChildren.reduce((total, entry) => total + Math.max(0, entry.balance), 0)
+    : Math.max(0, combined.outstanding);
+  const credit = availableChildren.reduce((total, entry) => total + Math.max(0, -entry.balance), 0);
+  const owingCount = availableChildren.filter((entry) => entry.balance > 0).length;
   const canPayAll = due > 0 && payAll.total > 0 && payAll.steps.length > 0;
   return (
     <section className="fees-simple-summary" aria-label="Fee balance">
       <div>
-        <span className="fees-summary-label">Total left to pay</span>
+        <span className="fees-summary-label">Bills still to pay</span>
         <strong className="fees-summary-amount">{formatNaira(due)}</strong>
         <p>{due > 0
-          ? childCount > 1
-            ? `${owingCount} of your ${childCount} children ${owingCount === 1 ? "has" : "have"} a balance.`
+          ? children.length > 1
+            ? `${owingCount} of your ${children.length} children ${owingCount === 1 ? "has" : "have"} a balance.`
             : "One child has a balance."
-          : combined.billed > 0 ? "Nothing is outstanding right now." : "No bills on your family account yet."}</p>
+          : combined.billed > 0 ? "No bills left to pay right now." : "No bills on your family account yet."}</p>
+        {credit > 0 && <p className="fees-summary-credit">{formatNaira(credit)} in credit across child accounts. Credit does not settle another child&apos;s bill until the school transfers it.</p>}
       </div>
       {canPayAll && <div className="fees-summary-action">
         {offline ? <span className="fees-summary-offline">You can pay when you&apos;re back online.</span>

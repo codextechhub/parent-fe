@@ -154,7 +154,7 @@ describe("HomePage", () => {
     const r = render(fetchStub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 20)));
-    expect(r.container.textContent).toContain("outstanding");
+    expect(r.container.textContent).toContain("still due on bills");
     expect(r.container.textContent).toContain("Welcome, Patricia");
     expect(r.container.textContent).toContain("2 children across 2 branches");
     expect(r.container.textContent).toContain("Tobi");
@@ -184,6 +184,10 @@ describe("HomePage", () => {
   it("says all fees are paid when outstanding is zero", async () => {
     const payload = homePayload({
       fees: { available: true, outstanding: 0, pay_all_total: 0 },
+      children: homePayload().data.children.map((child) => ({
+        ...child,
+        fees: { available: true, balance: 0, status: "CLEAR", open_invoice_count: 0 },
+      })),
     });
     const fetchStub = vi.fn(async () =>
       new Response(JSON.stringify(payload), {
@@ -195,6 +199,27 @@ describe("HomePage", () => {
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 20)));
     expect(r.container.textContent).toContain("All fees are paid");
+  });
+
+  it("shows a child's bill when another child's credit makes the family net zero", async () => {
+    const children = homePayload().data.children;
+    const payload = homePayload({
+      fees: { available: true, outstanding: 0, pay_all_total: 0 },
+      children: [
+        { ...children[0], fees: { available: true, balance: 50000, status: "OWING", open_invoice_count: 1 } },
+        { ...children[1], fees: { available: true, balance: -50000, status: "IN_CREDIT", open_invoice_count: 0 } },
+      ],
+    });
+    const fetchStub = vi.fn(async () => new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+    const r = render(fetchStub as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(r.container.querySelector(".home-banner")?.textContent).toContain("₦500.00 still due on bills");
+    expect(r.container.querySelector(".home-banner")?.textContent).toContain("₦500.00 in credit");
+    expect(r.container.querySelector(".home-banner")?.textContent).not.toContain("All fees are paid");
   });
 
   it("shows the fees-unavailable sentence from the family block instead of a figure", async () => {
