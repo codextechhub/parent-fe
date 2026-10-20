@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
-import { ChevronRight, Info, KeyRound, LockKeyhole, Pencil, Users } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { Camera, ChevronRight, ImagePlus, Info, KeyRound, LockKeyhole, Pencil, Trash2, Users } from "lucide-react";
+import { Dialog } from "radix-ui";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
@@ -8,11 +9,14 @@ import { ChildAvatar } from "@/components/child-avatar";
 import { InstallSetting } from "@/components/install-offer";
 import { PageShell } from "@/components/layout/page-shell";
 import { PushSetting } from "@/components/push-settings";
+import { useShownImage } from "@/lib/shown-image";
 import { useAppSelector } from "@/redux/hooks";
 import {
   refusal,
   useProfileQuery,
+  useRemovePhotoMutation,
   useUpdateProfileMutation,
+  useUploadPhotoMutation,
   type EditableFields,
   type ProfileData,
 } from "@/redux/services/portal-api";
@@ -64,18 +68,99 @@ export function ProfilePage() {
   );
 }
 
+/** The largest photograph the school takes, as the student app's. */
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+/**
+ * The parent's banner: their photograph (or initials) with the camera that
+ * changes it, their name, and how many children they have at the school.
+ *
+ * The photograph is the one on their guardian record, the one the school sees,
+ * so it is fetched with the parent's token (`useShownImage`). The camera stays
+ * off while the app cannot reach the school.
+ */
 function ProfileHero({ profile, schoolName }: { profile: ProfileData; schoolName: string }) {
   const name = profile.managed_by_school.full_name;
   const count = profile.managed_by_school.children.length;
   const childWord = count === 1 ? "child" : "children";
   // The server's initials: a title such as "Mrs." is not the parent's first initial.
   const initials = useAppSelector((s) => s.auth.me?.parent.initials) ?? "";
+  const offline = useAppSelector((s) => s.connectivity.offline);
+  const photo = useShownImage(profile.photo_url);
+  const picker = useRef<HTMLInputElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [upload, { isLoading: uploading }] = useUploadPhotoMutation();
+  const [remove, { isLoading: removing }] = useRemovePhotoMutation();
+
+  const chosen = async (file: File | undefined) => {
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast.error("Choose a PNG, JPEG or WebP photo.");
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast.error("That photo is larger than 5 MB. Choose a smaller one.");
+      return;
+    }
+    try {
+      await upload(file).unwrap();
+      toast.success("Photo updated");
+    } catch (error) {
+      toast.error(refusal(error).message);
+    }
+  };
+
+  const drop = async () => {
+    try {
+      await remove().unwrap();
+      setMenuOpen(false);
+      toast.success("Photo removed");
+    } catch (error) {
+      toast.error(refusal(error).message);
+    }
+  };
+
   return (
     <section className="profile-hero" aria-label="Parent identity">
       <div className="profile-hero-photo">
         <div className="profile-hero-avatar">
-          <span aria-hidden="true" className="profile-hero-initials">{initials}</span>
+          {photo.src ? (
+            <img src={photo.src} alt="" className="object-cover" />
+          ) : (
+            <span aria-hidden="true">{initials}</span>
+          )}
         </div>
+        <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
+          <Dialog.Trigger className="profile-camera" type="button" aria-label="Profile photo options" disabled={offline || uploading || removing}>
+            <Camera size={18} aria-hidden="true" />
+          </Dialog.Trigger>
+          <Dialog.Portal>
+            <Dialog.Overlay className="profile-photo-overlay" />
+            <Dialog.Content className="profile-photo-dialog" aria-describedby={undefined}>
+              <Dialog.Title>Profile photo</Dialog.Title>
+              <button type="button" onClick={() => { setMenuOpen(false); picker.current?.click(); }}>
+                <ImagePlus size={19} aria-hidden="true" /> Choose a photo
+              </button>
+              {profile.photo_url && (
+                <button type="button" onClick={() => void drop()} disabled={removing || uploading}>
+                  <Trash2 size={19} aria-hidden="true" /> {removing ? "Removing…" : "Remove photo"}
+                </button>
+              )}
+              <Dialog.Close type="button" className="profile-photo-cancel">Cancel</Dialog.Close>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
+        <input
+          ref={picker}
+          className="profile-photo-input"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          aria-label="Choose a profile photo"
+          onChange={(event) => {
+            void chosen(event.target.files?.[0]);
+            event.target.value = "";
+          }}
+        />
       </div>
       <div className="profile-hero-content">
         <h2>{name}</h2>

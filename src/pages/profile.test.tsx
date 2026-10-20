@@ -44,6 +44,7 @@ function profilePayload() {
     success: true,
     message: "ok",
     data: {
+      photo_url: "",
       managed_by_school: {
         full_name: "Mrs. Patricia Okafor",
         sign_in_email: "patricia@example.ng",
@@ -203,5 +204,49 @@ describe("ProfilePage", () => {
     expect(list?.textContent).toContain("Lekki");
     const link = list?.querySelector("a") as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/results?child=11");
+  });
+
+  it("uploads the parent's photo from the camera in the banner", async () => {
+    const sent: Request[] = [];
+    const fetchStub = vi.fn(async (input: RequestInfo | URL) => {
+      if (input instanceof Request) sent.push(input.clone());
+      return new Response(JSON.stringify(profilePayload()), {
+        status: input instanceof Request && input.method === "POST" ? 201 : 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    const r = render(fetchStub as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 20)));
+    expect(r.container.querySelector(".profile-hero-avatar")?.textContent).toBe("PO");
+    expect(r.container.querySelector('button[aria-label="Profile photo options"]')).not.toBeNull();
+
+    const input = r.container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File([new Uint8Array([137, 80, 78, 71])], "me.png", { type: "image/png" });
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    await act(async () => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    const post = sent.find((req) => req.method === "POST" && req.url.includes("/portal/parent/profile/photo/"));
+    expect(post).toBeDefined();
+  });
+
+  it("refuses a file that is not a photo before sending anything", async () => {
+    const fetchStub = vi.fn(async () =>
+      new Response(JSON.stringify(profilePayload()), { status: 200, headers: { "content-type": "application/json" } }),
+    );
+    const r = render(fetchStub as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 20)));
+    const calls = fetchStub.mock.calls.length;
+    const input = r.container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["%PDF"], "me.pdf", { type: "application/pdf" });
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    await act(async () => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(fetchStub.mock.calls.length).toBe(calls);
   });
 });

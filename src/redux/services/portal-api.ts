@@ -180,6 +180,8 @@ export type NoticePage = {
 /* ─── Profile ───────────────────────────────────────────────────────────── */
 
 export type ProfileData = {
+  /** The parent's own photograph on their guardian record, or "" when there is none. */
+  photo_url: string;
   managed_by_school: {
     full_name: string;
     sign_in_email: string;
@@ -524,6 +526,21 @@ export const parentApi = baseApi.injectEndpoints({
       transformResponse: (res: Envelope<ProfileData>) => res.data,
       invalidatesTags: ["Profile", "Me"],
     }),
+    /** Sets the parent's own photograph from one PNG, JPEG or WebP file. */
+    uploadPhoto: builder.mutation<ProfileData, File>({
+      query: (file) => {
+        const body = new FormData();
+        body.append("file", file);
+        return { url: "/portal/parent/profile/photo/", method: "POST", body };
+      },
+      transformResponse: (res: Envelope<ProfileData>) => res.data,
+      invalidatesTags: ["Profile"],
+    }),
+    removePhoto: builder.mutation<ProfileData, void>({
+      query: () => ({ url: "/portal/parent/profile/photo/", method: "DELETE" }),
+      transformResponse: (res: Envelope<ProfileData>) => res.data,
+      invalidatesTags: ["Profile"],
+    }),
     notices: builder.query<NoticePage, number>({
       query: (page) => ({ url: "/portal/parent/notices/", method: "GET", params: { page } }),
       transformResponse: (res: {
@@ -774,6 +791,8 @@ export const {
   useHomeQuery,
   useProfileQuery,
   useUpdateProfileMutation,
+  useUploadPhotoMutation,
+  useRemovePhotoMutation,
   useNoticesQuery,
   useNoticeQuery,
   useMarkNoticeReadMutation,
