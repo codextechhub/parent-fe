@@ -414,8 +414,55 @@ export type Payment = {
   child: { id: number; first_name: string };
 };
 
+/** Who issued a document, as its letterhead prints them. `logo_url` is a stored file. */
+export type DocumentLetterhead = {
+  name: string;
+  tag: string;
+  logo_url: string;
+  address: string;
+  email: string;
+  phone: string;
+  website: string;
+};
+
+/**
+ * An invoice as its printed copy reads, money in kobo.
+ *
+ * `tax_label` ("No VAT", "Exempt") prints in place of `tax_amount` where it
+ * is set. `adjustments` is what lowered the balance other than a payment, so
+ * `total - amount_paid - adjustments` is `balance_due`.
+ */
+export type InvoiceDocument = {
+  document_number: string;
+  invoice_date: string | null;
+  due_date: string | null;
+  reference: string;
+  narration: string;
+  status: "PAID" | "PARTIAL" | "UNPAID" | string;
+  letterhead: DocumentLetterhead | null;
+  billed_to: { name: string; code: string; email: string; phone: string; address: string };
+  lines: {
+    description: string;
+    detail: string;
+    quantity: string;
+    unit_price: number;
+    tax_amount: number;
+    tax_label: string;
+    amount: number;
+  }[];
+  subtotal: number;
+  tax_total: number;
+  total: number;
+  amount_paid: number;
+  adjustments: number;
+  balance_due: number;
+  bank: { bank_name: string; account_name: string; account_number: string } | null;
+};
+
 export type InvoiceSheet = Invoice & {
   child: { id: number; first_name: string };
+  /** Absent from a server that predates it; the sheet then draws from the fields above. */
+  document?: InvoiceDocument | null;
 };
 
 export type Receipt = {
@@ -431,6 +478,9 @@ export type Receipt = {
   lines: { invoice_number: string; title: string; amount_applied: number; balance_after: number }[];
   balance_after: number;
   issuer_name: string;
+  letterhead?: DocumentLetterhead | null;
+  amount_in_words?: string;
+  customer_code?: string;
   child: { id: number; first_name: string };
 };
 

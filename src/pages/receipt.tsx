@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, Check, CircleAlert, Download } from "lucide-react";
+import { ArrowLeft, CircleAlert, Download } from "lucide-react";
 import { Link, useParams } from "react-router";
 
+import { BlockTitle, Fact, Letterhead } from "@/components/fees/finance-document";
 import { PageShell } from "@/components/layout/page-shell";
 import { formatDate, formatNaira } from "@/lib/format";
+import { useAppSelector } from "@/redux/hooks";
 import {
   useLazyReceiptPdfQuery,
   useReceiptQuery,
+  type DocumentLetterhead,
   type Receipt,
 } from "@/redux/services/portal-api";
 
@@ -99,74 +102,115 @@ function Unavailable() {
   );
 }
 
+/**
+ * The receipt in the school's printed design: letterhead, the amount received
+ * in figures and words, what it settled, and the account's balance after it.
+ *
+ * The balance is the one frozen when the payment was booked, which is why the
+ * sheet says so under it. A server that predates the letterhead sends only the
+ * school's name, and the sheet draws that.
+ */
 function ReceiptDocument({ receipt }: { receipt: Receipt }) {
+  const school = useAppSelector((s) => s.auth.me?.school);
+  const letterhead: DocumentLetterhead = receipt.letterhead ?? {
+    name: receipt.issuer_name || school?.name || "",
+    tag: "",
+    logo_url: school?.logo_url ?? "",
+    address: "",
+    email: "",
+    phone: "",
+    website: "",
+  };
+
   return (
-    <article className="receipt-document" aria-label="Payment receipt">
-      <div className="receipt-document-top">
+    <article className="fdoc" aria-label="Payment receipt">
+      <div className="fdoc-stamp" aria-hidden="true">Received</div>
+      <Letterhead
+        letterhead={letterhead}
+        kind="Receipt"
+        kindSub="Payment received"
+        number={receipt.receipt_number}
+        tone="paid"
+      />
+
+      <section className="fdoc-meta-grid">
         <div>
-          <p className="receipt-issuer">{receipt.issuer_name}</p>
-          <p className="receipt-issuer-sub">Official payment receipt</p>
+          <BlockTitle>Payment details</BlockTitle>
+          <dl>
+            <Fact label="Payment date">{formatDate(receipt.paid_on)}</Fact>
+            <Fact label="Method">{receipt.method_label || "-"}</Fact>
+            {receipt.reference && <Fact label="Reference">{receipt.reference}</Fact>}
+            {receipt.payer_name && <Fact label="Paid by">{receipt.payer_name}</Fact>}
+          </dl>
         </div>
-        <span className="receipt-document-stamp">
-          <Check size={22} aria-hidden="true" />
-        </span>
-      </div>
-      <div className="receipt-document-id">
-        <span>Receipt number</span>
-        <strong>{receipt.receipt_number}</strong>
-      </div>
-      <div className="receipt-tear" aria-hidden="true" />
-      <div className="receipt-document-body">
-        <dl className="receipt-details">
-          <Fact label="Received from" value={receipt.received_from} />
-          <Fact label="On behalf of" value={receipt.child.first_name} />
-          <Fact label="Payment date" value={formatDate(receipt.paid_on)} />
-          <Fact label="Payment method" value={receipt.method_label} />
-          <Fact label="Reference" value={receipt.reference} reference />
-          {receipt.payer_name && <Fact label="Paid by" value={receipt.payer_name} />}
-        </dl>
-        <h2 className="receipt-section-title">Applied to</h2>
-        <div className="receipt-lines">
+        <div>
+          <BlockTitle>Received from</BlockTitle>
+          <p className="fdoc-party-name">{receipt.received_from}</p>
+          {receipt.customer_code && <p className="fdoc-party-line">Account · {receipt.customer_code}</p>}
+          <p className="fdoc-party-line">On behalf of {receipt.child.first_name}</p>
+        </div>
+      </section>
+
+      <section className="fdoc-hero" aria-label="Amount received">
+        <div>
+          <p className="fdoc-hero-label">Amount received</p>
+          <strong className="fdoc-hero-amount">{formatNaira(receipt.amount)}</strong>
+          {receipt.amount_in_words && <p className="fdoc-hero-words">{receipt.amount_in_words}</p>}
+        </div>
+        <span className="fdoc-badge is-paid">Paid</span>
+      </section>
+
+      <table className="fdoc-table">
+        <thead>
+          <tr>
+            <th>Applied to invoice</th>
+            <th className="num">Amount applied</th>
+            <th className="num">Invoice balance</th>
+          </tr>
+        </thead>
+        <tbody>
           {receipt.lines.map((line, index) => (
-            <div className="receipt-line" key={`${line.invoice_number}-${index}`}>
-              <div>
-                <strong>{line.title}</strong>
-                <small>{line.invoice_number}</small>
-              </div>
-              <span>{formatNaira(line.amount_applied)}</span>
-            </div>
+            <tr key={`${line.invoice_number}-${index}`}>
+              <td>
+                <div className="fdoc-ref">{line.invoice_number}</div>
+                {line.title && <div className="fdoc-line-sub">{line.title}</div>}
+              </td>
+              <td className="num" data-label="Amount applied">{formatNaira(line.amount_applied)}</td>
+              <td className="num" data-label="Invoice balance">{formatNaira(line.balance_after)}</td>
+            </tr>
           ))}
-        </div>
-        <div className="receipt-total">
-          <span>Amount received</span>
-          <strong>{formatNaira(receipt.amount)}</strong>
-        </div>
-        <div className="receipt-balance">
-          <span>Balance after this payment</span>
+          {receipt.lines.length === 0 && (
+            <tr>
+              <td><div className="fdoc-ref">Unallocated credit</div></td>
+              <td className="num" data-label="Amount applied">{formatNaira(receipt.amount)}</td>
+              <td className="num" data-label="Invoice balance">-</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      <div className="fdoc-after">
+        <div className="fdoc-after-box">
+          <span>Customer balance after payment</span>
           <strong>{formatNaira(receipt.balance_after)}</strong>
         </div>
-        <p className="receipt-historic">
-          This was the balance when the payment was recorded. The current balance in Fees may
-          have changed since.
-        </p>
       </div>
-    </article>
-  );
-}
+      <p className="fdoc-historic">
+        This was the balance when the payment was recorded. The current balance in Fees may have
+        changed since.
+      </p>
 
-function Fact({
-  label,
-  value,
-  reference = false,
-}: {
-  label: string;
-  value: string;
-  reference?: boolean;
-}) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd className={reference ? "is-reference" : undefined}>{value || "-"}</dd>
-    </div>
+      <footer className="fdoc-footer">
+        <div className="fdoc-footer-note">
+          This is a computer-generated receipt and is valid without a physical signature. Retain it
+          as proof of payment.
+          <p className="fdoc-thanks">Thank you - your payment has been received and applied.</p>
+        </div>
+        <div className="fdoc-sign">
+          <div className="fdoc-sign-line" />
+          <div className="fdoc-sign-label">Authorised by · Bursary</div>
+        </div>
+      </footer>
+    </article>
   );
 }
