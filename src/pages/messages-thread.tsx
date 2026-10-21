@@ -165,6 +165,7 @@ export function ThreadView({ id }: { id: number }) {
       <div ref={end} className="msg-end" aria-hidden="true" />
 
       {convo &&
+        !watching &&
         (convo.can_send ? (
           <Composer
             scope={`reply-${id}`}

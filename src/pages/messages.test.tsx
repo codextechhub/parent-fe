@@ -279,10 +279,16 @@ describe("Messages list", () => {
     expect(text).toContain("Class teacher, JSS1 A");
     expect(text).toContain("About Tobi");
     expect(text).toContain("Your child's conversations with staff");
-    expect(text).toContain("Adaeze's conversation with Mr Kunle Adebayo. You can read it but not reply.");
-    // The watched row carries no unread badge and no "About" chip.
+    // The section note says the rule once; the watched row does not repeat it.
+    expect(text.split("You can read these but not reply").length - 1).toBe(1);
+    expect(text).not.toContain("You can read it but not reply");
+    // The watched row reads like an ordinary one: staff label and child chip, no unread badge.
     const watched = last.container.querySelector('a[href="/messages/52"]');
-    expect(watched?.textContent).not.toContain("About");
+    expect(watched?.getAttribute("aria-label")).toBe("Open Adaeze's conversation with Mr Kunle Adebayo");
+    expect(watched?.textContent).toContain("Mr Kunle Adebayo");
+    expect(watched?.textContent).toContain("Mathematics");
+    expect(watched?.textContent).toContain("About Adaeze");
+    expect(watched?.querySelector(".msg-unread")).toBeNull();
   });
 
   it("leaves the child chips and the About line out for a parent with one child", async () => {
@@ -324,13 +330,32 @@ describe("Open conversation", () => {
     expect(last.container.querySelector("textarea")).toBeTruthy();
   });
 
-  it("shows the reason instead of a box, and never marks a watched conversation read", async () => {
+  it("shows no composer and no read-only note on a watched conversation, and never marks it read", async () => {
     const s = server();
     last = render("/messages/52", s.fn);
     await settle(80);
-    expect(last.container.textContent).toContain("Adaeze's conversation. You can read it but not reply.");
+    expect(last.container.textContent).not.toContain("You can read it but not reply");
+    expect(last.container.textContent).toContain("Adaeze's conversation, Primary 4");
     expect(last.container.querySelector("textarea")).toBeNull();
+    expect(last.container.querySelector(".msg-composer")).toBeNull();
+    expect(last.container.querySelector(".msg-readonly")).toBeNull();
     expect(s.reads).toEqual([]);
+  });
+
+  it("still shows the reason when a family conversation cannot be written in", async () => {
+    const closed = {
+      ...FAMILY_ROW,
+      unread_count: 0,
+      can_send: false,
+      read_only: true,
+      read_only_reason: "Mrs Funke Bello has left the school.",
+    };
+    const s = server({ rows: [closed, WATCHED_ROW] });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    expect(last.container.textContent).toContain("Mrs Funke Bello has left the school.");
+    expect(last.container.querySelector(".msg-readonly")).toBeTruthy();
+    expect(last.container.querySelector("textarea")).toBeNull();
   });
 
   it("sends once for a double tap", async () => {

@@ -26,8 +26,10 @@ export function Initials({ name, className }: { name: string; className?: string
  * A conversation of the parent's own shows the member of staff, their label
  * ("Class teacher, JSS1 A"), the child it is about (only when the parent has
  * more than one), the last words and an unread count. A watched pupil
- * conversation says whose it is and that it cannot be answered; it carries no
- * unread count because opening it changes nothing for anyone.
+ * conversation reads the same way, about the pupil whose conversation it is;
+ * the list's section note says once that watched conversations cannot be
+ * answered, so the row does not repeat it. It carries no unread count because
+ * opening it changes nothing for anyone.
  */
 export function ConversationRow({
   convo,
@@ -66,13 +68,7 @@ export function ConversationRow({
             <strong className="msg-row-name">{name}</strong>
             {last && <time dateTime={last.sent_at}>{listTime(last.sent_at)}</time>}
           </span>
-          {watching ? (
-            <span className="msg-row-watch">
-              {childFirst}&apos;s conversation with {name}. You can read it but not reply.
-            </span>
-          ) : (
-            other?.label && <span className="msg-row-label">{other.label}</span>
-          )}
+          {other?.label && <span className="msg-row-label">{other.label}</span>}
           <span className="msg-row-bottom">
             <span className="msg-row-preview">{preview}</span>
             {unread > 0 && (
@@ -81,7 +77,7 @@ export function ConversationRow({
               </span>
             )}
           </span>
-          {!watching && showChild && <span className="msg-row-child">About {childFirst}</span>}
+          {showChild && <span className="msg-row-child">About {childFirst}</span>}
         </span>
       </Link>
     </li>
