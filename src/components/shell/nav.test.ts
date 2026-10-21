@@ -9,11 +9,14 @@ describe("itemFor", () => {
     expect(itemFor("/results")?.key).toBe("results");
     expect(itemFor("/attendance")?.key).toBe("attendance");
     expect(itemFor("/timetable")?.key).toBe("timetable");
+    expect(itemFor("/messages")?.key).toBe("messages");
   });
 
   it("matches a child path to the parent item", () => {
     expect(itemFor("/notices/42")?.key).toBe("notices");
     expect(itemFor("/results/card/1")?.key).toBe("results");
+    expect(itemFor("/messages/7")?.key).toBe("messages");
+    expect(itemFor("/messages/new")?.key).toBe("messages");
   });
 
   it("does not match `/` for any deeper path", () => {
@@ -23,13 +26,15 @@ describe("itemFor", () => {
 });
 
 describe("splitTabs", () => {
-  it("overflows into More once Timetable + Attendance arrive (7 items)", () => {
-    expect(NAV.length).toBe(7);
+  it("keeps the owner's four tabs and puts the rest under More (8 items)", () => {
+    expect(NAV.length).toBe(8);
     const { tabs, more } = splitTabs(NAV);
-    // 4 onBar-flagged items + More, so tabs.length === 4.
-    expect(tabs.length).toBe(4);
-    expect(more.length).toBe(3);
-    expect(more.map((item) => item.key)).toEqual(["timetable", "attendance", "profile"]);
+    expect(tabs.map((item) => item.key)).toEqual(["home", "results", "fees", "notices"]);
+    expect(more.map((item) => item.key)).toEqual(["timetable", "attendance", "messages", "profile"]);
+  });
+
+  it("does not carry a child on Messages", () => {
+    expect(NAV.find((item) => item.key === "messages")?.perChild).toBeFalsy();
   });
 
   it("keeps every item as a tab when at or under the slot count", () => {

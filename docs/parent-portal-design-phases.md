@@ -179,14 +179,16 @@ parents.
 | Pay by bank transfer | **Served, not wired** | `GET/POST children/<id>/fees/transfer-account/` (`ISSUED` / `NONE` / `UNAVAILABLE`); `GET children/<id>/fees/transfer-account/deposits/?since=<as_of>` |
 | Profile | **Served, not wired** | `GET/PATCH profile/`; PATCH takes `phone`, `alt_phone`, `address` only; `email_editable: false` |
 | Notices | **Served, not wired** | `GET notices/`, `GET notices/<id>/`, `POST notices/<id>/read/`, `POST notices/read-all/`. Each notice names the children it is for |
-| Messages, Assignments | **Absent, parked** | hidden |
+| Messages | **Served, wired** (Phase 8) | `GET/POST messages/conversations/`, `GET messages/conversations/<id>/`, `GET/POST messages/conversations/<id>/messages/`, `POST messages/conversations/<id>/read/`, `GET messages/unread-count/`, `GET messages/contacts/?child=` |
+| Assignments | **Absent, parked** | hidden |
 
 **Bucket 3 (exists but closed) is empty.** The portal has no pending-tenant
 surface: a school not live has no parents.
 
-**Bucket 4 (absent) is small and deliberate:** Messages and Assignments. No
-owning module. The design shows them; the plan hides them (owner decision 4
-in the backend plan).
+**Bucket 4 (absent) is small and deliberate:** Assignments. No owning module.
+The design shows it; the plan hides it (owner decision 4 in the backend
+plan). Messages was in this bucket until the messaging module (Module 32)
+shipped its parent routes; it is built, see Phase 8.
 
 ### 2.2 Served, and no screen draws it (reverse audit)
 
@@ -241,8 +243,11 @@ design" and then is unbuilt again.
    runs it, then "Step 2 of 2 · Somto's First Term". The design's
    `allocationNote` and `payIsCombined` recede.
 5. **Messages, Assignments, the Messages tile and badge, the "Needs your
-   follow-up" list on Home.** Neither module exists. Ruled: hidden. No empty
-   nav item, no "coming soon".
+   follow-up" list on Home.** Neither module existed when this was ruled:
+   hidden, no empty nav item, no "coming soon". Messages has since shipped
+   and is built (Phase 8): its badge sits on the tab bar, and Home still
+   carries no Messages tile because `home/` serves no message block.
+   Assignments and the follow-up list stay hidden.
 6. **The combined "Pay fees" button on the Home outstanding banner.**
    Kept, but it opens the pay-all queue (point 4), not a merged charge.
 7. **`c.feeStatus`, `c.feeLine` and `c.openWork` on the child card.** Fee
@@ -424,11 +429,66 @@ Blocked, this phase, on the backend.
   tab's "Portal access" row, the Field Access switches on
   `school.guardians.alt_phone` and `school.guardians.portal_access`.
 
-### Parked: Messages and Assignments
+### Phase 8: Messages
 
-No owning module. The design shows them; the plan hides the nav and tiles.
-When each module ships, each starts from its own backend plan and a
-staff-side design, and the parent app gets a new phase.
+Built against Module 32 (`backend/docs/messaging/messaging-design.md`,
+sections 1, 2, 5, 9.4, 11 and 14, the last of which wins), whose parent routes
+sit under `/v1/portal/parent/messages/`. No keys: the portal's own admission
+applies.
+
+- **Nav.** `Messages` (`/messages`, `MessageSquare`) is the eighth
+  destination. The owner's four tabs (Home, Results, Fees, Notices) keep the
+  bar, so Messages goes under More with Timetable, Attendance and Profile. To
+  keep it from hiding there, the unread count shows on the More tab (the sum
+  of what sits under it) and on Messages' own row in the sheet. It is family
+  scoped and carries no `?child=`.
+- **Badge.** `unread-count/` is read every 60 s while the app is in view, on
+  regaining focus and on reconnecting (`AppShell`). Opening a conversation,
+  or sending, invalidates it.
+- **Routes.** `messages`, `messages/new` and `messages/:id`, all drawn by
+  `MessagesPage`. A message alert (`/parent/messages/<id>`) opens the
+  thread through the router with no change to `public/push-sw.js` or
+  `routerPath`, since the backend names a `/parent/` path.
+- **List.** Rows show the staff member's name and label ("Class teacher,
+  JSS1 A"), the child (a chip, only when the parent has several), the last
+  words, the time and an unread count. Child chips narrow the list with
+  `?child=`. The `PUPIL` rows (a child's conversations the parent reads as
+  primary parent) sit in their own section, "Your child's conversations with
+  staff", each reading "Adaeze's conversation with Mr Kunle Adebayo. You can
+  read it but not reply." They carry no unread count and no About chip.
+- **Thread.** Oldest to newest under day headings; the newest 50 load, and
+  "Show earlier messages" follows the `before` cursor, holding the view in
+  place. Opening a conversation of the parent's own marks it read (and so
+  does a message that arrives while it is open); a watched one is never
+  marked. The newest page reads again every 20 s, on focus and on
+  reconnecting. The box sends with a 4,000-character limit; `client_token`
+  comes from `crypto.randomUUID`, is kept with the text, and is reused when
+  the same text is retried after a failure, so a double tap or a retry
+  never writes twice. When `can_send` is false the box gives way to
+  `read_only_reason`.
+- **New message.** Child (skipped for a parent of one; defaults to the child
+  in the header switcher), then a member of staff from `contacts/?child=`
+  (preselected when there is only one), then the words. `can_start: false`
+  shows `can_start_reason` in place of the form. The conversation the
+  backend returns (201 new, 200 existing) opens.
+- **Phone first.** The list and an open conversation are separate full
+  screens below 900 px; side by side from 900 px. Both read cleanly at 375
+  and 768 with long names and unbroken text wrapping.
+- **Offline.** What was last loaded stays on screen and the shell's offline
+  bar shows the moment the browser goes offline (the shell listens for the
+  browser's `online` and `offline` events). Send waits: the text stays
+  and a line says it will go when the connection returns.
+- **Home.** `home/` serves no message block, so Home is unchanged.
+- **Field Access.** The portal serializers carry a fixed narrow shape and no
+  Field Access switches (a deliberate deviation recorded in section 14.4 of
+  the messaging design), so the screen shows exactly the fields the API
+  returns and submits only `child`, `staff`, `body` and `client_token`.
+
+### Parked: Assignments
+
+No owning module. The design shows it; the plan hides the nav and tiles.
+When the module ships, it starts from its own backend plan and a staff-side
+design, and the parent app gets a new phase.
 
 ---
 

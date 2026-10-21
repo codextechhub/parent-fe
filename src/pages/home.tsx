@@ -26,8 +26,9 @@ import "./home.css";
  * Family header greeting, then the money banner (what the family owes in all,
  * or an "all paid" line), one card per child, then the latest notice. Every
  * block honours its own `available: false` with the server's sentence; a
- * zero figure is never shown for an unavailable block. Follow-ups, messages
- * and open-work counts are parked (plan 2.3 point 5).
+ * zero figure is never shown for an unavailable block. Follow-ups and
+ * open-work counts are parked (plan 2.3 point 5). Messages have their own
+ * screen and unread badge in the shell, so Home does not repeat them.
  */
 /**
  * Where the family's children are, at a school with several branches: "2

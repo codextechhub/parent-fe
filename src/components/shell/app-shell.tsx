@@ -8,13 +8,18 @@ import {
   ChildSwitcher, CHILD_PARAM, useActiveChild, useFollowAddressedChild,
 } from "@/components/session/child-switcher";
 import { cn } from "@/lib/utils";
-import { useAppSelector } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { reachedSchool, wentOffline } from "@/redux/features/connectivity-slice";
+import { useUnreadMessagesQuery } from "@/redux/services/messages-api";
 import { useNoticesQuery } from "@/redux/services/portal-api";
 
 import { itemFor, NAV, splitTabs, type NavItem } from "./nav";
 import { OfflineBar } from "./offline-bar";
 import { PullToRefresh } from "./pull-to-refresh";
 import "./app-shell.css";
+
+/** How often the unread message count is read again while the app is in view, in ms. */
+const UNREAD_POLL_MS = 60_000;
 
 /**
  * The frame every signed-in parent screen sits in.
@@ -23,9 +28,10 @@ import "./app-shell.css";
  * and a header carrying the school's crest, the screen title and the child
  * switcher. The header is clear over the page's own tinted background, so
  * the two read as one surface, and turns frosted once the page scrolls under
- * it. The offline bar sits under the header whenever the app cannot reach
- * the school, and a pull down from the top of a screen reads everything on
- * it again.
+ * it. The offline bar sits under the header whenever the browser reports no
+ * connection, and a pull down from the top of a screen reads everything on
+ * it again. The unread message count is read every minute, on regaining
+ * focus and on reconnecting; it is the badge on Messages.
  */
 export function AppShell() {
   const { pathname } = useLocation();
@@ -38,6 +44,24 @@ export function AppShell() {
   const me = useAppSelector((s) => s.auth.me);
   const { data: firstPage } = useNoticesQuery(1, { skip: !me });
   const unreadNotices = firstPage?.unreadCount ?? 0;
+  const { data: unreadMessages = 0 } = useUnreadMessagesQuery(undefined, {
+    skip: !me,
+    pollingInterval: UNREAD_POLL_MS,
+    skipPollingIfUnfocused: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    const down = () => dispatch(wentOffline());
+    const up = () => dispatch(reachedSchool());
+    window.addEventListener("offline", down);
+    window.addEventListener("online", up);
+    return () => {
+      window.removeEventListener("offline", down);
+      window.removeEventListener("online", up);
+    };
+  }, [dispatch]);
   const current = itemFor(pathname);
   const screenTitle = pathname.startsWith("/results/card/")
     ? "Report card"
@@ -53,6 +77,7 @@ export function AppShell() {
       : current?.key === "attendance" ? "Attendance"
       : current?.key === "fees" ? "Fees"
       : current?.key === "notices" ? "Notices"
+      : current?.key === "messages" ? "Messages"
       : current?.key === "profile" ? "My profile"
       : current?.label ?? "";
 
@@ -89,7 +114,7 @@ export function AppShell() {
       <PullToRefresh>
         <Outlet />
       </PullToRefresh>
-      <TabBar badges={{ notices: unreadNotices }} />
+      <TabBar badges={{ notices: unreadNotices, messages: unreadMessages }} />
     </div>
   );
 }
@@ -111,6 +136,7 @@ function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> })
     ? tabs.length
     : Math.max(0, tabs.findIndex((item) => item.key === itemFor(pathname)?.key));
   const tabCount = tabs.length + (more.length > 0 ? 1 : 0);
+  const moreCount = more.reduce((total, item) => total + (badges[item.key] ?? 0), 0);
   return (
     <nav
       aria-label="Screens"
@@ -162,7 +188,17 @@ function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> })
                 moreShowing ? "font-medium text-primary" : "text-gray-05 hover:text-foreground",
               )}
             >
-              <MoreHorizontal className="size-5" />
+              <span className="relative">
+                <MoreHorizontal className="size-5" />
+                {moreCount > 0 && (
+                  <span
+                    className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-primary px-1 text-center text-[11px] leading-4 font-semibold text-primary-foreground"
+                    aria-label={`${moreCount} unread under More`}
+                  >
+                    {moreCount > 9 ? "9+" : moreCount}
+                  </span>
+                )}
+              </span>
               More
             </Dialog.Trigger>
             <Dialog.Portal>
@@ -176,6 +212,7 @@ function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> })
                 </Dialog.Title>
                 {more.map((item) => {
                   const Icon = item.icon;
+                  const count = badges[item.key];
                   return (
                     <div key={item.key} onClick={() => setMoreOpen(false)}>
                       <NavLink
@@ -190,7 +227,12 @@ function TabBar({ badges }: { badges: Partial<Record<NavItem["key"], number>> })
                         }
                       >
                         <Icon className="size-4.5 shrink-0" />
-                        <span className="truncate">{item.label}</span>
+                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                        {!!count && (
+                          <span className="min-w-5 rounded-full bg-primary px-1.5 text-center text-[11px] leading-5 font-semibold text-primary-foreground">
+                            {count > 99 ? "99+" : count}
+                          </span>
+                        )}
                       </NavLink>
                     </div>
                   );

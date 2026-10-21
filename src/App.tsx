@@ -12,6 +12,7 @@ import { AttendancePage } from "@/pages/attendance";
 import { FeesPage } from "@/pages/fees";
 import { HomePage } from "@/pages/home";
 import { InvoicePage } from "@/pages/invoice";
+import { MessagesPage } from "@/pages/messages";
 import { NoticesPage } from "@/pages/notices";
 import { PaidPage } from "@/pages/paid";
 import { PayPage } from "@/pages/pay";
@@ -58,6 +59,9 @@ export default function App() {
           <Route path="fees/paid" element={<PaidPage />} />
           <Route path="notices" element={<NoticesPage />} />
           <Route path="notices/:id" element={<NoticesPage />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/new" element={<MessagesPage />} />
+          <Route path="messages/:id" element={<MessagesPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
