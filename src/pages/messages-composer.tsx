@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useImperativeHandle, useRef, useState, type ChangeEvent, type KeyboardEvent, type Ref } from "react";
 import { SendHorizontal } from "lucide-react";
 
 import { BODY_MAX, newClientToken, useOnline } from "@/lib/messages";
@@ -23,7 +23,14 @@ const MAX_HEIGHT = 144;
  * so rather than failing. Command or Control plus Enter sends; a plain Enter
  * adds a line, which is what a phone keyboard expects.
  */
+export type ComposerHandle = {
+  /** Sends what is in the box now, as the Send button does. */
+  send: () => void;
+};
+
 export function Composer({
+  ref,
+  onEdit,
   onSend,
   scope,
   label,
@@ -32,6 +39,10 @@ export function Composer({
   canSend = true,
   className,
 }: {
+  /** Lets the screen press Send for the parent, to retry a message that did not go. */
+  ref?: Ref<ComposerHandle>;
+  /** Called whenever the parent changes the text, so a failed attempt can be let go. */
+  onEdit?: () => void;
   onSend: (text: string, token: string) => Promise<boolean>;
   /** What else makes two sends the same send, such as the child and member of staff chosen. */
   scope: string;
@@ -62,6 +73,7 @@ export function Composer({
   const change = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
     grow(event.target);
+    onEdit?.();
   };
 
   const send = async () => {
@@ -82,6 +94,8 @@ export function Composer({
       setSending(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({ send: () => void send() }));
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {

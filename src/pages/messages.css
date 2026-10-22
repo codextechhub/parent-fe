@@ -227,7 +227,6 @@
   animation: msg-pulse 1.4s ease-in-out infinite alternate;
 }
 .msg-loading.is-short { height: 64px; margin-top: 8px; }
-.msg-head-loading { height: 64px; margin-top: 0; }
 .msg-error, .msg-detail-error {
   margin-top: 14px;
   padding: 22px;
@@ -272,23 +271,75 @@
   font-weight: 700;
   text-decoration: none;
 }
-.msg-thread { min-width: 0; }
+.msg-thread { display: flex; min-width: 0; min-height: 0; flex: 1; flex-direction: column; padding-bottom: max(10px, var(--screen-inset-bottom, 0px)); }
 .msg-head {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 9px 12px;
   border: 1px solid #e9edf5;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 6px 18px #2638590c;
 }
+.msg-head-back {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 -4px 0 -6px;
+  border-radius: 50%;
+  color: #536787;
+}
+.msg-head-back:active { background: #eef2fa; }
 .msg-head-text { min-width: 0; }
 .msg-head-text h2 { margin: 0; color: #263957; font-size: 17px; font-weight: 650; line-height: 1.25; }
 .msg-head-text p { margin: 2px 0 0; color: #5d72a7; font-size: 12.5px; font-weight: 700; }
 .msg-head-text .msg-head-about { color: #1d7656; }
+.msg-head-loading { flex: 1; height: 40px; margin: 0; border-radius: 12px; }
 
-.msg-thread-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 16px 0 14px; }
+/* The messages: the one part of an open conversation that scrolls. */
+.msg-thread-main { position: relative; display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.msg-thread-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Showing earlier messages restores the place itself; the browser's own anchoring would move it twice. */
+  overflow-anchor: none;
+  /* A soft edge where the messages slide under the header and the box. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+.msg-thread-body > * { flex-shrink: 0; }
+.msg-new-pill {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
+  transform: translateX(-50%);
+  border: 0;
+  border-radius: 999px;
+  background: #3152bd;
+  box-shadow: 0 8px 20px #1b356d40;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
 .msg-thread-empty { margin: 24px 0; color: #7b8aa0; font-size: 14px; text-align: center; }
 .msg-day { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .msg-day-heading {
@@ -326,24 +377,36 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.msg-bubble time { display: block; margin-top: 3px; font-size: 11px; font-weight: 600; opacity: .62; text-align: right; }
-
-/* Room the scroll leaves below the newest message for the composer and the tab bar. */
-.msg-end { scroll-margin-bottom: 10.5rem; }
+.msg-bubble-foot { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 14px; margin-top: 3px; }
+.msg-bubble time { font-size: 11px; font-weight: 600; opacity: .62; }
+.msg-tick { flex: none; opacity: .7; }
+/* Read ticks take a light blue that holds on the bubble's blue. */
+.msg-tick.is-read { color: #8fe3ff; opacity: 1; }
+.msg-bubble.is-failed { border-color: #c0392b; background: #fff; color: #2c3d5c; }
+.msg-retry {
+  display: block;
+  margin: 4px 0 0 auto;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #b3261e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* ─── Composer ─── */
 .msg-composer {
-  position: sticky;
-  bottom: calc(5.4rem + env(safe-area-inset-bottom));
-  z-index: 5;
+  flex: none;
   padding: 10px;
   border: 1px solid #dde4f1;
   border-radius: 18px;
-  background: #ffffffee;
+  background: #fff;
   box-shadow: 0 10px 26px #2638591a;
-  backdrop-filter: blur(10px);
 }
-.msg-composer.is-inline { position: static; box-shadow: none; backdrop-filter: none; background: #fff; }
+.msg-composer.is-inline { box-shadow: none; }
 .msg-composer-row { display: flex; align-items: flex-end; gap: 8px; min-width: 0; }
 .msg-composer-input {
   min-width: 0;
@@ -424,13 +487,28 @@
 @media (min-width: 900px) {
   .msg-layout { grid-template-columns: minmax(320px, .8fr) minmax(0, 1.2fr); }
   .msg-list-panel { position: sticky; top: 76px; max-height: calc(100dvh - 13rem); overflow-y: auto; padding-right: 4px; }
-  .msg-composer { bottom: 6.2rem; }
 }
 @media (max-width: 899px) {
   .msg-list-panel.is-hidden-on-detail,
   .msg-detail-panel.is-hidden-on-list { display: none; }
-  .msg-detail-back { display: inline-flex; }
+  .msg-detail-back, .msg-head-back { display: inline-flex; }
+  .msg-page.is-fixed { padding: calc(8px + var(--screen-inset-top, 0px)) 12px 0; }
 }
+
+/* ─── An open conversation fills the height the shell gives it ─── */
+.msg-page.is-fixed {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+.msg-page.is-fixed .msg-wrap { display: flex; width: min(100%, 1080px); min-height: 0; flex: 1; flex-direction: column; }
+.msg-page.is-fixed .msg-layout { min-height: 0; flex: 1; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+.msg-page.is-fixed .msg-list-panel { position: static; height: 100%; max-height: none; min-height: 0; overflow-y: auto; }
+.msg-page.is-fixed .msg-detail-panel { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
+.msg-page.is-fixed .msg-detail-error { margin-top: 0; }
 @media (max-width: 420px) {
   .msg-page { padding-right: 16px; padding-left: 16px; }
   .msg-cover { padding: 19px; }

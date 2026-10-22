@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { itemFor, NAV, splitTabs } from "./nav";
+import { isConversationPath, itemFor, NAV, splitTabs } from "./nav";
 
 describe("itemFor", () => {
   it("matches the exact path", () => {
@@ -42,5 +42,16 @@ describe("splitTabs", () => {
     const { tabs, more } = splitTabs(trimmed);
     expect(tabs.length).toBe(5);
     expect(more.length).toBe(0);
+  });
+});
+
+describe("isConversationPath", () => {
+  it("is true for an open conversation only", () => {
+    expect(isConversationPath("/messages/41")).toBe(true);
+    expect(isConversationPath("/messages/41/")).toBe(true);
+    expect(isConversationPath("/messages")).toBe(false);
+    expect(isConversationPath("/messages/new")).toBe(false);
+    expect(isConversationPath("/messages/abc")).toBe(false);
+    expect(isConversationPath("/notices/41")).toBe(false);
   });
 });

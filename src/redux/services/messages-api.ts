@@ -37,7 +37,19 @@ export type Conversation = {
   read_only: boolean;
   can_send: boolean;
   read_only_reason: string;
+  /**
+   * Whether to draw read ticks. Only an open conversation's detail carries it:
+   * false when the school has receipts off or the parent only watches a
+   * child's conversation; absent counts as false.
+   */
+  receipts?: boolean;
 };
+
+/**
+ * Whether the person written to has read a message the parent sent. Only the
+ * parent's own messages carry one, and only while the school shows receipts.
+ */
+export type Receipt = { state: "sent" | "read"; read_count: number; recipient_count: number };
 
 export type ThreadMessage = {
   id: number;
@@ -45,6 +57,7 @@ export type ThreadMessage = {
   sender: { user_id: number; name: string } | null;
   sent_at: string;
   mine: boolean;
+  receipt?: Receipt;
 };
 
 export type ConversationPage = {
@@ -73,6 +86,12 @@ export type Thread = {
 };
 
 type MessagePageResponse = { results: ThreadMessage[]; has_more: boolean; next_before: number | null };
+
+type PollResponse = {
+  results: ThreadMessage[];
+  has_more: boolean;
+  receipts?: (Receipt & { id: number })[];
+};
 
 /** How many messages the newest page and each older page carry. */
 export const THREAD_PAGE_SIZE = 50;
@@ -210,6 +229,49 @@ export const messagesApi = baseApi.injectEndpoints({
     }),
 
     /**
+     * Reads what came after the newest message the app holds, and the current
+     * ticks of the parent's recent messages, and folds both into the thread.
+     * Answers the newest id now held and whether more waits beyond the 100 the
+     * backend returns at once, so the caller can ask again.
+     */
+    pollNewerMessages: builder.mutation<
+      { newest: number; more: boolean },
+      { id: number; after: number }
+    >({
+      queryFn: async ({ id, after }, api, _extra, baseQuery) => {
+        const result = await baseQuery({
+          url: `/portal/parent/messages/conversations/${id}/messages/`,
+          method: "GET",
+          params: { after },
+        });
+        if (result.error) return { error: result.error };
+        const page = (result.data as Envelope<PollResponse>).data;
+        const fresh = [...page.results].sort((a, b) => a.id - b.id);
+        api.dispatch(
+          messagesApi.util.updateQueryData("thread", id, (draft) => {
+            draft.messages = union(draft.messages, fresh);
+            for (const receipt of page.receipts ?? []) {
+              const held = draft.messages.find((m) => m.id === receipt.id);
+              if (held?.mine) {
+                held.receipt = {
+                  state: receipt.state,
+                  read_count: receipt.read_count,
+                  recipient_count: receipt.recipient_count,
+                };
+              }
+            }
+          }),
+        );
+        if (fresh.length > 0) {
+          api.dispatch(
+            messagesApi.util.invalidateTags([LIST, UNREAD, { type: "Messages", id: `row-${id}` }]),
+          );
+        }
+        return { data: { newest: fresh.at(-1)?.id ?? after, more: page.has_more } };
+      },
+    }),
+
+    /**
      * Writes a message. The same `client_token` on a retry answers the stored
      * message instead of sending a second one.
      */
@@ -249,15 +311,15 @@ export const messagesApi = baseApi.injectEndpoints({
       invalidatesTags: [LIST, UNREAD],
     }),
 
-    /** Marks a conversation read up to its newest message. */
-    markConversationRead: builder.mutation<number, number>({
-      query: (id) => ({
+    /** Marks a conversation read up to the newest message the parent has seen. */
+    markConversationRead: builder.mutation<number, { id: number; up_to: number }>({
+      query: ({ id, up_to }) => ({
         url: `/portal/parent/messages/conversations/${id}/read/`,
         method: "POST",
-        body: {},
+        body: { up_to },
       }),
       transformResponse: (res: Envelope<{ unread_count: number }>) => res.data.unread_count,
-      invalidatesTags: (_r, _e, id) => [LIST, UNREAD, { type: "Messages", id: `row-${id}` }],
+      invalidatesTags: (_r, _e, { id }) => [LIST, UNREAD, { type: "Messages", id: `row-${id}` }],
     }),
   }),
 });
@@ -269,6 +331,7 @@ export const {
   useMessageContactsQuery,
   useThreadQuery,
   useLoadOlderMessagesMutation,
+  usePollNewerMessagesMutation,
   useSendMessageMutation,
   useStartConversationMutation,
   useMarkConversationReadMutation,

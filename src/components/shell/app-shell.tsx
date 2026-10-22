@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { NavLink, Outlet, useLocation } from "react-router";
@@ -13,9 +13,10 @@ import { reachedSchool, wentOffline } from "@/redux/features/connectivity-slice"
 import { useUnreadMessagesQuery } from "@/redux/services/messages-api";
 import { useNoticesQuery } from "@/redux/services/portal-api";
 
-import { itemFor, NAV, splitTabs, type NavItem } from "./nav";
+import { isConversationPath, itemFor, NAV, splitTabs, type NavItem } from "./nav";
 import { OfflineBar } from "./offline-bar";
 import { PullToRefresh } from "./pull-to-refresh";
+import { useNarrowScreen, useVisibleViewport } from "./viewport";
 import "./app-shell.css";
 
 /** How often the unread message count is read again while the app is in view, in ms. */
@@ -32,9 +33,29 @@ const UNREAD_POLL_MS = 60_000;
  * connection, and a pull down from the top of a screen reads everything on
  * it again. The unread message count is read every minute, on regaining
  * focus and on reconnecting; it is the badge on Messages.
+ *
+ * An open message conversation owns its scrolling (`isConversationPath`), so
+ * the frame stops scrolling with the page: it is fixed to the visible screen
+ * (`--vv-height` follows the phone keyboard, see `useVisibleViewport`), the
+ * pull-to-refresh is off so a pull at the top of the older messages cannot
+ * start a refresh, and below 900px the tab bar is taken away, as a chat app
+ * does, to give the messages and the box their room, and the shell's own
+ * header goes with it, so the conversation's header and its back arrow are the
+ * top of the screen (the page keeps clear of the top safe-area inset through
+ * `--screen-inset-top`, which the offline bar takes over while it shows, since
+ * it then sits first). Back returns to the list, the header and the tab bar.
+ * From 900px the conversation sits beside the list and both the header and
+ * the tab bar stay, with room reserved under the panes.
  */
 export function AppShell() {
   const { pathname } = useLocation();
+  const fixed = isConversationPath(pathname);
+  const narrow = useNarrowScreen();
+  // A phone's open conversation is the whole screen: its own header, with the way back, is the top.
+  const bareScreen = fixed && narrow;
+  const offline = useAppSelector((s) => s.connectivity.offline);
+  const frame = useRef<HTMLDivElement>(null);
+  useVisibleViewport(frame, fixed);
   const [scrolled, setScrolled] = useState(() => window.scrollY > 8);
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 8);
@@ -89,32 +110,42 @@ export function AppShell() {
     : me?.school.name ?? "";
 
   return (
-    <div className="app-shell app-shell--design flex min-h-dvh min-w-0 flex-col bg-background pb-[calc(6rem+env(safe-area-inset-bottom))]">
-      <header
-        className={cn(
-          "sticky top-0 z-30 flex min-h-[58px] min-w-0 items-center gap-3 border-b px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 transition-[background-color,backdrop-filter,border-color] duration-200 sm:min-h-[66px] lg:px-6",
-          scrolled
-            ? "border-[#dbe0eb] bg-[#f5f7fc]/70 backdrop-blur-xl backdrop-saturate-150"
-            : "border-transparent bg-transparent",
-        )}
-      >
-        <SchoolMark
-          logo={me?.school.logo_url || null}
-          size={34}
-          animate={false}
-          alt={where}
-          className="max-h-7 sm:max-h-[34px]"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold text-foreground">{screenTitle}</p>
-        </div>
-        <ChildSwitcher />
-      </header>
-      <OfflineBar />
-      <PullToRefresh>
+    <div
+      ref={frame}
+      className={cn(
+        "app-shell app-shell--design flex min-w-0 flex-col bg-background",
+        fixed && "app-shell--fixed",
+        fixed && offline && "app-shell--offline",
+        !fixed && "min-h-dvh pb-[calc(6rem+env(safe-area-inset-bottom))]",
+      )}
+    >
+      {!bareScreen && (
+        <header
+          className={cn(
+            "sticky top-0 z-30 flex min-h-[58px] shrink-0 min-w-0 items-center gap-3 border-b px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 transition-[background-color,backdrop-filter,border-color] duration-200 sm:min-h-[66px] lg:px-6",
+            scrolled
+              ? "border-[#dbe0eb] bg-[#f5f7fc]/70 backdrop-blur-xl backdrop-saturate-150"
+              : "border-transparent bg-transparent",
+          )}
+        >
+          <SchoolMark
+            logo={me?.school.logo_url || null}
+            size={34}
+            animate={false}
+            alt={where}
+            className="max-h-7 sm:max-h-[34px]"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-semibold text-foreground">{screenTitle}</p>
+          </div>
+          <ChildSwitcher />
+        </header>
+      )}
+      <OfflineBar clearTop={bareScreen} />
+      <PullToRefresh fillHeight={fixed}>
         <Outlet />
       </PullToRefresh>
-      <TabBar badges={{ notices: unreadNotices, messages: unreadMessages }} />
+      {!bareScreen && <TabBar badges={{ notices: unreadNotices, messages: unreadMessages }} />}
     </div>
   );
 }

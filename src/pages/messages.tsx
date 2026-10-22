@@ -30,6 +30,11 @@ import { ThreadView } from "./messages-thread";
  * (`/messages`, `/messages/<id>`, and `/messages/new` for a new one); from
  * 900px wide they sit side by side. A message alert opens
  * `/messages/<id>`.
+ *
+ * An open conversation (`is-fixed`) fills the height the app shell gives it
+ * rather than growing with its messages: the person stays at the top, the box
+ * at the bottom, and only the messages between them scroll. On the wide
+ * layout the list beside it scrolls on its own too.
  */
 export function MessagesPage() {
   const { id } = useParams();
@@ -60,7 +65,7 @@ export function MessagesPage() {
   };
 
   return (
-    <PageShell className="msg-page">
+    <PageShell className={cn("msg-page", openId !== null && "is-fixed")}>
       <div className="msg-wrap">
         <div className="msg-layout">
           <div className={cn("msg-list-panel", detailOpen && "is-hidden-on-detail")}>

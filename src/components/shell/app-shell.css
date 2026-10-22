@@ -9,3 +9,34 @@
 .app-shell--design :is(.report-hero, .attendance-hero, .receipt-summary, .paid-cover) {
   min-height: 0;
 }
+
+/* An open conversation: the frame is the visible screen and nothing outside the message list scrolls. */
+.app-shell--fixed {
+  position: fixed;
+  top: var(--vv-top, 0px);
+  right: 0;
+  left: 0;
+  height: var(--vv-height, 100dvh);
+  overflow: hidden;
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  /* What a fixed screen leaves free at its bottom for the home bar; the tab bar's room is the padding above. */
+  --screen-inset-bottom: 0px;
+  --screen-inset-top: 0px;
+}
+
+@media (max-width: 899px) {
+  .app-shell--fixed {
+    padding-bottom: 0;
+    --screen-inset-bottom: env(safe-area-inset-bottom, 0px);
+    /* With the shell header gone the screen starts at the status bar, so its first row clears the notch. */
+    --screen-inset-top: env(safe-area-inset-top, 0px);
+  }
+  /* The offline bar sits first while it shows and clears the notch itself. */
+  .app-shell--fixed.app-shell--offline {
+    --screen-inset-top: 0px;
+  }
+  /* The keyboard covers the home bar, so its inset is not wanted above the keys. */
+  .app-shell--fixed[data-keyboard] {
+    --screen-inset-bottom: 0px;
+  }
+}

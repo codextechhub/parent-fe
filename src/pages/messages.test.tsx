@@ -1,5 +1,5 @@
 import { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
@@ -101,6 +101,12 @@ type Opts = {
   firstSend?: number;
   canStart?: boolean;
   contacts?: { user_id: number; name: string; label: string }[];
+  /** Whether the conversation detail says to draw ticks. */
+  receipts?: boolean;
+  /** Ids of the parent's messages the other person has read; tests add to it. */
+  readIds?: Set<number>;
+  /** Milliseconds the first send takes to answer, to catch the clock. */
+  sendDelay?: number;
 };
 
 const json = (data: unknown, status = 200, extra: Record<string, unknown> = {}) =>
@@ -117,6 +123,13 @@ function server(opts: Opts = {}) {
   };
   const sends: { id: number; body: string; client_token: string }[] = [];
   const reads: number[] = [];
+  const readUpTo: unknown[] = [];
+  const polls: number[] = [];
+  type Sent = ReturnType<typeof message> & { receipt?: { state: string; read_count: number; recipient_count: number } };
+  const receiptOf = (m: ReturnType<typeof message>): Sent =>
+    opts.receipts && m.mine
+      ? { ...m, receipt: { state: opts.readIds?.has(m.id) ? "read" : "sent", read_count: 1, recipient_count: 1 } }
+      : m;
   const starts: unknown[] = [];
   let firstSend = opts.firstSend;
   const fn = vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
@@ -158,16 +171,33 @@ function server(opts: Opts = {}) {
               : { message: "The school could not be reached." },
           );
         }
+        if (opts.sendDelay) await new Promise((r) => setTimeout(r, opts.sendDelay));
         const stored = message(990 + sends.length, body.body, true);
         threads[id] = [...(threads[id] ?? []), stored];
-        return json(stored, 201);
+        return json(receiptOf(stored), 201);
+      }
+      const after = url.searchParams.get("after");
+      if (after !== null) {
+        polls.push(Number(after));
+        const newer = (threads[id] ?? []).filter((m) => m.id > Number(after)).sort((a, b) => a.id - b.id);
+        return json({
+          results: newer.map(receiptOf),
+          has_more: false,
+          ...(opts.receipts
+            ? {
+                receipts: (threads[id] ?? [])
+                  .filter((m) => m.mine)
+                  .map((m) => ({ id: m.id, ...receiptOf(m).receipt })),
+              }
+            : {}),
+        });
       }
       const before = Number(url.searchParams.get("before") ?? 0);
       const limit = Number(url.searchParams.get("limit") ?? 50);
       const all = [...(threads[id] ?? [])].sort((a, b) => b.id - a.id).filter((m) => !before || m.id < before);
       const page = all.slice(0, limit);
       return json({
-        results: page,
+        results: page.map(receiptOf),
         has_more: all.length > limit,
         next_before: all.length > limit ? page[page.length - 1].id : null,
       });
@@ -175,12 +205,13 @@ function server(opts: Opts = {}) {
     const read = path.match(/\/conversations\/(\d+)\/read\/$/);
     if (read) {
       reads.push(Number(read[1]));
+      readUpTo.push(body.up_to);
       return json({ conversation: Number(read[1]), unread_count: 0 });
     }
     const one = path.match(/\/conversations\/(\d+)\/$/);
     if (one) {
       const row = rows.find((r) => r.id === Number(one[1]));
-      return row ? json(row) : json(null, 404);
+      return row ? json({ ...row, receipts: row.kind === "PUPIL" ? false : (opts.receipts ?? false) }) : json(null, 404);
     }
     if (path.endsWith("/messages/conversations/")) {
       if (method === "POST") {
@@ -197,7 +228,7 @@ function server(opts: Opts = {}) {
     }
     return new Response("{}", { status: 200 });
   });
-  return { fn, sends, reads, starts };
+  return { fn, sends, reads, readUpTo, polls, starts };
 }
 
 function Where() {
@@ -233,10 +264,10 @@ function render(path: string, fetchImpl: ReturnType<typeof server>["fn"], me: Me
       </Provider>,
     ),
   );
-  return { container, root };
+  return { container, root, store };
 }
 
-let last: { container: HTMLDivElement; root: Root } | null = null;
+let last: ReturnType<typeof render> | null = null;
 const settle = (ms = 40) => act(() => new Promise((r) => setTimeout(r, ms)));
 
 beforeEach(() => {
@@ -498,5 +529,457 @@ describe("New message", () => {
     await settle(80);
     expect(last.container.textContent).not.toContain("Which child is it about?");
     expect(last.container.textContent).toContain("about Tobi");
+  });
+});
+
+/**
+ * happy-dom lays nothing out, so the message list is given a size from what is
+ * in it: every bubble is 100px tall inside a 400px window. The scroll area is
+ * the one element the layout tests measure.
+ */
+function sizeMessageList() {
+  const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
+  const saved = {
+    scrollHeight: Object.getOwnPropertyDescriptor(proto, "scrollHeight"),
+    clientHeight: Object.getOwnPropertyDescriptor(proto, "clientHeight"),
+    scrollTo: Object.getOwnPropertyDescriptor(proto, "scrollTo"),
+  };
+  const isList = (el: HTMLElement) => el.classList.contains("msg-thread-body");
+  Object.defineProperty(proto, "scrollHeight", {
+    configurable: true,
+    get(this: HTMLElement) {
+      return isList(this) ? this.querySelectorAll(".msg-bubble").length * 100 : 0;
+    },
+  });
+  Object.defineProperty(proto, "clientHeight", {
+    configurable: true,
+    get(this: HTMLElement) {
+      return isList(this) ? 400 : 0;
+    },
+  });
+  Object.defineProperty(proto, "scrollTo", {
+    configurable: true,
+    value(this: HTMLElement, options: { top: number }) {
+      this.scrollTop = options.top;
+    },
+  });
+  return () => {
+    for (const [key, descriptor] of Object.entries(saved)) {
+      if (descriptor) Object.defineProperty(proto, key, descriptor);
+      else delete proto[key];
+    }
+  };
+}
+
+const list = (container: HTMLElement) => container.querySelector(".msg-thread-body") as HTMLElement;
+
+/** The reader scrolls the list to `top`, as a thumb would. */
+function scrollListTo(container: HTMLElement, top: number) {
+  act(() => {
+    list(container).scrollTop = top;
+    list(container).dispatchEvent(new Event("scroll"));
+  });
+}
+
+describe("Open conversation layout", () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = sizeMessageList();
+  });
+  afterEach(() => restore());
+
+  const twelve = () => Array.from({ length: 12 }, (_, i) => message(200 + i, `Line ${200 + i}`, i % 2 === 0));
+
+  it("pins the header and the box outside the scrolling list, and the list is the only scroller", async () => {
+    const s = server({ messages: { 41: twelve() } });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    const thread = last.container.querySelector(".msg-thread")!;
+    const body = list(last.container);
+    expect(thread.querySelector(".msg-head")).toBeTruthy();
+    expect(body.contains(thread.querySelector(".msg-head"))).toBe(false);
+    expect(body.contains(thread.querySelector(".msg-composer"))).toBe(false);
+    expect(last.container.querySelector(".msg-page")!.classList.contains("is-fixed")).toBe(true);
+    expect(last.container.querySelector('a[aria-label="All messages"]')?.getAttribute("href")).toBe("/messages");
+  });
+
+  it("does not fix the layout on the list or the new message form", async () => {
+    const s = server();
+    last = render("/messages", s.fn);
+    await settle(80);
+    expect(last.container.querySelector(".msg-page")!.classList.contains("is-fixed")).toBe(false);
+  });
+
+  it("opens on the newest message", async () => {
+    const s = server({ messages: { 41: twelve() } });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    expect(list(last.container).scrollTop).toBe(1200);
+    expect(last.container.querySelector(".msg-new-pill")).toBeNull();
+  });
+
+  it("scrolls a message that arrives into view when the reader is at the end", async () => {
+    const messages = { 41: twelve() };
+    const s = server({ messages });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    messages[41] = [...messages[41], message(300, "Newest", false)];
+    await act(async () => {
+      last!.store.dispatch(baseApi.util.invalidateTags(["Messages"]));
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(last.container.textContent).toContain("Newest");
+    expect(list(last.container).scrollTop).toBe(1300);
+    expect(last.container.querySelector(".msg-new-pill")).toBeNull();
+  });
+
+  it("raises a New messages pill instead of moving a reader who scrolled up, and the pill jumps down", async () => {
+    const messages = { 41: twelve() };
+    const s = server({ messages });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    scrollListTo(last.container, 100);
+    messages[41] = [...messages[41], message(300, "Newest", false)];
+    await act(async () => {
+      last!.store.dispatch(baseApi.util.invalidateTags(["Messages"]));
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(list(last.container).scrollTop).toBe(100);
+    const pill = button(last.container, /New messages/)!;
+    expect(pill).toBeTruthy();
+    await act(async () => pill.click());
+    expect(list(last.container).scrollTop).toBe(1300);
+    expect(last.container.querySelector(".msg-new-pill")).toBeNull();
+  });
+
+  it("takes the pill away when the reader scrolls to the end themselves", async () => {
+    const messages = { 41: twelve() };
+    const s = server({ messages });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    scrollListTo(last.container, 100);
+    messages[41] = [...messages[41], message(300, "Newest", false)];
+    await act(async () => {
+      last!.store.dispatch(baseApi.util.invalidateTags(["Messages"]));
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(last.container.querySelector(".msg-new-pill")).toBeTruthy();
+    scrollListTo(last.container, 1300 - 400);
+    expect(last.container.querySelector(".msg-new-pill")).toBeNull();
+  });
+
+  it("always scrolls the parent's own message into view, even from higher up", async () => {
+    const s = server({ messages: { 41: twelve() } });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    scrollListTo(last.container, 0);
+    typeInto(last.container.querySelector("textarea")!, "On my way");
+    await act(async () => {
+      button(last!.container, /^Send$/)!.click();
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(list(last.container).scrollTop).toBe(1300);
+    expect(last.container.querySelector(".msg-new-pill")).toBeNull();
+  });
+
+  it("keeps the reader's place when earlier messages are shown", async () => {
+    const many = Array.from({ length: 60 }, (_, i) => message(100 + i, `Message ${100 + i}`, i % 2 === 0));
+    const s = server({ messages: { 41: many } });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    expect(list(last.container).scrollTop).toBe(5000);
+    scrollListTo(last.container, 0);
+    await act(async () => {
+      button(last!.container, /Show earlier messages/)!.click();
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    // Ten bubbles of 100px were added above the one the reader was on.
+    expect(list(last.container).scrollTop).toBe(1000);
+  });
+
+  it("shows the header and no box on a watched conversation, still with the list scrolling alone", async () => {
+    const s = server();
+    last = render("/messages/52", s.fn);
+    await settle(80);
+    expect(last.container.querySelector(".msg-head")).toBeTruthy();
+    expect(last.container.querySelector(".msg-composer")).toBeNull();
+    expect(list(last.container)).toBeTruthy();
+  });
+});
+
+const ticks = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll(".msg-tick")).map((n) => n.getAttribute("aria-label"));
+
+/** Moves the app between front and back, as a phone does on switching apps. */
+function setVisibility(state: "visible" | "hidden") {
+  Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
+  act(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+}
+
+describe("Read ticks", () => {
+  const mixed = () => [
+    message(901, "Hello", false),
+    message(902, "Hi, thanks", true),
+    message(904, "Anything else?", true),
+  ];
+
+  it("draws one tick for a message the school has and two once it has been read", async () => {
+    const s = server({ messages: { 41: mixed() }, receipts: true, readIds: new Set([902]) });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    // Only the parent's own two messages carry ticks.
+    expect(ticks(last.container)).toEqual(["Read", "Sent"]);
+  });
+
+  it("draws nothing when the conversation says receipts are off, or says nothing", async () => {
+    const off = server({ messages: { 41: mixed() }, receipts: false });
+    last = render("/messages/41", off.fn);
+    await settle(80);
+    expect(ticks(last.container)).toEqual([]);
+  });
+
+  it("draws no ticks on a conversation the parent only watches", async () => {
+    const s = server({ receipts: true, messages: { 52: [message(950, "Hi", false), message(951, "Mine", true)] } });
+    last = render("/messages/52", s.fn);
+    await settle(80);
+    expect(ticks(last.container)).toEqual([]);
+  });
+
+  it("shows a clock while a message goes, then one tick", async () => {
+    const s = server({ messages: { 41: mixed() }, receipts: true, sendDelay: 150 });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    typeInto(last.container.querySelector("textarea")!, "On my way");
+    await act(async () => {
+      button(last!.container, /^Send$/)!.click();
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    expect(ticks(last.container)).toContain("Sending");
+    expect(last.container.textContent).toContain("On my way");
+    await settle(200);
+    expect(ticks(last.container)).not.toContain("Sending");
+    expect(last.container.querySelectorAll(".msg-bubble-text")).toHaveLength(4);
+    expect(ticks(last.container)).toEqual(["Sent", "Sent", "Sent"]);
+  });
+
+  it("says Not sent when a message fails, and tapping it sends the same text and token again", async () => {
+    const s = server({ messages: { 41: mixed() }, receipts: true, firstSend: 500 });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    typeInto(last.container.querySelector("textarea")!, "Running late");
+    await act(async () => {
+      button(last!.container, /^Send$/)!.click();
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    const retry = button(last.container, /Not sent/)!;
+    expect(retry.textContent).toBe("Not sent. Tap to retry.");
+    expect((last.container.querySelector("textarea") as HTMLTextAreaElement).value).toBe("Running late");
+    await act(async () => {
+      retry.click();
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(s.sends).toHaveLength(2);
+    expect(s.sends[1].client_token).toBe(s.sends[0].client_token);
+    expect(button(last.container, /Not sent/)).toBeUndefined();
+    expect((last.container.querySelector("textarea") as HTMLTextAreaElement).value).toBe("");
+    expect(last.container.textContent?.split("Running late").length).toBe(2);
+  });
+
+  it("lets a failed message go when the parent changes the text", async () => {
+    const s = server({ firstSend: 500 });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    typeInto(last.container.querySelector("textarea")!, "Running late");
+    await act(async () => {
+      button(last!.container, /^Send$/)!.click();
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(button(last.container, /Not sent/)).toBeTruthy();
+    typeInto(last.container.querySelector("textarea")!, "Running very late");
+    expect(button(last.container, /Not sent/)).toBeUndefined();
+  });
+});
+
+describe("Following an open conversation", () => {
+  const start = () => [message(901, "Hello", false), message(902, "Hi, thanks", true)];
+  let visibility: "visible" | "hidden";
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    visibility = "visible";
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => visibility });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
+  });
+
+  const tick = async (ms = 10_000) => {
+    await act(async () => {
+      vi.advanceTimersByTime(ms);
+      await new Promise((r) => setTimeout(r, 60));
+    });
+  };
+
+  it("asks for newer messages every ten seconds, merges them once, and turns a tick by id", async () => {
+    const messages = { 41: start() };
+    const readIds = new Set<number>();
+    const s = server({ messages, receipts: true, readIds });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    expect(ticks(last.container)).toEqual(["Sent"]);
+    expect(s.polls).toEqual([]);
+
+    messages[41] = [...messages[41], message(903, "Newer", false)];
+    readIds.add(902);
+    await tick();
+    expect(s.polls).toEqual([902]);
+    expect(last.container.textContent).toContain("Newer");
+    expect(ticks(last.container)).toEqual(["Read"]);
+
+    // The next ask starts from what is now held, and nothing is shown twice.
+    await tick();
+    expect(s.polls).toEqual([902, 903]);
+    expect(last.container.querySelectorAll(".msg-bubble-text")).toHaveLength(3);
+  });
+
+  it("stops while the app is hidden and asks once on coming back", async () => {
+    const s = server({ messages: { 41: start() }, receipts: true });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    await tick();
+    expect(s.polls).toHaveLength(1);
+
+    visibility = "hidden";
+    setVisibility("hidden");
+    await tick(60_000);
+    expect(s.polls).toHaveLength(1);
+
+    visibility = "visible";
+    setVisibility("visible");
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 60));
+    });
+    expect(s.polls).toHaveLength(2);
+  });
+
+  it("stops when the conversation closes", async () => {
+    const s = server({ messages: { 41: start() }, receipts: true });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    await tick();
+    expect(s.polls).toHaveLength(1);
+    act(() => last!.root.unmount());
+    await tick(60_000);
+    expect(s.polls).toHaveLength(1);
+    // The afterEach unmount finds nothing left to remove.
+    last.container.remove();
+    last = null;
+  });
+
+  it("still follows the new messages of a watched conversation", async () => {
+    const messages = { 52: [message(950, "Hi", false, "Mr Kunle Adebayo")] };
+    const s = server({ messages });
+    last = render("/messages/52", s.fn);
+    await settle(80);
+    messages[52] = [...messages[52], message(951, "Second", false, "Mr Kunle Adebayo")];
+    await tick();
+    expect(s.polls).toEqual([950]);
+    expect(last.container.textContent).toContain("Second");
+    expect(ticks(last.container)).toEqual([]);
+  });
+});
+
+describe("Reading only what is seen", () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = sizeMessageList();
+  });
+  afterEach(() => restore());
+
+  const family = (unread: number) => ({ ...FAMILY_ROW, unread_count: unread });
+  const thread = () => Array.from({ length: 12 }, (_, i) => message(200 + i, `Line ${200 + i}`, false));
+
+  it("marks read up to the newest message when the parent opens at the end", async () => {
+    const s = server({ rows: [family(2)], messages: { 41: thread() } });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    expect(s.reads).toEqual([41]);
+    expect(s.readUpTo).toEqual([211]);
+  });
+
+  it("marks nothing read for a reader who has scrolled away, and while the pill shows", async () => {
+    const messages = { 41: thread() };
+    const row = family(0);
+    const s = server({ rows: [row], messages });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    expect(s.reads).toEqual([]);
+
+    scrollListTo(last.container, 100);
+    messages[41] = [...messages[41], message(300, "Newest", false)];
+    row.unread_count = 1;
+    await act(async () => {
+      last!.store.dispatch(baseApi.util.invalidateTags(["Messages"]));
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(button(last.container, /New messages/)).toBeTruthy();
+    expect(s.reads).toEqual([]);
+  });
+
+  it("marks the new message read once the parent taps the pill", async () => {
+    const messages = { 41: thread() };
+    const row = family(0);
+    const s = server({ rows: [row], messages });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    scrollListTo(last.container, 100);
+    messages[41] = [...messages[41], message(300, "Newest", false)];
+    row.unread_count = 1;
+    await act(async () => {
+      last!.store.dispatch(baseApi.util.invalidateTags(["Messages"]));
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    await act(async () => {
+      button(last!.container, /New messages/)!.click();
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(s.reads).toEqual([41]);
+    expect(s.readUpTo).toEqual([300]);
+  });
+
+  it("marks the new message read when the parent scrolls down to it themselves", async () => {
+    const messages = { 41: thread() };
+    const row = family(0);
+    const s = server({ rows: [row], messages });
+    last = render("/messages/41", s.fn);
+    await settle(80);
+    scrollListTo(last.container, 100);
+    messages[41] = [...messages[41], message(300, "Newest", false)];
+    row.unread_count = 1;
+    await act(async () => {
+      last!.store.dispatch(baseApi.util.invalidateTags(["Messages"]));
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(s.reads).toEqual([]);
+    await act(async () => {
+      scrollListTo(last!.container, 1300 - 400);
+      await new Promise((r) => setTimeout(r, 80));
+    });
+    expect(s.readUpTo).toEqual([300]);
+  });
+
+  it("does not mark anything read while the app is in the background", async () => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    try {
+      const s = server({ rows: [family(2)], messages: { 41: thread() } });
+      last = render("/messages/41", s.fn);
+      await settle(80);
+      expect(s.reads).toEqual([]);
+    } finally {
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
+    }
   });
 });

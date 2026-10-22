@@ -18,8 +18,15 @@ const MAX = 96;
  * off in `index.css` (`overscroll-behavior-y`), because reloading the page
  * would drop the parent's in-memory sign-in and the child showing for no
  * reason.
+ *
+ * `fillHeight` is for a screen that scrolls inside itself, such as an open
+ * message conversation. The window never scrolls there, so "at the top" would
+ * be always true and a pull at the top of the older messages would start a
+ * refresh; the pull is turned off, and the wrappers hand the screen's height
+ * down to the page instead. The wrappers stay the same elements either way,
+ * so the page below keeps its state when the flag changes.
  */
-export function PullToRefresh({ children }: { children: ReactNode }) {
+export function PullToRefresh({ children, fillHeight = false }: { children: ReactNode; fillHeight?: boolean }) {
   const dispatch = useAppDispatch();
   const [pull, setPull] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -27,6 +34,7 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
   const distance = useRef(0);
 
   useEffect(() => {
+    if (fillHeight) return;
     const down = (e: TouchEvent) => {
       start.current = window.scrollY <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
     };
@@ -54,11 +62,11 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
       window.removeEventListener("touchmove", move);
       window.removeEventListener("touchend", up);
     };
-  }, [dispatch]);
+  }, [dispatch, fillHeight]);
 
-  const shown = busy ? TRIGGER * 0.6 : pull;
+  const shown = fillHeight ? 0 : busy ? TRIGGER * 0.6 : pull;
   return (
-    <div className="relative min-w-0 flex-1">
+    <div className={cn("relative min-w-0 flex-1", fillHeight && "flex min-h-0 flex-col")}>
       <div
         aria-hidden={!busy}
         className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
@@ -69,7 +77,10 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
           style={{ transform: busy ? undefined : `rotate(${pull * 3}deg)` }}
         />
       </div>
-      <div style={{ transform: shown ? `translateY(${shown}px)` : undefined }} className="transition-transform">
+      <div
+        style={{ transform: shown ? `translateY(${shown}px)` : undefined }}
+        className={cn("transition-transform", fillHeight && "flex min-h-0 flex-1 flex-col")}
+      >
         {children}
       </div>
     </div>

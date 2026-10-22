@@ -60,3 +60,15 @@ export function itemFor(pathname: string): NavItem | undefined {
       item.path === "/" ? pathname === "/" : pathname === item.path || pathname.startsWith(`${item.path}/`),
     );
 }
+
+/**
+ * Whether a path is an open message conversation (`/messages/41`).
+ *
+ * An open conversation is a screen that owns its own scrolling: the shell
+ * fixes its height to the visible screen, turns pull-to-refresh off and, on a
+ * phone, takes the tab bar away. `/messages/new` is an ordinary form and is
+ * not one.
+ */
+export function isConversationPath(pathname: string): boolean {
+  return /^\/messages\/\d+\/?$/.test(pathname);
+}
