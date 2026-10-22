@@ -103,10 +103,10 @@ export function FeesPage() {
 }
 
 function childFeesOrder(entry: ChildFeesEntry): number {
-  if (!entry.available) return 3;
+  if (!entry.available) return 2;
   if (entry.balance > 0) return 0;
   if (entry.balance < 0) return 1;
-  return entry.invoices.length === 0 ? 2 : 4;
+  return entry.invoices.length === 0 ? 4 : 3;
 }
 
 function earliestUnpaidDue(entry: ChildFeesEntry): string | null {

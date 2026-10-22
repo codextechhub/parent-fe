@@ -293,7 +293,7 @@ describe("FeesPage", () => {
     expect(r.container.querySelector('a[href="/fees/pay/102"]')).not.toBeNull();
   });
 
-  it("puts balances due by due date, then credit and other non-paid states, then paid children", async () => {
+  it("puts no-bill children below paid children", async () => {
     const tobi = fees().data.children[0];
     const somto = fees().data.children[1];
     const withDue = (id: number, name: string, dueDate: string) => ({
@@ -309,6 +309,6 @@ describe("FeesPage", () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
     const names = [...r.container.querySelectorAll(".fees-simple-children > li .fees-child-identity strong")]
       .map((node) => node.textContent);
-    expect(names).toEqual(["Ada", "Tobi", "Kemi", "Zara", "Somto", "Nneka", "Chika"]);
+    expect(names).toEqual(["Ada", "Tobi", "Kemi", "Zara", "Nneka", "Chika", "Somto"]);
   });
 });
