@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDate, formatLongDate, formatNaira, formatTimestampDate } from "./format";
+import { accountBalanceWords, formatDate, formatLongDate, formatNaira, formatTimestampDate } from "./format";
 
 describe("format", () => {
   it("writes money from kobo in naira", () => {
@@ -19,5 +19,11 @@ describe("format", () => {
     expect(formatTimestampDate("not a date")).toBe("");
     const now = formatTimestampDate("2026-10-19T08:03:53Z");
     expect(now).toMatch(/\d{1,2} \w{3} 2026/);
+  });
+
+  it("writes an account balance by its side, never by a minus sign", () => {
+    expect(accountBalanceWords(10_000_000)).toBe("₦100,000.00 owing");
+    expect(accountBalanceWords(-2_000_000)).toBe("₦20,000.00 in credit");
+    expect(accountBalanceWords(0)).toBe("₦0.00");
   });
 });

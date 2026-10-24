@@ -120,7 +120,18 @@ export type ChildAttendance =
   | ({ available: true; rate: number | null } & Record<string, unknown>)
   | Unavailable;
 export type ChildFees =
-  | { available: true; balance: number; status: "OWING" | "CLEAR" | "IN_CREDIT"; open_invoice_count: number }
+  | {
+      available: true;
+      /** Owing minus credit; never the figure to show as "to pay". */
+      balance: number;
+      /** Open bills and charges, never reduced by credit. */
+      owing: number;
+      /** Credit the school holds for the child. */
+      credit: number;
+      status: "OWING" | "CLEAR" | "IN_CREDIT";
+      open_invoice_count: number;
+      open_charge_count: number;
+    }
   | Unavailable;
 export type ChildResults =
   | { available: true; released: false }
@@ -137,7 +148,7 @@ export type ChildHomeBlock = {
 };
 
 export type FamilyFees =
-  | { available: true; outstanding: number; pay_all_total: number }
+  | { available: true; outstanding: number; credit: number; pay_all_total: number }
   | Unavailable;
 
 export type HomeNotice = {
@@ -354,14 +365,33 @@ export type Invoice = {
   status_label: string;
 };
 
+/** An extra charge added after a bill. Paid by transfer into the child's account, never by card. */
+export type DebitNote = {
+  note_ref: number;
+  number: string;
+  date: string | null;
+  reason: string;
+  total: number;
+  paid: number;
+  balance: number;
+  status: "UNPAID" | "PARTIAL" | "PAID" | string;
+  status_label: string;
+};
+
 export type ChildFeesEntry =
   | {
       available: true;
       child: { id: number; first_name: string; full_name: string };
+      /** Owing minus credit. Use `owing` and `credit` to say what is due. */
       balance: number;
+      /** Open bills and open charges, never reduced by credit (kobo). */
+      owing: number;
+      /** Credit the school holds for the child (kobo). */
+      credit: number;
       total_billed: number;
       total_paid: number;
       invoices: Invoice[];
+      debit_notes: DebitNote[];
     }
   | {
       available: false;
@@ -370,7 +400,7 @@ export type ChildFeesEntry =
     };
 
 export type FamilyFeesBlock =
-  | { available: true; billed: number; paid: number; outstanding: number }
+  | { available: true; billed: number; paid: number; outstanding: number; credit: number }
   | { available: false; message: string };
 
 export type PayAllStep = {
@@ -385,6 +415,8 @@ export type PayAllStep = {
 export type PayAll = {
   total: number;
   steps: PayAllStep[];
+  /** Open charge balances across children; Pay all never includes them (kobo). */
+  charges_total: number;
   /** True when every step would reach zero on its own full charge. */
   complete: boolean;
 };

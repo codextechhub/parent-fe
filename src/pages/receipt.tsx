@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router";
 
 import { BlockTitle, Fact, Letterhead } from "@/components/fees/finance-document";
 import { PageShell } from "@/components/layout/page-shell";
-import { formatDate, formatNaira } from "@/lib/format";
+import { accountBalanceWords, formatDate, formatNaira } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
 import {
   useLazyReceiptPdfQuery,
@@ -191,8 +191,8 @@ function ReceiptDocument({ receipt }: { receipt: Receipt }) {
 
       <div className="fdoc-after">
         <div className="fdoc-after-box">
-          <span>Customer balance after payment</span>
-          <strong>{formatNaira(receipt.balance_after)}</strong>
+          <span>Account balance after this payment</span>
+          <strong>{accountBalanceWords(receipt.balance_after)}</strong>
         </div>
       </div>
       <p className="fdoc-historic">

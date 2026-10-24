@@ -59,7 +59,7 @@ function homePayload(overrides: Record<string, unknown> = {}) {
           first_name: "Tobi",
           class_name: "JSS1 A",
           attendance: { available: true, rate: 92 },
-          fees: { available: true, balance: 500000, status: "OWING", open_invoice_count: 1 },
+          fees: { available: true, balance: 500000, owing: 500000, credit: 0, status: "OWING", open_invoice_count: 1, open_charge_count: 0 },
           results: {
             available: true,
             released: true,
@@ -73,12 +73,12 @@ function homePayload(overrides: Record<string, unknown> = {}) {
           first_name: "Somto",
           class_name: "Primary 4",
           attendance: { available: false, message: "Somto's attendance cannot be shown right now." },
-          fees: { available: true, balance: 0, status: "CLEAR", open_invoice_count: 0 },
+          fees: { available: true, balance: 0, owing: 0, credit: 0, status: "CLEAR", open_invoice_count: 0, open_charge_count: 0 },
           results: { available: true, released: false },
           today: { available: true, published: false, date: null, next_lesson: null },
         },
       ],
-      fees: { available: true, outstanding: 500000, pay_all_total: 500000 },
+      fees: { available: true, outstanding: 500000, credit: 0, pay_all_total: 500000 },
       notices: {
         available: true,
         latest: {
@@ -154,7 +154,7 @@ describe("HomePage", () => {
     const r = render(fetchStub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 20)));
-    expect(r.container.textContent).toContain("still due on bills");
+    expect(r.container.textContent).toContain("still due on bills and charges");
     expect(r.container.textContent).toContain("Welcome, Patricia");
     expect(r.container.textContent).toContain("2 children across 2 branches");
     expect(r.container.textContent).toContain("Tobi");
@@ -183,10 +183,10 @@ describe("HomePage", () => {
 
   it("says all fees are paid when outstanding is zero", async () => {
     const payload = homePayload({
-      fees: { available: true, outstanding: 0, pay_all_total: 0 },
+      fees: { available: true, outstanding: 0, credit: 0, pay_all_total: 0 },
       children: homePayload().data.children.map((child) => ({
         ...child,
-        fees: { available: true, balance: 0, status: "CLEAR", open_invoice_count: 0 },
+        fees: { available: true, balance: 0, owing: 0, credit: 0, status: "CLEAR", open_invoice_count: 0, open_charge_count: 0 },
       })),
     });
     const fetchStub = vi.fn(async () =>
@@ -201,25 +201,76 @@ describe("HomePage", () => {
     expect(r.container.textContent).toContain("All fees are paid");
   });
 
-  it("shows a child's bill when another child's credit makes the family net zero", async () => {
-    const children = homePayload().data.children;
-    const payload = homePayload({
-      fees: { available: true, outstanding: 0, pay_all_total: 0 },
-      children: [
-        { ...children[0], fees: { available: true, balance: 50000, status: "OWING", open_invoice_count: 1 } },
-        { ...children[1], fees: { available: true, balance: -50000, status: "IN_CREDIT", open_invoice_count: 0 } },
-      ],
-    });
-    const fetchStub = vi.fn(async () => new Response(JSON.stringify(payload), {
+  function stubFor(payload: unknown) {
+    return vi.fn(async () => new Response(JSON.stringify(payload), {
       status: 200,
       headers: { "content-type": "application/json" },
-    }));
-    const r = render(fetchStub as unknown as typeof fetch);
+    })) as unknown as typeof fetch;
+  }
+
+  it("shows what child B owes and child A's credit, never netting them to zero", async () => {
+    const children = homePayload().data.children;
+    const payload = homePayload({
+      fees: { available: true, outstanding: 50000, credit: 50000, pay_all_total: 50000 },
+      children: [
+        { ...children[0], fees: { available: true, balance: 50000, owing: 50000, credit: 0, status: "OWING", open_invoice_count: 1, open_charge_count: 0 } },
+        { ...children[1], fees: { available: true, balance: -50000, owing: 0, credit: 50000, status: "IN_CREDIT", open_invoice_count: 0, open_charge_count: 0 } },
+      ],
+    });
+    const r = render(stubFor(payload));
     last = r;
     await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
-    expect(r.container.querySelector(".home-banner")?.textContent).toContain("₦500.00 still due on bills");
-    expect(r.container.querySelector(".home-banner")?.textContent).toContain("₦500.00 in credit");
-    expect(r.container.querySelector(".home-banner")?.textContent).not.toContain("All fees are paid");
+    const banner = r.container.querySelector(".home-banner")?.textContent ?? "";
+    expect(banner).toContain("₦500.00 still due on bills and charges");
+    expect(banner).toContain("₦500.00 credit held by the school. Ask the school to apply it before you pay.");
+    expect(banner).not.toContain("All fees are paid");
+    const tobi = r.container.querySelector('[aria-label="Tobi\'s card"]')?.textContent ?? "";
+    const somto = r.container.querySelector('[aria-label="Somto\'s card"]')?.textContent ?? "";
+    expect(tobi).toContain("₦500.00");
+    expect(tobi).toContain("1 open bill");
+    expect(somto).toContain("₦500.00");
+    expect(somto).toContain("In credit");
+  });
+
+  it("never says all fees are paid when one child's own credit is larger than the bill", async () => {
+    const children = homePayload().data.children;
+    const payload = homePayload({
+      fees: { available: true, outstanding: 150000, credit: 200000, pay_all_total: 150000 },
+      children: [
+        { ...children[0], fees: { available: true, balance: -50000, owing: 150000, credit: 200000, status: "OWING", open_invoice_count: 1, open_charge_count: 1 } },
+        children[1],
+      ],
+    });
+    const r = render(stubFor(payload));
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    const banner = r.container.querySelector(".home-banner")?.textContent ?? "";
+    expect(banner).toContain("₦1,500.00 still due");
+    expect(banner).toContain("₦2,000.00 credit held by the school");
+    expect(r.container.textContent).not.toContain("All fees are paid");
+    const tobi = r.container.querySelector('[aria-label="Tobi\'s card"]')?.textContent ?? "";
+    expect(tobi).toContain("₦1,500.00");
+    expect(tobi).toContain("1 open bill");
+    expect(tobi).toContain("1 open charge");
+    expect(tobi).toContain("₦2,000.00 credit held");
+    expect(tobi).not.toContain("In credit");
+  });
+
+  it("mentions credit but not owing when nothing is owed and the school holds credit", async () => {
+    const children = homePayload().data.children;
+    const payload = homePayload({
+      fees: { available: true, outstanding: 0, credit: 50000, pay_all_total: 0 },
+      children: [
+        { ...children[0], fees: { available: true, balance: -50000, owing: 0, credit: 50000, status: "IN_CREDIT", open_invoice_count: 0, open_charge_count: 0 } },
+        children[1],
+      ],
+    });
+    const r = render(stubFor(payload));
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    const banner = r.container.querySelector(".home-banner")?.textContent ?? "";
+    expect(banner).toContain("₦500.00 in credit");
+    expect(banner).not.toContain("still due");
   });
 
   it("shows the fees-unavailable sentence from the family block instead of a figure", async () => {

@@ -181,9 +181,11 @@ function FamilyFeesBanner({ block, children }: { block: FamilyFees; children: Ch
   }
   const availableChildren = children.filter((child) => child.fees.available);
   const due = availableChildren.length
-    ? availableChildren.reduce((total, child) => total + Math.max(0, child.fees.available ? child.fees.balance : 0), 0)
-    : Math.max(0, block.outstanding);
-  const credit = availableChildren.reduce((total, child) => total + Math.max(0, child.fees.available ? -child.fees.balance : 0), 0);
+    ? availableChildren.reduce((total, child) => total + (child.fees.available ? child.fees.owing : 0), 0)
+    : block.outstanding;
+  const credit = availableChildren.length
+    ? availableChildren.reduce((total, child) => total + (child.fees.available ? child.fees.credit : 0), 0)
+    : block.credit;
   if (due <= 0) {
     return (
       <section className="home-surface home-banner home-banner--green" aria-label="Family fees status">
@@ -192,7 +194,9 @@ function FamilyFeesBanner({ block, children }: { block: FamilyFees; children: Ch
         </div>
         <div className="home-banner-text">
           <strong>All fees are paid.</strong>
-          <p>Nothing is outstanding across your children.</p>
+          <p>{credit > 0
+            ? `Nothing is outstanding. ${formatNaira(credit)} in credit across your children.`
+            : "Nothing is outstanding across your children."}</p>
         </div>
       </section>
     );
@@ -203,8 +207,8 @@ function FamilyFeesBanner({ block, children }: { block: FamilyFees; children: Ch
         <Wallet size={21} aria-hidden="true" />
       </div>
       <div className="home-banner-text">
-        <strong>{formatNaira(due)} still due on bills</strong>
-        <p>{credit > 0 ? `${formatNaira(credit)} in credit on another child's account. Open Fees to see each balance.` : "Across your children."}</p>
+        <strong>{formatNaira(due)} still due on bills and charges</strong>
+        <p>{credit > 0 ? `${formatNaira(credit)} credit held by the school. Ask the school to apply it before you pay.` : "Across your children."}</p>
       </div>
       <Link to="/fees" className="home-banner-cta">
         Open Fees
@@ -282,12 +286,15 @@ function FeesStat({ block }: { block: ChildFees }) {
       </Stat>
     );
   }
-  const sub =
-    block.status === "OWING" && block.open_invoice_count > 0
-      ? `${block.open_invoice_count} open bill${block.open_invoice_count === 1 ? "" : "s"}`
-      : FEE_STATUS[block.status];
+  const open = [
+    block.open_invoice_count > 0 ? `${block.open_invoice_count} open bill${block.open_invoice_count === 1 ? "" : "s"}` : null,
+    block.open_charge_count > 0 ? `${block.open_charge_count} open charge${block.open_charge_count === 1 ? "" : "s"}` : null,
+  ].filter(Boolean).join(" · ");
+  const sub = block.status === "OWING"
+    ? [open || FEE_STATUS.OWING, block.credit > 0 ? `${formatNaira(block.credit)} credit held` : null].filter(Boolean).join(" · ")
+    : FEE_STATUS[block.status];
   return (
-    <Stat label="Fees" value={formatNaira(Math.abs(block.balance))}>
+    <Stat label="Fees" value={formatNaira(block.status === "IN_CREDIT" ? block.credit : block.owing)}>
       {sub}
     </Stat>
   );

@@ -19,6 +19,18 @@ export function formatNaira(kobo: number): string {
   return `${sign}₦${naira.format(Math.abs(kobo) / 100)}`;
 }
 
+/**
+ * A net account balance written by its side: "₦100,000.00 owing", "₦20,000.00 in credit".
+ *
+ * Positive kobo means the customer owes; negative means they are in credit. A
+ * bare minus sign does not say which, so the side is named and no sign is shown.
+ * A zero balance has no side and is the bare amount.
+ */
+export function accountBalanceWords(kobo: number): string {
+  if (kobo === 0) return formatNaira(0);
+  return kobo > 0 ? `${formatNaira(kobo)} owing` : `${formatNaira(-kobo)} in credit`;
+}
+
 function parts(value: string): { y: number; m: number; d: number } | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value || "");
   if (!match) return null;

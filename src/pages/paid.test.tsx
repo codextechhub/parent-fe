@@ -129,9 +129,9 @@ describe("PaidPage", () => {
             message: "",
             data: {
               children: [],
-              combined: { available: true, billed: 500000, paid: 500000, outstanding: 0 },
+              combined: { available: true, billed: 500000, paid: 500000, outstanding: 0, credit: 0 },
               min_part_payment: 100000,
-              pay_all: { total: 0, steps: [], complete: true },
+              pay_all: { total: 0, charges_total: 0, steps: [], complete: true },
             },
           }),
           { status: 200, headers: { "content-type": "application/json" } },
@@ -159,12 +159,12 @@ describe("PaidPage", () => {
       if (url.includes("/portal/parent/fees/")) {
         return new Response(JSON.stringify({ success: true, message: "", data: {
           children: [
-            { available: true, child: { id: 11, first_name: "Musa", full_name: "Musa" }, balance: 50000, total_billed: 50000, total_paid: 0, invoices: [] },
-            { available: true, child: { id: 22, first_name: "Ada", full_name: "Ada" }, balance: -50000, total_billed: 50000, total_paid: 100000, invoices: [] },
+            { available: true, child: { id: 11, first_name: "Musa", full_name: "Musa" }, balance: 50000, owing: 50000, credit: 0, total_billed: 50000, total_paid: 0, invoices: [], debit_notes: [] },
+            { available: true, child: { id: 22, first_name: "Ada", full_name: "Ada" }, balance: -50000, owing: 0, credit: 50000, total_billed: 50000, total_paid: 100000, invoices: [], debit_notes: [] },
           ],
-          combined: { available: true, billed: 100000, paid: 100000, outstanding: 0 },
+          combined: { available: true, billed: 100000, paid: 100000, outstanding: 50000, credit: 50000 },
           min_part_payment: 10000,
-          pay_all: { total: 0, steps: [], complete: true },
+          pay_all: { total: 0, charges_total: 0, steps: [], complete: true },
         } }), { status: 200, headers: { "content-type": "application/json" } });
       }
       return new Response("{}", { status: 200 });

@@ -40,6 +40,8 @@ function fees(overrides: Record<string, unknown> = {}) {
           available: true,
           child: { id: 11, first_name: "Tobi", full_name: "Tobi O" },
           balance: 500000,
+          owing: 500000,
+          credit: 0,
           total_billed: 1000000,
           total_paid: 500000,
           invoices: [
@@ -57,20 +59,25 @@ function fees(overrides: Record<string, unknown> = {}) {
               status_label: "Part-paid",
             },
           ],
+          debit_notes: [],
         },
         {
           available: true,
           child: { id: 22, first_name: "Somto", full_name: "Somto O" },
           balance: 0,
+          owing: 0,
+          credit: 0,
           total_billed: 500000,
           total_paid: 500000,
           invoices: [],
+          debit_notes: [],
         },
       ],
-      combined: { available: true, billed: 1500000, paid: 1000000, outstanding: 500000 },
+      combined: { available: true, billed: 1500000, paid: 1000000, outstanding: 500000, credit: 0 },
       min_part_payment: 100000,
       pay_all: {
         total: 500000,
+        charges_total: 0,
         steps: [
           { child_id: 11, first_name: "Tobi", invoice_ref: 101, number: "IV-1", title: "First Term", amount: 500000 },
         ],
@@ -169,7 +176,7 @@ describe("FeesPage", () => {
     const r = render(stub(fees()) as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
-    expect(r.container.textContent).toContain("Bills still to pay");
+    expect(r.container.textContent).toContain("Total left to pay");
     expect(r.container.textContent).toContain("₦5,000.00");
     expect(r.container.textContent).toContain("Tobi");
     expect(r.container.textContent).toContain("Somto");
@@ -225,6 +232,8 @@ describe("FeesPage", () => {
             {
               ...fees().data.children[0],
               balance: -50000,
+              owing: 0,
+              credit: 50000,
               total_billed: 1000000,
               total_paid: 1050000,
               invoices: [
@@ -244,25 +253,119 @@ describe("FeesPage", () => {
     );
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
-    expect(r.container.textContent).toContain("in credit");
+    expect(r.container.textContent).toContain("₦500.00 in credit");
+    expect(r.container.textContent).not.toContain("credit held by the school");
   });
 
-  it("shows a child's unpaid balance even when another child's credit makes the family net zero", async () => {
+  it("shows what one child owes and another child's credit without netting them", async () => {
     const [tobi, somto] = fees().data.children;
     const r = render(stub(fees({
       children: [
-        { ...tobi, balance: 50000, invoices: [{ ...tobi.invoices[0], balance: 50000 }] },
-        { ...somto, balance: -50000 },
+        { ...tobi, balance: 50000, owing: 50000, invoices: [{ ...tobi.invoices[0], balance: 50000 }] },
+        { ...somto, balance: -50000, credit: 50000 },
       ],
-      combined: { available: true, billed: 1000000, paid: 1000000, outstanding: 0 },
-      pay_all: { total: 0, steps: [], complete: true },
+      combined: { available: true, billed: 1000000, paid: 1000000, outstanding: 50000, credit: 50000 },
+      pay_all: { total: 50000, charges_total: 0, steps: [{ child_id: 11, first_name: "Tobi", invoice_ref: 101, number: "IV-1", title: "First Term", amount: 50000 }], complete: true },
     })) as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
     expect(r.container.querySelector(".fees-summary-amount")?.textContent).toBe("₦500.00");
-    expect(r.container.querySelector(".fees-summary-credit")?.textContent).toContain("₦500.00 in credit");
+    expect(r.container.querySelector(".fees-summary-credit")?.textContent)
+      .toBe("₦500.00 credit held by the school. Ask the school to apply it before you pay.");
     expect(r.container.textContent).not.toContain("No bills left to pay");
     expect(r.container.querySelector('a[href="/fees/pay/101"]')).not.toBeNull();
+    const rows = [...r.container.querySelectorAll(".fees-simple-children > li")];
+    expect(rows[0].textContent).toContain("Tobi");
+    expect(rows[0].textContent).toContain("₦500.00");
+    expect(rows[1].textContent).toContain("Somto");
+    expect(rows[1].textContent).toContain("In credit");
+    expect(rows[1].textContent).toContain("₦500.00 in credit");
+  });
+
+  it("shows the owed amount and the credit line when a child's credit exceeds their open bill", async () => {
+    const [tobi, somto] = fees().data.children;
+    const r = render(stub(fees({
+      children: [
+        { ...tobi, balance: -50000, owing: 150000, credit: 200000, invoices: [{ ...tobi.invoices[0], balance: 150000 }] },
+        somto,
+      ],
+      combined: { available: true, billed: 1000000, paid: 850000, outstanding: 150000, credit: 200000 },
+      pay_all: { total: 150000, charges_total: 0, steps: [{ child_id: 11, first_name: "Tobi", invoice_ref: 101, number: "IV-1", title: "First Term", amount: 150000 }], complete: true },
+    })) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    const row = r.container.querySelector(".fees-simple-children > li")?.textContent ?? "";
+    expect(row).toContain("₦1,500.00");
+    expect(row).toContain("₦2,000.00 credit held by the school. Ask the school to apply it before you pay.");
+    expect(row).not.toContain("In credit");
+    expect(row).not.toContain("All paid");
+    expect(r.container.querySelector(".fees-summary-amount")?.textContent).toBe("₦1,500.00");
+    expect(r.container.querySelector('a[href="/fees/pay/101"]')).not.toBeNull();
+  });
+
+  it("shows an exactly offsetting credit beside the owed amount, never as all paid", async () => {
+    const [tobi, somto] = fees().data.children;
+    const r = render(stub(fees({
+      children: [{ ...tobi, balance: 0, owing: 500000, credit: 500000 }, somto],
+    })) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    const row = r.container.querySelector(".fees-simple-children > li")?.textContent ?? "";
+    expect(row).toContain("₦5,000.00");
+    expect(row).toContain("₦5,000.00 credit held by the school");
+    expect(row).not.toContain("All paid");
+  });
+
+  it("lists a debit note as a charge with no card Pay button and points to the transfer account", async () => {
+    const [tobi, somto] = fees().data.children;
+    const note = { note_ref: 31, number: "DN-1", date: "2026-10-05", reason: "Excursion", total: 300000, paid: 100000, balance: 200000, status: "PARTIAL", status_label: "Part-paid" };
+    const r = render(stub(fees({
+      children: [
+        {
+          ...tobi,
+          owing: 700000,
+          balance: 700000,
+          invoices: [],
+          debit_notes: [note],
+        },
+        somto,
+      ],
+      combined: { available: true, billed: 1300000, paid: 600000, outstanding: 700000, credit: 0 },
+      pay_all: { total: 0, charges_total: 200000, steps: [], complete: true },
+    })) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    expect(r.container.textContent).toContain("1 charge");
+    expect(r.container.querySelector(".fees-summary-amount")?.textContent).toBe("₦7,000.00");
+    expect(r.container.textContent).toContain("Added charges (₦2,000.00) are not paid by card");
+    expect(r.container.textContent).not.toContain("Excursion");
+    const toggle = r.container.querySelector<HTMLButtonElement>('[aria-controls="fees-child-bills-11"]');
+    expect(toggle?.textContent).toContain("Charges");
+    await act(async () => toggle?.click());
+    const panel = r.container.querySelector("#fees-child-bills-11")?.textContent ?? "";
+    expect(panel).toContain("Excursion");
+    expect(panel).toContain("₦2,000.00");
+    expect(panel).toContain("Pay this charge by bank transfer into Tobi's account number");
+    expect(r.container.querySelector('a[href^="/fees/pay/"]')).toBeNull();
+    expect(r.container.querySelector('a[href="/fees/pay-all"]')).toBeNull();
+    const transfer = [...r.container.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === "Pay by transfer");
+    expect(transfer).toBeDefined();
+    await act(async () => transfer?.click());
+    expect(r.container.querySelector("#fees-bank-transfer")?.hasAttribute("hidden")).toBe(false);
+  });
+
+  it("says no bills are left when nothing is owing and credit is held", async () => {
+    const [tobi, somto] = fees().data.children;
+    const r = render(stub(fees({
+      children: [{ ...tobi, balance: -50000, owing: 0, credit: 50000, invoices: [{ ...tobi.invoices[0], balance: 0, paid: 1000000, status: "PAID", status_label: "Paid" }] }, somto],
+      combined: { available: true, billed: 1000000, paid: 1050000, outstanding: 0, credit: 50000 },
+      pay_all: { total: 0, charges_total: 0, steps: [], complete: true },
+    })) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+    expect(r.container.querySelector(".fees-summary-amount")?.textContent).toBe("₦0.00");
+    expect(r.container.querySelector(".fees-summary-credit")?.textContent).toBe("₦500.00 in credit.");
+    expect(r.container.textContent).not.toContain("credit held by the school");
   });
 
   it("lets a parent choose among multiple bills for one child", async () => {
@@ -273,6 +376,7 @@ describe("FeesPage", () => {
           {
             ...first,
             balance: 650000,
+            owing: 650000,
             invoices: [
               ...first.invoices,
               { ...first.invoices[0], invoice_ref: 102, number: "IV-2", title: "Transport", balance: 150000 },
@@ -280,7 +384,7 @@ describe("FeesPage", () => {
           },
           fees().data.children[1],
         ],
-        combined: { available: true, billed: 1650000, paid: 1000000, outstanding: 650000 },
+        combined: { available: true, billed: 1650000, paid: 1000000, outstanding: 650000, credit: 0 },
       })) as unknown as typeof fetch,
     );
     last = r;
@@ -302,7 +406,7 @@ describe("FeesPage", () => {
       invoices: [{ ...tobi.invoices[0], invoice_ref: id, due_date: dueDate }],
     });
     const paid = { ...somto, child: { id: 55, first_name: "Chika", full_name: "Chika O" }, invoices: [{ ...tobi.invoices[0], invoice_ref: 55, paid: 1000000, balance: 0, status: "PAID", status_label: "Paid" }] };
-    const credit = { ...tobi, child: { id: 66, first_name: "Zara", full_name: "Zara O" }, balance: -50000, invoices: [{ ...tobi.invoices[0], invoice_ref: 66, paid: 1050000, balance: -50000 }] };
+    const credit = { ...tobi, child: { id: 66, first_name: "Zara", full_name: "Zara O" }, balance: -50000, owing: 0, credit: 50000, invoices: [{ ...tobi.invoices[0], invoice_ref: 66, paid: 1050000, balance: 0 }] };
     const unavailable = { available: false, child: { id: 77, first_name: "Nneka", full_name: "Nneka O" }, message: "Fees unavailable" };
     const r = render(stub(fees({ children: [paid, unavailable, somto, credit, tobi, withDue(33, "Kemi", "2026-12-01"), withDue(44, "Ada", "2026-10-25")] })) as unknown as typeof fetch);
     last = r;

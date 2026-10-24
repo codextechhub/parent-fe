@@ -256,7 +256,19 @@ describe("Receipt sheet", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].querySelectorAll("td")).toHaveLength(doc.querySelectorAll("thead th").length);
     expect(rows[0].textContent).toContain("BSS-INV-2026-00001");
-    expect(doc.querySelector(".fdoc-after-box")?.textContent).toBe("Customer balance after payment₦75,800.00");
+    expect(doc.querySelector(".fdoc-after-box")?.textContent).toBe("Account balance after this payment₦75,800.00 owing");
+  });
+
+  it("words a balance in credit without a minus sign", async () => {
+    const c = render("/fees/receipts/41", receipt({ balance_after: -2000000 }));
+    await settle();
+    expect(c.querySelector(".fdoc-after-box")?.textContent).toBe("Account balance after this payment₦20,000.00 in credit");
+  });
+
+  it("says nothing is owing when the balance is zero", async () => {
+    const c = render("/fees/receipts/41", receipt({ balance_after: 0 }));
+    await settle();
+    expect(c.querySelector(".fdoc-after-box")?.textContent).toBe("Account balance after this payment₦0.00");
   });
 
   it("shows a receipt not yet applied to an invoice as unallocated credit", async () => {

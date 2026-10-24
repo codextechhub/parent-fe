@@ -38,6 +38,8 @@ const FEES = {
         available: true,
         child: { id: 11, first_name: "Tobi", full_name: "Tobi O" },
         balance: 500000,
+        owing: 500000,
+        credit: 0,
         total_billed: 1000000,
         total_paid: 500000,
         invoices: [
@@ -55,11 +57,12 @@ const FEES = {
             status_label: "Part-paid",
           },
         ],
+        debit_notes: [],
       },
     ],
-    combined: { available: true, billed: 1000000, paid: 500000, outstanding: 500000 },
+    combined: { available: true, billed: 1000000, paid: 500000, outstanding: 500000, credit: 0 },
     min_part_payment: 100000,
-    pay_all: { total: 500000, steps: [], complete: true },
+    pay_all: { total: 500000, charges_total: 0, steps: [], complete: true },
   },
 };
 

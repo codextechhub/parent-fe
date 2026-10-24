@@ -115,7 +115,7 @@
 .fdoc-hero .fdoc-badge { flex: none; padding: 5px 14px; font-size: 12px; }
 .fdoc-after { display: flex; justify-content: flex-end; margin-top: 14px; }
 .fdoc-after-box { display: flex; align-items: center; gap: 18px; padding: 11px 16px; background: var(--fdoc-navy); color: #fff; }
-.fdoc-after-box span { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; }
+.fdoc-after-box span { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; white-space: nowrap; }
 .fdoc-after-box strong { font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .fdoc-historic { margin-top: 8px !important; color: var(--fdoc-muted); font-size: 11px; line-height: 1.5; text-align: right; }
 

@@ -98,7 +98,7 @@ export function PaidPage() {
     feesOutstanding:
       fees?.combined?.available
         ? fees.children.some((entry) => entry.available)
-          ? fees.children.reduce((total, entry) => total + (entry.available ? Math.max(0, entry.balance) : 0), 0)
+          ? fees.children.reduce((total, entry) => total + (entry.available ? entry.owing : 0), 0)
           : fees.combined.outstanding
         : undefined,
     receiptRef,
