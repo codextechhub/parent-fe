@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { PageShell } from "@/components/layout/page-shell";
 import { ChildAvatar } from "@/components/child-avatar";
 import { InstallOffer } from "@/components/install-offer";
+import { PaymentNotices } from "@/components/payment-notices";
 import { PushOffer } from "@/components/push-settings";
 import { formatLongDate, formatNaira, formatTimestampDate } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
@@ -28,7 +29,8 @@ import "./home.css";
  * Family header greeting, then the money banner (what the family owes in all,
  * or an "all paid" line), one card per child, then the latest notice. Every
  * block honours its own `available: false` with the server's sentence; a
- * zero figure is never shown for an unavailable block. Follow-ups and
+ * zero figure is never shown for an unavailable block. Payments the school has
+ * booked since the parent last looked sit just above the notice. Follow-ups and
  * open-work counts are parked (plan 2.3 point 5). Messages have their own
  * screen and unread badge in the shell, so Home does not repeat them.
  */
@@ -122,6 +124,7 @@ export function HomePage() {
                   )}
                 </div>
               </section>
+              <PaymentNotices />
               <NoticeSection block={home.notices} unread={unreadNotices} />
             </>
           )}
