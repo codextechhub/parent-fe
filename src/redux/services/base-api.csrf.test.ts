@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { setAccessToken } from "@/auth/access-token";
 import { _resetCsrfCache } from "@/auth/csrf";
+import { _resetAccountForTests, setAccount } from "@/auth/device-account";
 import { authReducer } from "@/redux/features/auth-slice";
 import { connectivityReducer } from "@/redux/features/connectivity-slice";
 
@@ -18,13 +19,15 @@ import { portalApi } from "./portal-api";
 describe("the parent app's requests", () => {
   const sent: Request[] = [];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     sent.length = 0;
+    _resetAccountForTests();
+    await setAccount("a-patricia");
     document.cookie = "csrftoken=token-123; path=/";
     _resetCsrfCache();
     setAccessToken("access-abc");
-    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
-      if (input instanceof Request) sent.push(input);
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      sent.push(new Request(input instanceof Request ? input : String(input), init));
       return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
     }) as unknown as typeof fetch;
   });
@@ -41,7 +44,8 @@ describe("the parent app's requests", () => {
 
   it("sends the CSRF token when signing out", async () => {
     await store().dispatch(portalApi.endpoints.logout.initiate());
-    const logout = sent.find((r) => r.url.includes("/user/auth/logout/"));
-    expect(logout?.headers.get("X-CSRFToken")).toBe("token-123");
+    const signOut = sent.find((r) => r.url.includes("/user/auth/device/sign-out/"));
+    expect(signOut?.headers.get("X-CSRFToken")).toBe("token-123");
+    expect(await signOut?.json()).toEqual({ account: "a-patricia" });
   });
 });

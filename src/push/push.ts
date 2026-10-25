@@ -1,5 +1,6 @@
 import type { ThunkDispatch, UnknownAction } from "@reduxjs/toolkit";
 
+import { getAccount } from "@/auth/device-account";
 import { pushApi, type ParentSubscription } from "@/redux/services/push-api";
 
 import { pushChoice, setPushChoice } from "./push-choice";
@@ -10,7 +11,8 @@ import { browserFacts, isAppleMobile, runningInstalled } from "./situation";
  *
  * The browser holds one subscription for the whole app and the parent either
  * has it or does not: there is no sibling-switch complication here (unlike
- * student-fe). Turning push on asks the browser's permission from the tap
+ * student-fe). The school is told of it with the sign-in's device account, so
+ * it ends when that device signs out. Turning push on asks the browser's permission from the tap
  * (required by iPhone), subscribes with the school's VAPID key and tells the
  * school. Turning it off tells the school to forget this parent's row.
  *
@@ -91,6 +93,18 @@ async function browserSubscription(dispatch: Dispatch): Promise<ParentSubscripti
   return { endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } };
 }
 
+/**
+ * The subscription as the school is told of it: carrying the device account
+ * of this sign-in, so signing out ends this device's pushes. Sent only when
+ * there is an account to name.
+ */
+async function withAccount(
+  subscription: ParentSubscription,
+): Promise<ParentSubscription & { account?: string }> {
+  const account = await getAccount();
+  return account ? { ...subscription, account } : subscription;
+}
+
 export type TurnOnResult = { ok: true } | { ok: false; reason: "blocked" | "dismissed" | "failed" };
 
 /**
@@ -105,7 +119,7 @@ export async function turnOnPush(dispatch: Dispatch): Promise<TurnOnResult> {
   try {
     const subscription = await browserSubscription(dispatch);
     if (!subscription) return { ok: false, reason: "failed" };
-    await dispatch(pushApi.endpoints.subscribePush.initiate(subscription)).unwrap();
+    await dispatch(pushApi.endpoints.subscribePush.initiate(await withAccount(subscription))).unwrap();
   } catch {
     return { ok: false, reason: "failed" };
   }
@@ -141,7 +155,7 @@ export async function refreshPush(dispatch: Dispatch): Promise<void> {
   try {
     const subscription = await browserSubscription(dispatch);
     if (subscription)
-      await dispatch(pushApi.endpoints.subscribePush.initiate(subscription)).unwrap();
+      await dispatch(pushApi.endpoints.subscribePush.initiate(await withAccount(subscription))).unwrap();
   } catch {
     // Tried again next open.
   }

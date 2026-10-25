@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { setAccessToken } from "@/auth/access-token";
 import { _resetCsrfCache } from "@/auth/csrf";
+import { _resetAccountForTests, setAccount } from "@/auth/device-account";
 import { _resetRefreshForTests } from "@/auth/refresh";
 
 import { baseApi } from "./base-api";
@@ -47,8 +48,10 @@ function makeStore() {
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   calls = [];
+  _resetAccountForTests();
+  await setAccount("a-patricia");
   document.cookie = "csrftoken=abc; path=/";
   _resetCsrfCache();
   _resetRefreshForTests();
@@ -66,7 +69,7 @@ describe("base-api 401 flow", () => {
     const responses = [401, 200];
     let refreshCount = 0;
     stubFetch((url) => {
-      if (url.endsWith("/user/auth/token/refresh/")) {
+      if (url.endsWith("/user/auth/device/refresh/")) {
         refreshCount += 1;
         return new Response(JSON.stringify({ data: { access: "fresh" } }), {
           status: 200,
@@ -103,7 +106,7 @@ describe("base-api 401 flow", () => {
 
   it("gives up when the retry answers 401 as well", async () => {
     stubFetch((url) => {
-      if (url.endsWith("/user/auth/token/refresh/")) {
+      if (url.endsWith("/user/auth/device/refresh/")) {
         return new Response(JSON.stringify({ data: { access: "fresh" } }), {
           status: 200,
           headers: { "content-type": "application/json" },
@@ -115,7 +118,7 @@ describe("base-api 401 flow", () => {
     const store = makeStore();
     const result = await store.dispatch(portalApi.endpoints.me.initiate());
     expect(result.status).toBe("rejected");
-    const refreshCalls = calls.filter((c) => c.url.endsWith("/user/auth/token/refresh/"));
+    const refreshCalls = calls.filter((c) => c.url.endsWith("/user/auth/device/refresh/"));
     expect(refreshCalls.length).toBe(1);
   });
 

@@ -21,7 +21,7 @@ const baseUrl = import.meta.env.VITE_BACKEND_URL;
  * never run the 401 refresh/retry on them. Matched as a path under
  * `/user/auth/`, so "activate" and "login" never collide with other words.
  */
-const AUTH_URLS = ["login", "logout", "token/refresh", "csrf", "password", "activate"];
+const AUTH_URLS = ["login", "device", "csrf", "password", "activate"];
 
 const isAuthRoute = (args: string | FetchArgs): boolean => {
   const url =

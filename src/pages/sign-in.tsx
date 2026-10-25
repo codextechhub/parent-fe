@@ -23,17 +23,27 @@ const FORGOT_PASSWORD = "/accounts/forgot-password";
 
 type Refusal = { message: string; staff?: boolean };
 
+const NOT_A_PARENT = "This account is not a parent at this school.";
+
+/** The code the API gives a refusal, under either key it uses. */
+function refusalCode(data: unknown): string {
+  const error = (data as { error?: { code?: string; error_code?: string } } | undefined)?.error;
+  return error?.code ?? error?.error_code ?? "";
+}
+
 /**
  * The sign-in page, in the student app's design: the school's welcome beside
  * the form on a wide screen, above it on a phone.
  *
- * The parent types their email and password and the ordinary tenant sign-in
- * answers. On success the shell takes over through `me/`; a 404 there means
- * the account is not a parent at this school (a teacher, a bursar, or a
- * parent at a different school), so the session just opened is closed and
- * the page points them at the school's own sign-in. A teacher who is also a
- * parent here is a parent to `me/`, and comes straight in. Every refusal
- * shows in one place under the fields, as the student app's does.
+ * The parent types their email and password and the sign-in asks for a device
+ * session. On success the shell takes over through `me/`. An account the
+ * school does not offer a device session (staff) is refused by the sign-in
+ * itself as `DEVICE_SESSION_NOT_OFFERED`; a 404 from `me/` means the account
+ * is not a parent at this school (a parent at a different school), so the
+ * session just opened is closed. Either way the page points them at the
+ * school's own sign-in. A teacher who is also a parent here is a parent to
+ * `me/`, and comes straight in. Every refusal shows in one place under the
+ * fields, as the student app's does.
  */
 export default function SignInPage() {
   const slug = currentSchoolSlug();
@@ -51,7 +61,7 @@ export default function SignInPage() {
   const [checking, setChecking] = useState(false);
 
   const shown: Refusal | null = refusal ?? (notAParent
-    ? { message: "This account is not a parent at this school.", staff: true }
+    ? { message: NOT_A_PARENT, staff: true }
     : null);
 
   const clear = () => {
@@ -83,12 +93,6 @@ export default function SignInPage() {
         refuse({ message: "That is a CodeX staff account. Sign in on the CodeX console." });
         return;
       }
-      // A pupil belongs in the student app; guard so a `device_app` never opens this shell.
-      if (result.data.device_app) {
-        await logout().unwrap().catch(() => {});
-        refuse({ message: "That account signs in on the student app, not here." });
-        return;
-      }
       const meResult = await fetchMe().unwrap().then(
         () => ({ ok: true as const }),
         (err: unknown) => ({ ok: false as const, status: (err as { status?: number })?.status }),
@@ -106,7 +110,10 @@ export default function SignInPage() {
       }
     } catch (err) {
       const failed = err as { status?: number | string; data?: { message?: string } };
-      if (failed?.status === 401 || failed?.status === 400) {
+      if (failed?.status === 403 && refusalCode(failed.data) === "DEVICE_SESSION_NOT_OFFERED") {
+        // Not a parent at this school: a teacher, a bursar, a pupil.
+        refuse({ message: NOT_A_PARENT, staff: true });
+      } else if (failed?.status === 401 || failed?.status === 400) {
         refuse({ message: failed.data?.message || "Those details did not match an account at this school." });
       } else if (failed?.status === 0 || failed?.status === "FETCH_ERROR") {
         refuse({ message: "Could not reach the school. Check your connection and try again." });

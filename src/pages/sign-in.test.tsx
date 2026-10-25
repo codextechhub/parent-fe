@@ -113,6 +113,31 @@ describe("parent sign-in", () => {
     expect((container.querySelector('input[name="password"]') as HTMLInputElement).value).toBe("");
   });
 
+  it("points an account the school offers no device session at the school's own sign-in", async () => {
+    mocks.login.mockReturnValue(
+      unwrapped({ status: 403, data: { error: { code: "DEVICE_SESSION_NOT_OFFERED" } } }, false),
+    );
+    render();
+    type("email", "bursar@lagoon-view.example");
+    type("password", "Bursar@School2026");
+    await submit();
+    const alert = container.querySelector('[role="alert"]');
+    expect(alert?.textContent).toContain("This account is not a parent at this school.");
+    expect(alert?.querySelector("a")?.getAttribute("href")).toBe("/accounts");
+    expect(mocks.fetchMe).not.toHaveBeenCalled();
+  });
+
+  it("closes the session and says so when a CodeX staff account signs in", async () => {
+    mocks.login.mockReturnValue(unwrapped({ data: { tenant: { kind: "PLATFORM" } } }));
+    render();
+    type("email", "ops@codexng.com");
+    type("password", "Secret@123");
+    await submit();
+    expect(mocks.logout).toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("CodeX staff account");
+    expect(mocks.fetchMe).not.toHaveBeenCalled();
+  });
+
   it("opens the parent's home once the school knows her as a parent", async () => {
     mocks.login.mockReturnValue(unwrapped({ data: { tenant: { kind: "SCHOOL" } } }));
     mocks.fetchMe.mockReturnValue(unwrapped({}));

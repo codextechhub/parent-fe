@@ -19,9 +19,9 @@ const unwrap = <T,>(body: { data: T }) => body.data;
  * - `unsubscribePush` — forget this browser (the parent turned push off or
  *   signed out).
  *
- * No `account` is sent: parents have no per-device session on this app,
- * unlike pupils in student-fe. The backend accepts the subscription with
- * `account` omitted and keys the row by (user, endpoint).
+ * The subscription carries the device `account` of the sign-in, so the
+ * school ends this device's pushes when it signs out. The backend also
+ * accepts it omitted, and then keys the row by (user, endpoint).
  */
 export const pushApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -31,7 +31,7 @@ export const pushApi = baseApi.injectEndpoints({
         unwrap(body).public_key,
       keepUnusedDataFor: 3600,
     }),
-    subscribePush: build.mutation<void, ParentSubscription>({
+    subscribePush: build.mutation<void, ParentSubscription & { account?: string }>({
       query: (body) => ({
         url: "/notify/push/subscriptions/",
         method: "POST",

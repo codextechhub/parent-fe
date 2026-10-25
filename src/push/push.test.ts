@@ -23,6 +23,8 @@ vi.mock("@/redux/services/push-api", () => {
   };
 });
 
+import { _resetAccountForTests, setAccount } from "@/auth/device-account";
+
 import { pushChoice, setPushChoice } from "./push-choice";
 import {
   dropPushOnSignOut,
@@ -63,7 +65,9 @@ const dispatch = vi.fn((action: { name: string; args: unknown }) => {
   return { unwrap: async () => (action.name === "pushKey" ? SCHOOL_KEY : undefined) };
 }) as never;
 
-beforeEach(() => {
+beforeEach(async () => {
+  _resetAccountForTests();
+  await setAccount("a-patricia");
   calls.sent = [];
   existing = null;
   permission = "default";
@@ -105,10 +109,16 @@ describe("turnOnPush", () => {
     expect(sub?.args).toEqual({
       endpoint: "https://push.example/new",
       keys: { p256dh: "p-key", auth: "a-key" },
+      account: "a-patricia",
     });
-    // No `account` key sent; parent is a plain-user subscription.
-    expect((sub?.args as Record<string, unknown>)?.account).toBeUndefined();
     expect(pushChoice()).toBe("on");
+  });
+
+  it("names no account when nobody has a device session", async () => {
+    _resetAccountForTests();
+    await turnOnPush(dispatch);
+    const sub = calls.sent.find((c) => c.endpoint === "subscribePush");
+    expect((sub?.args as Record<string, unknown>)?.account).toBeUndefined();
   });
 
   it("returns blocked when the browser refuses permission", async () => {
@@ -160,6 +170,7 @@ describe("refreshPush", () => {
     expect(calls.sent.find((c) => c.endpoint === "subscribePush")?.args).toEqual({
       endpoint: "https://push.example/current",
       keys: { p256dh: "p-key", auth: "a-key" },
+      account: "a-patricia",
     });
   });
 

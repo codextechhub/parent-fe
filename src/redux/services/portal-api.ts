@@ -1,4 +1,6 @@
 import { setAccessToken } from "@/auth/access-token";
+import { authPost } from "@/auth/api";
+import { clearAccount, getAccount, setAccount } from "@/auth/device-account";
 import { resetSessionInvalidation } from "@/auth/refresh";
 import {
   meLoaded,
@@ -17,19 +19,19 @@ type Envelope<T> = { message: string; data: T };
 
 export type LoginRequest = { email: string; password: string };
 
-/** What the platform `login/` route answers for an ordinary tenant sign-in. */
+/**
+ * What `login/` answers for a device sign-in: the access token and the
+ * `account` key the session is known by (its refresh credential is an
+ * HttpOnly cookie).
+ */
 export type LoginData = {
   access: string;
+  account: string;
   session_id: number;
   user: { email: string; first_name: string; last_name: string; full_name: string };
   school: { name?: string; logo?: string } | null;
   tenant: { kind?: string; slug?: string } | null;
   permissions: string[];
-  /**
-   * Set for an account that is handed off to a device-session app (student).
-   * Not set for parents: they sign in on this app on their own account.
-   */
-  device_app?: { path: string } | null;
 };
 
 export const portalApi = baseApi.injectEndpoints({
@@ -38,19 +40,18 @@ export const portalApi = baseApi.injectEndpoints({
       query: ({ email, password }) => ({
         url: "/user/auth/login/",
         method: "POST",
-        body: { email, password, tenant: currentSchoolSlug() },
+        body: { email, password, tenant: currentSchoolSlug(), session: "device" },
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         dispatch(signInStarted());
         try {
           const { data: result } = await queryFulfilled;
           const data = result.data;
-          // The parent app is for parent / guardian accounts only. Codex
-          // staff and pupils (device-session accounts) get signed back out
-          // here; the sign-in page shows the right message off the response
-          // before this handler runs.
+          // The parent app is for parent accounts only. Codex staff are signed
+          // back out by the sign-in page, which needs the account key to do
+          // it, so the key is kept for them too; their access token is not.
+          if (data?.account) void setAccount(data.account);
           if (data?.tenant?.kind === "PLATFORM") return;
-          if (data?.device_app) return;
           resetSessionInvalidation();
           setAccessToken(data?.access || "");
           // The `me/` fetch triggers from the route guard once the mutation
@@ -62,13 +63,17 @@ export const portalApi = baseApi.injectEndpoints({
       },
     }),
     logout: builder.mutation<void, void>({
-      queryFn: async (_arg, _api, _extraOptions, baseQuery) => {
-        const result = await baseQuery({
-          url: "/user/auth/logout/",
-          method: "POST",
-          body: {},
-        });
-        if (result.error) return { error: result.error };
+      queryFn: async () => {
+        const account = await getAccount();
+        if (!account) return { data: undefined };
+        const result = await authPost("/user/auth/device/sign-out/", { account });
+        // A 200 with no payload is still a sign-out; only a refusal is an error.
+        if (!result.ok && result.refusal.status !== 200) {
+          const { status, message } = result.refusal;
+          return status === 0
+            ? { error: { status: "FETCH_ERROR" as const, error: message || "Network error" } }
+            : { error: { status, data: { message } } };
+        }
         return { data: undefined };
       },
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
@@ -83,9 +88,12 @@ export const portalApi = baseApi.injectEndpoints({
         }
         try {
           await queryFulfilled;
+        } catch {
+          // The caller sees the refusal; the clean-up below runs regardless.
         } finally {
           // Server-side revocation may have failed - clear local state anyway.
           setAccessToken("");
+          await clearAccount();
           dispatch(sessionEnded());
           dispatch(baseApi.util.resetApiState());
         }

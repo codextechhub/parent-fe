@@ -34,9 +34,9 @@ schools has two separate sign-ins (FR-009).
 
 The app's shape follows from that:
 
-- Sign-in is the **ordinary tenant sign-in**, not the per-device cookie
-  session the student app uses. There is one account per parent on this phone,
-  not several siblings sharing it.
+- Sign-in is a **device session**, as the student app's is
+  (`session: "device"`, an `account` key, an HttpOnly refresh cookie). There
+  is one account per parent on this phone, not several siblings sharing it.
 - The switcher **in the header switches children** (`child_id` in memory), not
   accounts. A sibling with their own guardian is a different mother and lives
   under a different sign-in.
@@ -166,7 +166,7 @@ parents.
 
 | Screen | Bucket | Endpoint |
 |---|---|---|
-| Sign in | **Served, wired by platform** | the usual `POST /v1/user/auth/login/` and refresh. No per-device cookie for parents |
+| Sign in | **Served, wired by platform** | `POST /v1/user/auth/login/` with `session: "device"`, then `device/refresh/` and `device/sign-out/` |
 | Shell, header, child list | **Served, not wired** | `GET me/` |
 | Home | **Served, not wired** | `GET home/` (per-child + family blocks, each with `available`) |
 | Child record | **Served, not wired** | `GET children/<id>/` |
@@ -321,10 +321,8 @@ Blocked, this phase, on the backend.
 
 ### Phase 2: sign-in, children, and the shell
 
-- **Sign in** on this app's own page: the ordinary tenant sign-in (not a
-  per-device cookie), used by school-fe already. Reusing school-fe's
-  `authApi` is the shortest path; `parent-fe` imports the service and the
-  CSRF/refresh plumbing straight.
+- **Sign in** on this app's own page: a device-session sign-in, as
+  student-fe does it, with the CSRF and refresh plumbing copied from there.
 - **school-fe hand-off:** school-fe's sign-in page already hands pupils to
   `/student/`; add the symmetric branch for parents: a guardian signed in
   through school-fe is sent to `/parent/`, same as a pupil to `/student/`.
@@ -340,7 +338,7 @@ Blocked, this phase, on the backend.
   per-child (Fees, Notices, Profile) carry no `child=`.
 - **Branch line in the header:** reads from `me.show_branch` and the active
   child's branch; recedes at a one-branch school.
-- **Sign out:** platform sign-out, no device cookie to tear down.
+- **Sign out:** the device sign-out route, handed the sign-in's account key.
 
 ### Phase 3: shell + Home + Notices + Profile
 
