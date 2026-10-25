@@ -4,7 +4,7 @@ import { Navigate, useNavigate } from "react-router";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { formatNaira } from "@/lib/format";
-import { useFamilyFeesQuery } from "@/redux/services/portal-api";
+import { cardPaymentsOn, useFamilyFeesQuery } from "@/redux/services/portal-api";
 import {
   clearPayAllQueue,
   readPayAllQueue,
@@ -31,7 +31,7 @@ export function PayAllPage() {
 
   useEffect(() => {
     if (existing) return;
-    if (!fees) return;
+    if (!fees || !cardPaymentsOn(fees)) return;
     if (isFetching) return;
     if (fees.pay_all.steps.length === 0) return;
     savePayAllQueue({ steps: fees.pay_all.steps, index: 0 });
@@ -45,6 +45,12 @@ export function PayAllPage() {
         </div>
       </PageShell>
     );
+  }
+
+  // Where families pay by transfer alone there is no card queue to run: back to the account cards.
+  if (fees && !cardPaymentsOn(fees)) {
+    clearPayAllQueue();
+    return <Navigate to="/fees" replace />;
   }
 
   // Pay-all without open invoices sends the parent back to Fees.

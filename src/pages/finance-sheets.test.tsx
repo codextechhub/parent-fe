@@ -118,7 +118,13 @@ function answer(body: unknown, status = 200) {
 }
 
 function render(path: string, body: unknown, status = 200) {
-  globalThis.fetch = vi.fn(async () => answer(status === 200 ? { success: true, message: "", data: body } : body, status)) as unknown as typeof fetch;
+  const familyFees = { children: [], combined: { available: false, message: "" }, pay_all: { total: 0, steps: [] } };
+  globalThis.fetch = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+    const url = input instanceof Request ? input.url : String(input);
+    // The invoice page also reads the family's fees, to know how this school's families pay.
+    if (/\/portal\/parent\/fees\/(\?.*)?$/.test(url)) return answer({ success: true, message: "", data: familyFees });
+    return answer(status === 200 ? { success: true, message: "", data: body } : body, status);
+  }) as unknown as typeof fetch;
   const store = configureStore({
     reducer: { [baseApi.reducerPath]: baseApi.reducer, auth: authReducer, connectivity: connectivityReducer },
     middleware: (gd) => gd().concat(baseApi.middleware),

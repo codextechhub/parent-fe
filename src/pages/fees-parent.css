@@ -309,3 +309,19 @@
   .fees-child-balance strong { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .fees-child-bills-button svg, .fees-secondary-button svg { transition: none; } }
+
+/* Transfer cards where families pay by transfer alone. */
+.student-transfer-number .student-transfer-copy { display: inline-flex; flex: none; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; letter-spacing: 0; color: #2d4aab; }
+.student-transfer-owing { margin: 4px 0 0; color: #8a5a14; font-size: 13px; font-weight: 700; }
+.fees-transfer-activity { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.fees-transfer-activity li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 10px 12px; border-radius: 11px; font-size: 13px; line-height: 1.4; }
+.fees-transfer-activity li.is-pending { background: #fff5e9; color: #95621f; }
+.fees-transfer-activity li.is-received { background: #e9f8f2; color: #227956; }
+.fees-transfer-activity a { color: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; }
+.fees-transfer-section { display: grid; gap: 12px; margin-top: 18px; }
+.fees-transfer-section > h2 { margin: 0; color: #243654; font-size: 17px; font-weight: 650; letter-spacing: -.02em; }
+.fees-transfer-section > p { margin: 0; color: #6b7991; font-size: 13px; line-height: 1.45; }
+.fees-transfer-others { justify-self: start; padding: 0; border: 0; background: none; color: #405d91; font-size: 13px; font-weight: 700; cursor: pointer; }
+.fees-transfer-others:hover { text-decoration: underline; }
+.fees-transfer-others:focus-visible { outline: 3px solid #7895c5; outline-offset: 3px; }
+.fees-transfer-switched { margin: 0 0 12px; padding: 11px 12px; border-radius: 12px; background: #fff5e9; color: #95621f; font-size: 13px; line-height: 1.45; }

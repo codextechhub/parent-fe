@@ -397,6 +397,22 @@ Blocked, this phase, on the backend.
   The panel watches deposits since `as_of`, shows "Arriving" and "Received",
   then re-reads `fees/`.
 - Offline: Pay is disabled with a sentence.
+- **Where card is off** (`card_payments` false on `fees/`, a per-school
+  setting, off by default): families pay by transfer alone. Fees leads with
+  one account card per child who owes (name, bank, number with Copy, account
+  name, amount owing), the other children's cards on request; there is no
+  Pay all, no card Pay button and no card/transfer switcher. The invoice sheet
+  and the Pay screen show the child's card in place of "Pay this invoice". A
+  409 `CARD_PAYMENTS_OFF` from a stale screen refetches fees and shows the
+  transfer view with a plain line. An absent flag reads as card on.
+- **Live arrival** (`src/lib/deposit-watcher.ts`): one timer asks each shown
+  child's deposits (`since` = the account's `as_of` read when the screen
+  opened) every 5 s, one request per child per cycle, only while the page is
+  showing and used in the last 10 minutes; it asks at once on return and when
+  a "Payment received" push reaches the open app (the service worker posts
+  `xvs-parent-push-received`). "On its way", then "Received" with View receipt;
+  a booked transfer marks fees, home and payments stale. A tapped push opens
+  `/parent/fees/receipts/<id>`.
 
 ### Phase 6: Push notifications
 

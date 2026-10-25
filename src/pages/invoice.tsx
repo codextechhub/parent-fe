@@ -2,11 +2,14 @@ import { useState } from "react";
 import { ArrowLeft, CircleAlert, Download } from "lucide-react";
 import { Link, useParams } from "react-router";
 
+import { ChildTransferAccount } from "@/components/fees/child-transfer-account";
 import { BlockTitle, Fact, Letterhead } from "@/components/fees/finance-document";
 import { PageShell } from "@/components/layout/page-shell";
 import { formatDate, formatNaira } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
 import {
+  cardPaymentsOn,
+  useFamilyFeesQuery,
   useInvoiceSheetQuery,
   useLazyInvoicePdfQuery,
   type DocumentLetterhead,
@@ -23,6 +26,9 @@ export function InvoicePage() {
   const { data: invoice, isLoading, isError } = useInvoiceSheetQuery(ref, { skip: !validRef });
   const [fetchPdf, { isFetching }] = useLazyInvoicePdfQuery();
   const [pdfError, setPdfError] = useState("");
+  const { data: fees } = useFamilyFeesQuery();
+  const transferOnly = !!fees && !cardPaymentsOn(fees);
+  const owing = fees?.children.find((entry) => entry.available && entry.child.id === invoice?.child.id);
 
   const download = async () => {
     setPdfError("");
@@ -93,13 +99,23 @@ export function InvoicePage() {
                   {pdfError}
                 </p>
               )}
-              {invoice.balance > 0 && (
+              {invoice.balance > 0 && !transferOnly && (
                 <Link
                   to={`/fees/pay/${invoice.invoice_ref}`}
                   className="receipt-secondary"
                 >
                   Pay this invoice
                 </Link>
+              )}
+              {transferOnly && (
+                <ChildTransferAccount
+                  childId={invoice.child.id}
+                  firstName={invoice.child.first_name}
+                  fullName={owing?.child.full_name ?? invoice.child.first_name}
+                  owing={owing?.available ? owing.owing : undefined}
+                  title={`Pay into ${invoice.child.first_name}'s account`}
+                  showAccount={invoice.balance > 0}
+                />
               )}
             </div>
             <InvoiceDocument invoice={invoice} />

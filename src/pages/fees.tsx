@@ -3,6 +3,7 @@ import { Check, ChevronDown, Clock3, CreditCard, Receipt as ReceiptIcon } from "
 import { Link } from "react-router";
 
 import { ChildAvatar } from "@/components/child-avatar";
+import { SAVED_NUMBER_HINT } from "@/components/fees/transfer-account-card";
 import { TransferCardsForChildren } from "@/components/fees/transfer-cards-for-children";
 import { PageShell } from "@/components/layout/page-shell";
 import { clearPayAllQueue } from "@/pages/pay-all-queue";
@@ -10,6 +11,7 @@ import { formatDate, formatNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/redux/hooks";
 import {
+  cardPaymentsOn,
   useFamilyFeesQuery,
   useFamilyPaymentsQuery,
   type ChildFeesEntry,
@@ -32,6 +34,7 @@ export function FeesPage() {
     useFamilyPaymentsQuery(undefined, { skip: !historyOpen });
   const offline = useAppSelector((s) => s.connectivity.offline);
   const children = fees?.children ?? [];
+  const cardOn = cardPaymentsOn(fees);
   const orderedChildren = [...children].sort((left, right) => {
     const leftGroup = childFeesOrder(left);
     const rightGroup = childFeesOrder(right);
@@ -61,7 +64,9 @@ export function FeesPage() {
               payAll={fees.pay_all}
               children={children}
               offline={offline}
+              cardOn={cardOn}
             />
+            {!cardOn && <TransferSection children={children} />}
             <section aria-labelledby="fees-children-heading">
               <div className="fees-simple-heading">
                 <h2 id="fees-children-heading">By child</h2>
@@ -71,14 +76,14 @@ export function FeesPage() {
                 <div className="fees-surface fees-empty">No children on your account yet.</div>
               ) : (
                 <ul className="fees-simple-children">
-                  {orderedChildren.map((entry) => <li key={entry.child.id}><ChildFeesRow entry={entry} offline={offline} onShowTransfer={() => setTransferOpen(true)} /></li>)}
+                  {orderedChildren.map((entry) => <li key={entry.child.id}><ChildFeesRow entry={entry} offline={offline} cardOn={cardOn} onShowTransfer={() => setTransferOpen(true)} /></li>)}
                 </ul>
               )}
             </section>
 
             <div className="fees-secondary-actions">
               <DisclosureButton title="Payment history" description="See payments and receipts" open={historyOpen} onClick={() => setHistoryOpen((value) => !value)} controls="fees-payment-history" />
-              <DisclosureButton title="Pay by bank transfer" description="Find each child's account number" open={transferOpen} onClick={() => setTransferOpen((value) => !value)} controls="fees-bank-transfer" />
+              {cardOn && <DisclosureButton title="Pay by bank transfer" description="Find each child's account number" open={transferOpen} onClick={() => setTransferOpen((value) => !value)} controls="fees-bank-transfer" />}
             </div>
             <section className="fees-secondary-panel" id="fees-payment-history" aria-label="Payment history" hidden={!historyOpen}>
               {historyOpen && <>
@@ -89,13 +94,13 @@ export function FeesPage() {
                   : <ul className="fees-payment-list">{payments.map((payment) => <PaymentRow key={`${payment.reference}:${payment.child.id}`} payment={payment} />)}</ul>}
               </>}
             </section>
-            <section className="fees-secondary-panel" id="fees-bank-transfer" aria-label="Pay by bank transfer" hidden={!transferOpen}>
+            {cardOn && <section className="fees-secondary-panel" id="fees-bank-transfer" aria-label="Pay by bank transfer" hidden={!transferOpen}>
               {transferOpen && <>
                 <h2>Pay by bank transfer</h2>
                 <p className="fees-secondary-message">Each child has a separate account number.</p>
-                <TransferCardsForChildren children={children} />
+                <TransferCardsForChildren children={children} hint={SAVED_NUMBER_HINT} />
               </>}
-            </section>
+            </section>}
           </div>
         )}
       </div>
@@ -118,8 +123,8 @@ function earliestUnpaidDue(entry: ChildFeesEntry): string | null {
     .sort()[0] ?? null;
 }
 
-function FamilySummary({ combined, payAll, children, offline }: {
-  combined: FamilyFeesBlock; payAll: PayAll; children: ChildFeesEntry[]; offline: boolean;
+function FamilySummary({ combined, payAll, children, offline, cardOn }: {
+  combined: FamilyFeesBlock; payAll: PayAll; children: ChildFeesEntry[]; offline: boolean; cardOn: boolean;
 }) {
   if (!combined.available) {
     return <section className="fees-simple-summary is-unavailable" role="status" aria-label="Fee balance">
@@ -136,7 +141,7 @@ function FamilySummary({ combined, payAll, children, offline }: {
     ? availableChildren.reduce((total, entry) => total + entry.credit, 0)
     : combined.credit;
   const owingCount = availableChildren.filter((entry) => entry.owing > 0).length;
-  const canPayAll = due > 0 && payAll.total > 0 && payAll.steps.length > 0;
+  const canPayAll = cardOn && due > 0 && payAll.total > 0 && payAll.steps.length > 0;
   return (
     <section className="fees-simple-summary" aria-label="Fee balance">
       <div>
@@ -147,7 +152,8 @@ function FamilySummary({ combined, payAll, children, offline }: {
             ? `${owingCount} of your ${children.length} children ${owingCount === 1 ? "has" : "have"} a balance.`
             : "One child has a balance."
           : combined.billed > 0 ? "No bills left to pay right now." : "No bills on your family account yet."}</p>
-        {payAll.charges_total > 0 && <p>
+        {!cardOn && due > 0 && <p>Pay by bank transfer into each child&apos;s own account number, shown below.</p>}
+        {cardOn && payAll.charges_total > 0 && <p>
           Added charges ({formatNaira(payAll.charges_total)}) are not paid by card. Pay them by bank transfer into the child&apos;s account number.
         </p>}
         {credit > 0 && <p className="fees-summary-credit">{due > 0
@@ -163,7 +169,7 @@ function FamilySummary({ combined, payAll, children, offline }: {
   );
 }
 
-function ChildFeesRow({ entry, offline, onShowTransfer }: { entry: ChildFeesEntry; offline: boolean; onShowTransfer: () => void }) {
+function ChildFeesRow({ entry, offline, cardOn, onShowTransfer }: { entry: ChildFeesEntry; offline: boolean; cardOn: boolean; onShowTransfer: () => void }) {
   const [open, setOpen] = useState(false);
   const panelId = `fees-child-bills-${entry.child.id}`;
   if (!entry.available) {
@@ -186,7 +192,7 @@ function ChildFeesRow({ entry, offline, onShowTransfer }: { entry: ChildFeesEntr
     invoices.length > 0 ? `${invoices.length} ${invoices.length === 1 ? "bill" : "bills"}` : null,
     charges.length > 0 ? `${charges.length} ${charges.length === 1 ? "charge" : "charges"}` : null,
   ].filter(Boolean).join(" · ") || "No bills yet";
-  const toggleLabel = unpaid.length > 1 && !open ? "Choose bill"
+  const toggleLabel = cardOn && unpaid.length > 1 && !open ? "Choose bill"
     : invoices.length > 0 && charges.length > 0 ? "Bills and charges"
       : invoices.length === 0 ? "Charges" : "Bills";
 
@@ -202,7 +208,7 @@ function ChildFeesRow({ entry, offline, onShowTransfer }: { entry: ChildFeesEntr
           <small>{status}</small>
         </div>
         {hasBills && <div className="fees-child-actions">
-          {oneUnpaid && !offline && <Link className="fees-child-pay" to={`/fees/pay/${oneUnpaid.invoice_ref}`}>Pay {entry.child.first_name}</Link>}
+          {cardOn && oneUnpaid && !offline && <Link className="fees-child-pay" to={`/fees/pay/${oneUnpaid.invoice_ref}`}>Pay {entry.child.first_name}</Link>}
           <button type="button" className="fees-child-bills-button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((value) => !value)}>
             {toggleLabel}<ChevronDown size={15} aria-hidden="true" />
           </button>
@@ -213,24 +219,24 @@ function ChildFeesRow({ entry, offline, onShowTransfer }: { entry: ChildFeesEntr
       </p>}
       {hasBills && <div className="fees-child-bills-panel" id={panelId} hidden={!open}>
         {open && <ul className="fees-simple-bills">
-          {invoices.map((invoice) => <InvoiceRow key={invoice.invoice_ref} invoice={invoice} offline={offline} />)}
-          {charges.map((charge) => <ChargeRow key={`charge-${charge.note_ref}`} charge={charge} firstName={entry.child.first_name} onShowTransfer={onShowTransfer} />)}
+          {invoices.map((invoice) => <InvoiceRow key={invoice.invoice_ref} invoice={invoice} offline={offline} cardOn={cardOn} />)}
+          {charges.map((charge) => <ChargeRow key={`charge-${charge.note_ref}`} charge={charge} firstName={entry.child.first_name} cardOn={cardOn} onShowTransfer={onShowTransfer} />)}
         </ul>}
       </div>}
     </article>
   );
 }
 
-function InvoiceRow({ invoice, offline }: { invoice: Invoice; offline: boolean }) {
+function InvoiceRow({ invoice, offline, cardOn }: { invoice: Invoice; offline: boolean; cardOn: boolean }) {
   return <li className="fees-simple-bill">
     <div className="fees-bill-main"><strong>{invoice.title}</strong><small>{[invoice.status_label, invoice.due_date ? `Due ${formatDate(invoice.due_date)}` : null].filter(Boolean).join(" · ")}</small></div>
     <div className="fees-bill-side"><strong>{formatNaira(Math.max(0, invoice.balance))}</strong><small>remaining</small></div>
-    <div className="fees-bill-links"><Link to={`/fees/invoices/${invoice.invoice_ref}`}>View bill</Link>{invoice.balance > 0 && !offline && <Link to={`/fees/pay/${invoice.invoice_ref}`}>Pay bill</Link>}</div>
+    <div className="fees-bill-links"><Link to={`/fees/invoices/${invoice.invoice_ref}`}>View bill</Link>{cardOn && invoice.balance > 0 && !offline && <Link to={`/fees/pay/${invoice.invoice_ref}`}>Pay bill</Link>}</div>
   </li>;
 }
 
 /** An added charge is settled by transfer into the child's account number, never by card. */
-function ChargeRow({ charge, firstName, onShowTransfer }: { charge: DebitNote; firstName: string; onShowTransfer: () => void }) {
+function ChargeRow({ charge, firstName, cardOn, onShowTransfer }: { charge: DebitNote; firstName: string; cardOn: boolean; onShowTransfer: () => void }) {
   return <li className="fees-simple-bill fees-simple-charge">
     <div className="fees-bill-main">
       <strong>{charge.reason || "Additional charge"}</strong>
@@ -238,14 +244,44 @@ function ChargeRow({ charge, firstName, onShowTransfer }: { charge: DebitNote; f
     </div>
     <div className="fees-bill-side"><strong>{formatNaira(Math.max(0, charge.balance))}</strong><small>remaining</small></div>
     <div className="fees-bill-links">
-      {charge.balance > 0
-        ? <button type="button" className="fees-charge-transfer" onClick={onShowTransfer}>Pay by transfer</button>
-        : <small>Paid</small>}
+      {charge.balance <= 0
+        ? <small>Paid</small>
+        : cardOn ? <button type="button" className="fees-charge-transfer" onClick={onShowTransfer}>Pay by transfer</button> : null}
     </div>
     {charge.balance > 0 && <p className="fees-charge-note">
-      Pay this charge by bank transfer into {firstName}&apos;s account number. It can&apos;t be paid by card.
+      {cardOn
+        ? <>Pay this charge by bank transfer into {firstName}&apos;s account number. It can&apos;t be paid by card.</>
+        : <>Pay this charge by bank transfer into {firstName}&apos;s account number, shown above.</>}
     </p>}
   </li>;
+}
+
+/**
+ * Where families pay by bank transfer alone: each child who owes something has
+ * their own account card with the amount owing, and the other children's
+ * numbers open on request.
+ */
+function TransferSection({ children }: { children: ChildFeesEntry[] }) {
+  const [showOthers, setShowOthers] = useState(false);
+  // A child who owed something when the screen opened keeps their card after
+  // paying in full, so the transfer that cleared the balance stays on screen.
+  const [pinned, setPinned] = useState<number[]>([]);
+  const owingNow = children.filter((entry) => entry.available && entry.owing > 0).map((entry) => entry.child.id);
+  if (owingNow.some((id) => !pinned.includes(id))) setPinned([...new Set([...pinned, ...owingNow])]);
+  const owing = children.filter((entry) => pinned.includes(entry.child.id) || owingNow.includes(entry.child.id));
+  const others = children.filter((entry) => !owing.includes(entry));
+  return (
+    <section className="fees-transfer-section" id="fees-bank-transfer" aria-labelledby="fees-transfer-heading">
+      <h2 id="fees-transfer-heading">Pay by bank transfer</h2>
+      <p>Each child has an account number of their own. Pay into the one for the child you are paying for.</p>
+      {owing.length > 0 && <TransferCardsForChildren children={owing} />}
+      {others.length > 0 && (showOthers
+        ? <TransferCardsForChildren children={others} />
+        : <button type="button" className="fees-transfer-others" onClick={() => setShowOthers(true)}>
+            {owing.length > 0 ? "Show the other children's account numbers" : "Show each child's account number"}
+          </button>)}
+    </section>
+  );
 }
 
 function DisclosureButton({ title, description, open, onClick, controls }: {

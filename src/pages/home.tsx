@@ -8,6 +8,8 @@ import { PushOffer } from "@/components/push-settings";
 import { formatLongDate, formatNaira, formatTimestampDate } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
 import {
+  cardPaymentsOn,
+  useFamilyFeesQuery,
   useHomeQuery,
   type ChildAttendance,
   type ChildFees,
@@ -163,6 +165,10 @@ function Unavailably({ block }: { block: Unavailable }) {
 }
 
 function FamilyFeesBanner({ block, children }: { block: FamilyFees; children: ChildHomeBlock[] }) {
+  const owesSomething = block.available && children.some((child) => child.fees.available && child.fees.owing > 0);
+  // Read only to learn how this school's families pay; Fees needs the same answer next.
+  const { data: fees } = useFamilyFeesQuery(undefined, { skip: !owesSomething });
+  const transferOnly = !!fees && !cardPaymentsOn(fees);
   if (!block.available) {
     return (
       <section className="home-surface home-banner home-banner--amber" role="status">
@@ -208,7 +214,7 @@ function FamilyFeesBanner({ block, children }: { block: FamilyFees; children: Ch
       </div>
       <div className="home-banner-text">
         <strong>{formatNaira(due)} still due on bills and charges</strong>
-        <p>{credit > 0 ? `${formatNaira(credit)} credit held by the school. Ask the school to apply it before you pay.` : "Across your children."}</p>
+        <p>{credit > 0 ? `${formatNaira(credit)} credit held by the school. Ask the school to apply it before you pay.` : "Across your children."}{transferOnly && " Pay by transfer to each child's account on the Fees screen."}</p>
       </div>
       <Link to="/fees" className="home-banner-cta">
         Open Fees

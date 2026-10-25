@@ -113,6 +113,15 @@ describe("push arriving", () => {
     );
   });
 
+  it("tells an open parent app what arrived, so it can read balances again at once", async () => {
+    const open = [{ url: "http://lagoon-view.localhost:5176/parent/fees", postMessage: vi.fn(), focus: vi.fn(async () => undefined) }];
+    const other = [{ url: "http://lagoon-view.localhost:5176/student/", postMessage: vi.fn(), focus: vi.fn(async () => undefined) }];
+    const { listeners } = loadWorker([...open, ...other]);
+    await fire(listeners.push, { data: { json: () => PAYMENT_PUSH } });
+    expect(open[0].postMessage).toHaveBeenCalledWith({ type: "xvs-parent-push-received", tag: "billing.payment_received" });
+    expect(other[0].postMessage).not.toHaveBeenCalled();
+  });
+
   it("falls back to a default title when the payload is empty", async () => {
     const { self, listeners } = loadWorker([]);
     await fire(listeners.push, { data: { json: () => ({}) } });
@@ -141,6 +150,17 @@ describe("a push that arrives and is then tapped", () => {
     const open = [{ url: "http://lagoon-view.localhost:5176/parent/", postMessage: vi.fn(), focus: vi.fn(async () => undefined) }];
     await arriveThenTap({ ...NOTICE_PUSH, url: "/parent/notices/42" }, open);
     expect(open[0].postMessage).toHaveBeenCalledWith({ type: "xvs-parent-push-open", path: "/parent/notices/42" });
+  });
+
+  it("opens the receipt a booked transfer's push names, in the open app", async () => {
+    const open = [{ url: "http://lagoon-view.localhost:5176/parent/fees", postMessage: vi.fn(), focus: vi.fn(async () => undefined) }];
+    await arriveThenTap({ ...PAYMENT_PUSH, url: "/parent/fees/receipts/88", child: 11 }, open);
+    expect(open[0].postMessage).toHaveBeenCalledWith({ type: "xvs-parent-push-open", path: "/parent/fees/receipts/88" });
+  });
+
+  it("opens the receipt in a new window when the app is closed", async () => {
+    const self = await arriveThenTap({ ...PAYMENT_PUSH, url: "/parent/fees/receipts/88", child: 11 }, []);
+    expect(self.clients.openWindow).toHaveBeenCalledWith("/parent/fees/receipts/88");
   });
 
   it("names the child from the push when the url is not the parent app's", async () => {

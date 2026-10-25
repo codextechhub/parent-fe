@@ -48,19 +48,28 @@ self.addEventListener("push", (event) => {
   }
   const title = data.title || "Your school";
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body || "",
-      tag: data.tag || undefined,
-      renotify: Boolean(data.tag),
-      icon: APP_ROOT + "icons/icon-192.png",
-      badge: APP_ROOT + "icons/badge-96.png",
-      data: {
-        tag: data.tag || "",
-        notificationId: data.notification_id || "",
-        url: typeof data.url === "string" ? data.url : "",
-        child: Number.isInteger(data.child) ? data.child : null,
-      },
-    }),
+    (async () => {
+      // An open app is told what arrived, so it can read balances and transfers again at once.
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of windows) {
+        if (new URL(client.url).pathname.startsWith(APP_ROOT)) {
+          client.postMessage({ type: "xvs-parent-push-received", tag: data.tag || "" });
+        }
+      }
+      await self.registration.showNotification(title, {
+        body: data.body || "",
+        tag: data.tag || undefined,
+        renotify: Boolean(data.tag),
+        icon: APP_ROOT + "icons/icon-192.png",
+        badge: APP_ROOT + "icons/badge-96.png",
+        data: {
+          tag: data.tag || "",
+          notificationId: data.notification_id || "",
+          url: typeof data.url === "string" ? data.url : "",
+          child: Number.isInteger(data.child) ? data.child : null,
+        },
+      });
+    })(),
   );
 });
 

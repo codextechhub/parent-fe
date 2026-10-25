@@ -432,9 +432,20 @@ export type PayAll = {
 export type FamilyFeesData = {
   children: ChildFeesEntry[];
   combined: FamilyFeesBlock;
+  /**
+   * Whether the school lets families pay by card. False means every family pays
+   * by bank transfer into the child's own account. Absent from a server that
+   * predates it, which then offers card as it always did.
+   */
+  card_payments?: boolean;
   min_part_payment: number;
   pay_all: PayAll;
 };
+
+/** Whether this school takes card payments from families. An absent flag reads as on. */
+export function cardPaymentsOn(fees: Pick<FamilyFeesData, "card_payments"> | undefined): boolean {
+  return fees?.card_payments !== false;
+}
 
 export type Payment = {
   payment_ref: number | null;
@@ -910,6 +921,15 @@ export const {
 
 /** The sentence a mutation refused for one field, as the backend wraps it. */
 export type FieldRefusal = { message: string; field: string };
+
+/** The machine code a refused call carries (`error.code`), or an empty string. */
+export function refusalCode(error: unknown): string {
+  const code = (error as { data?: { error?: { code?: unknown } } } | undefined)?.data?.error?.code;
+  return typeof code === "string" ? code : "";
+}
+
+/** The code the card checkout answers with, 409, when the school's families pay by transfer. */
+export const CARD_PAYMENTS_OFF = "CARD_PAYMENTS_OFF";
 
 export function refusal(error: unknown): FieldRefusal {
   const err = error as {

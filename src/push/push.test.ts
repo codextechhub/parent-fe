@@ -197,6 +197,7 @@ describe("routerPath", () => {
   it("peels the /parent prefix for react-router", () => {
     expect(routerPath("/parent/fees")).toBe("/fees");
     expect(routerPath("/parent/notices")).toBe("/notices");
+    expect(routerPath("/parent/fees/receipts/88")).toBe("/fees/receipts/88");
     expect(routerPath("/parent/")).toBe("/");
     expect(routerPath("/parent")).toBe("/");
     expect(routerPath("/student/fees")).toBe("/");

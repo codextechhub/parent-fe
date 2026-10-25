@@ -16,6 +16,7 @@ const fees = vi.hoisted(() => ({
 const query = vi.hoisted(() => ({ isFetching: false }));
 
 vi.mock("@/redux/services/portal-api", () => ({
+  cardPaymentsOn: (data?: { card_payments?: boolean }) => data?.card_payments !== false,
   useFamilyFeesQuery: () => ({ data: fees, isLoading: false, isFetching: query.isFetching }),
 }));
 

@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Building2, CreditCard, Lock } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router";
 
-import { GetTransferAccount } from "@/components/fees/get-transfer-account";
-import { TransferAccountCard } from "@/components/fees/transfer-account-card";
+import { ChildTransferAccount } from "@/components/fees/child-transfer-account";
+import { SAVED_NUMBER_HINT } from "@/components/fees/transfer-account-card";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatNaira, parseNaira } from "@/lib/format";
@@ -12,9 +12,10 @@ import { clearPayAllQueue, readPayAllQueue } from "@/pages/pay-all-queue";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { baseApi } from "@/redux/services/base-api";
 import {
+  CARD_PAYMENTS_OFF,
+  cardPaymentsOn,
   refusal,
-  useChildDepositsQuery,
-  useChildTransferAccountQuery,
+  refusalCode,
   useFamilyFeesQuery,
   useInvoiceSheetQuery,
   useStartPaymentMutation,
@@ -26,7 +27,11 @@ import {
 import "./fees.css";
 import "./pay.css";
 
-/** Pay one invoice, by card or by bank transfer into the child's own account. */
+/**
+ * Pay one invoice. Where the school takes cards it is by card or by bank
+ * transfer into the child's own account; where families pay by transfer alone
+ * it is the child's account, with the transfer arriving on this screen.
+ */
 export function PayPage() {
   const { invoiceRef } = useParams();
   const [searchParams] = useSearchParams();
@@ -35,8 +40,14 @@ export function PayPage() {
   const { data: sheet } = useInvoiceSheetQuery(ref, { skip: !Number.isSafeInteger(ref) || ref <= 0 });
   const offline = useAppSelector((s) => s.connectivity.offline);
   const [method, setMethod] = useState<"card" | "transfer">("card");
+  // Set when the server refuses a card checkout because this school's families pay by transfer.
+  const [cardRefused, setCardRefused] = useState(false);
+  const cardOn = cardPaymentsOn(fees) && !cardRefused;
   const { invoice, childEntry } = findInvoice(fees, ref);
-  const isPayAllStep = searchParams.get("pay-all") === "1";
+  const isPayAllStep = cardOn && searchParams.get("pay-all") === "1";
+  useEffect(() => {
+    if (!cardOn) clearPayAllQueue();
+  }, [cardOn]);
   const queue = isPayAllStep ? readPayAllQueue() : null;
   const currentStep = queue?.steps[queue.index];
   const queueStep = currentStep?.invoice_ref === ref ? currentStep : undefined;
@@ -71,12 +82,32 @@ export function PayPage() {
                   )}
                 </div>
               </section>
-              <p className="pay-help">{isPayAllStep
-                ? "Pay all uses a separate secure checkout for each bill. You can review each amount before paying."
-                : <>Card details go on the secure gateway page, never in this app. A transfer goes into {childEntry.child.first_name}&apos;s own account number.</>}</p>
+              <p className="pay-help">{!cardOn
+                ? <>Pay by bank transfer into {childEntry.child.first_name}&apos;s own account number. It shows here as soon as it arrives.</>
+                : isPayAllStep
+                  ? "Pay all uses a separate secure checkout for each bill. You can review each amount before paying."
+                  : <>Card details go on the secure gateway page, never in this app. A transfer goes into {childEntry.child.first_name}&apos;s own account number.</>}</p>
             </div>
             <div className="pay-detail">
-              {invalidQueue ? (
+              {!cardOn ? (
+                <>
+                  {cardRefused && (
+                    <p className="fees-transfer-switched" role="status">
+                      Card payments aren&apos;t available at this school. Pay by bank transfer into{" "}
+                      {childEntry.child.first_name}&apos;s account number instead.
+                    </p>
+                  )}
+                  {invoice.balance <= 0 && <Note>This bill is fully paid. Thank you.</Note>}
+                  <ChildTransferAccount
+                    childId={childEntry.child.id}
+                    firstName={childEntry.child.first_name}
+                    fullName={childEntry.child.full_name}
+                    owing={childEntry.owing}
+                    title={`Pay into ${childEntry.child.first_name}'s account`}
+                    showAccount={invoice.balance > 0}
+                  />
+                </>
+              ) : invalidQueue ? (
                 <Note>This payment step has changed. Return to Fees and start Pay all balances again.</Note>
               ) : invoice.balance <= 0 ? (
                 <Note>This bill is fully paid. Thank you.</Note>
@@ -92,9 +123,21 @@ export function PayPage() {
                     <MethodButton active={method === "transfer"} onClick={() => setMethod("transfer")} icon={<Building2 size={19} />} label="Bank transfer" description="Into the child's own account" />
                   </div></>}
                   {isPayAllStep || method === "card" ? (
-                    <CardPayment fees={fees} invoice={invoice} queuedAmount={queuedAmount} />
+                    <CardPayment fees={fees} invoice={invoice} queuedAmount={queuedAmount} onCardOff={() => setCardRefused(true)} />
                   ) : (
-                    <TransferPayment childId={childEntry.child.id} firstName={childEntry.child.first_name} />
+                    <div className="pay-transfer">
+                      <ChildTransferAccount
+                        childId={childEntry.child.id}
+                        firstName={childEntry.child.first_name}
+                        fullName={childEntry.child.full_name}
+                        title={`Pay into ${childEntry.child.first_name}'s account`}
+                        hint={SAVED_NUMBER_HINT}
+                      />
+                      <p className="pay-transfer-note">
+                        Transfer any amount from a bank app. There is no card-payment minimum for a
+                        bank transfer. Anything over what is owed waits as credit for the next bill.
+                      </p>
+                    </div>
                   )}
                 </>
               )}
@@ -153,7 +196,10 @@ function findInvoice(fees: FamilyFeesData | undefined, ref: number): {
   return {};
 }
 
-function CardPayment({ fees, invoice, queuedAmount }: { fees: FamilyFeesData; invoice: Invoice; queuedAmount?: number }) {
+function CardPayment({ fees, invoice, queuedAmount, onCardOff }: {
+  fees: FamilyFeesData; invoice: Invoice; queuedAmount?: number; onCardOff: () => void;
+}) {
+  const dispatch = useAppDispatch();
   const [mode, setMode] = useState<"full" | "part">("full");
   const [typed, setTyped] = useState("");
   const [error, setError] = useState("");
@@ -181,6 +227,12 @@ function CardPayment({ fees, invoice, queuedAmount }: { fees: FamilyFeesData; in
       const checkout = await start({ invoiceRef: invoice.invoice_ref, amount }).unwrap();
       window.location.assign(checkout.checkout_url);
     } catch (failure) {
+      if (refusalCode(failure) === CARD_PAYMENTS_OFF) {
+        // A stale screen: read the fees again, which now say card is off, and show the transfer view.
+        dispatch(baseApi.util.invalidateTags(["Fees"]));
+        clearPayAllQueue();
+        return onCardOff();
+      }
       setError(refusal(failure).message);
     }
   };
@@ -264,75 +316,6 @@ function CardPayment({ fees, invoice, queuedAmount }: { fees: FamilyFeesData; in
         Card details go on the secure gateway page, never in this app. The gateway may offer
         other methods there.
       </p>
-    </section>
-  );
-}
-
-/** How often the transfer panel asks whether a deposit has arrived. */
-const WATCH_EVERY_MS = 5_000;
-
-function TransferPayment({ childId, firstName }: { childId: number; firstName: string }) {
-  const { data: account, isLoading, isError, error } = useChildTransferAccountQuery(childId);
-  if (isLoading) return <div className="pay-loading" role="status" aria-label="Loading transfer account" />;
-  if (isError || !account)
-    return <Note>{refusal(error).message || "The account number can't be shown right now."}</Note>;
-  if (account.state === "UNAVAILABLE") return <Note>{account.message}</Note>;
-  if (account.state === "NONE") return <GetTransferAccount childId={childId} firstName={firstName} />;
-  return (
-    <div className="pay-transfer">
-      <TransferAccountCard account={account} childName={firstName} title={`Pay into ${firstName}'s account`} />
-      <p className="pay-transfer-note">
-        Transfer any amount from a bank app. There is no card-payment minimum for a bank
-        transfer. Anything over what is owed waits as credit for the next bill.
-      </p>
-      <DepositWatch childId={childId} since={account.as_of} firstName={firstName} />
-    </div>
-  );
-}
-
-function DepositWatch({ childId, since, firstName }: { childId: number; since: string; firstName: string }) {
-  const dispatch = useAppDispatch();
-  const { data } = useChildDepositsQuery(
-    { childId, since },
-    { pollingInterval: WATCH_EVERY_MS, skipPollingIfUnfocused: true, refetchOnFocus: true },
-  );
-  const deposits = data?.deposits ?? [];
-  const confirmed = deposits.filter((deposit) => deposit.status === "CONFIRMED").length;
-  const seen = useRef(0);
-  useEffect(() => {
-    if (confirmed > seen.current) {
-      seen.current = confirmed;
-      dispatch(baseApi.util.invalidateTags(["Fees", "Me", "Payments"]));
-    }
-  }, [confirmed, dispatch]);
-  return (
-    <section className="pay-watch" aria-label="Transfer activity">
-      <h3>{firstName}&apos;s transfers</h3>
-      {deposits.length === 0 ? (
-        <p className="pay-watch-message" role="status">
-          Waiting for the transfer. Keep this page open to see it arrive.
-        </p>
-      ) : (
-        <ul role="status">
-          {deposits.map((deposit) => (
-            <li
-              key={deposit.reference}
-              className={cn(
-                "pay-watch-message",
-                deposit.status === "CONFIRMED" ? "is-received" : "is-pending",
-              )}
-            >
-              {formatNaira(deposit.amount)}{" "}
-              {deposit.status === "CONFIRMED"
-                ? "received. Thank you."
-                : "on its way. Waiting for the bank to confirm."}
-              {deposit.has_receipt && deposit.payment_ref && (
-                <Link to={`/fees/receipts/${deposit.payment_ref}`}>View receipt</Link>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }
