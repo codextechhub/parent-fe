@@ -2,8 +2,7 @@ import { ReceiptText } from "lucide-react";
 import { Link } from "react-router";
 
 import { formatTimestampDate } from "@/lib/format";
-import { describeNotice } from "@/lib/payment-notices";
-import { useFamilyPaymentsQuery } from "@/redux/services/portal-api";
+import { noticePath } from "@/lib/payment-notices";
 import {
   useMarkPaymentNoticeReadMutation,
   usePaymentNoticesQuery,
@@ -16,13 +15,11 @@ import {
  * notification feed, each opening the receipt and clearing itself as it is
  * opened. It draws nothing while there is nothing new, while the feed is still
  * loading and when the feed cannot be read, so a quiet family sees no empty
- * block. The family's payments are read only once there is a notice to match,
- * to turn the receipt number the notice names into the receipt's address.
+ * block. A notice opens the receipt its address names, or Fees when it names none.
  */
 export function PaymentNotices() {
   const { data: notices } = usePaymentNoticesQuery(undefined, { refetchOnMountOrArgChange: true });
   const shown = notices ?? [];
-  const { data: payments } = useFamilyPaymentsQuery(undefined, { skip: shown.length === 0 });
   const [markRead] = useMarkPaymentNoticeReadMutation();
   if (shown.length === 0) return null;
 
@@ -35,12 +32,10 @@ export function PaymentNotices() {
         </div>
       </div>
       <ul className="home-payments">
-        {shown.map((notice) => {
-          const line = describeNotice(notice, payments);
-          return (
+        {shown.map((notice) => (
             <li key={notice.id}>
               <Link
-                to={line.href}
+                to={noticePath(notice.actionUrl)}
                 className="home-surface home-notice home-notice-link"
                 onClick={() => void markRead(notice.id)}
               >
@@ -51,18 +46,14 @@ export function PaymentNotices() {
                   <span className="home-notice-top">
                     <strong>
                       <span className="home-unread-dot" aria-label="Unread" />
-                      {line.title}
+                      {notice.subject || "Payment received"}
                     </strong>
                     <time dateTime={notice.createdAt}>{formatTimestampDate(notice.createdAt)}</time>
-                  </span>
-                  <span className="home-notice-excerpt">
-                    {line.receiptNumber ? `Receipt ${line.receiptNumber}` : "Open Fees to see your receipt"}
                   </span>
                 </span>
               </Link>
             </li>
-          );
-        })}
+        ))}
       </ul>
     </section>
   );

@@ -6,7 +6,8 @@ import { baseApi } from "./base-api";
 export type PaymentNotice = {
   id: string;
   subject: string;
-  body: string;
+  /** Where the school says the notice opens; "" from a school that sends none. */
+  actionUrl: string;
   createdAt: string;
 };
 
@@ -14,7 +15,7 @@ type FeedRow = {
   id?: unknown;
   event_type_key?: unknown;
   subject?: unknown;
-  body?: unknown;
+  action_url?: unknown;
   created_at?: unknown;
   is_read?: unknown;
 };
@@ -57,7 +58,7 @@ export const paymentNoticesApi = baseApi.injectEndpoints({
           .map((row) => ({
             id: row.id as string,
             subject: typeof row.subject === "string" ? row.subject : "",
-            body: typeof row.body === "string" ? row.body : "",
+            actionUrl: typeof row.action_url === "string" ? row.action_url : "",
             createdAt: typeof row.created_at === "string" ? row.created_at : "",
           }));
       },
