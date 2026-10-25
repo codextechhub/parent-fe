@@ -65,7 +65,7 @@ describe("PushListener", () => {
   it("reads fees and watched transfers again when a Payment received push arrives", () => {
     const { invalidate, root } = mount();
     send({ type: "xvs-parent-push-received", tag: "billing.payment_received" });
-    expect(invalidate).toHaveBeenCalledWith(["Fees", "Me", "Payments"]);
+    expect(invalidate).toHaveBeenCalledWith(["Fees", "Me", "Payments", "PaymentNotices"]);
     expect(refreshWatch).toHaveBeenCalledTimes(1);
     act(() => root.unmount());
   });

@@ -46,7 +46,7 @@ export function PushListener() {
     const onMessage = (event: MessageEvent) => {
       if (isReceivedMessage(event.data)) {
         if (event.data.tag !== PAYMENT_RECEIVED) return;
-        dispatch(baseApi.util.invalidateTags(["Fees", "Me", "Payments"]));
+        dispatch(baseApi.util.invalidateTags(["Fees", "Me", "Payments", "PaymentNotices"]));
         refreshDepositWatch();
         return;
       }

@@ -56,7 +56,7 @@ export function useDepositWatch(childId: number | null, since: string | null): D
       return answer.deposits;
     };
     watcher.onBooked = () => {
-      dispatch(baseApi.util.invalidateTags(["Fees", "Me", "Payments"]));
+      dispatch(baseApi.util.invalidateTags(["Fees", "Me", "Payments", "PaymentNotices"]));
     };
   }, [dispatch]);
 
