@@ -69,9 +69,15 @@ calls them.
   without a message. The platform tenant and a `DEVICE_SESSION_NOT_OFFERED`
   answer on login are refused inline on sign-in: Codex staff and other
   school staff never open the shell.
-- **No school-fe hand-off yet.** school-fe's sign-in page already hands
-  pupils to `/student/`; no branch hands parents to `/parent/`. Parent
-  sign-in works self-contained on this app's own `/parent/sign-in` page.
+- **school-fe hands parents here.** A parent-only account that signs in,
+  activates or resets its password on the school web app is answered a
+  `device_app` of `/parent/`; school-fe moves the sign-in into this app's
+  device session (`POST /user/auth/device/hand-over/`), leaves the account
+  under sessionStorage `xvs.parent.handover` and opens `/parent/`.
+  `adoptHandover` (`src/auth/device-account.ts`, called from `main.tsx`
+  before the first render) adopts and removes it; the ordinary refresh then
+  gets the access token from the cookie. The key name is school-fe's
+  contract. Sign-in also works on this app's own `/parent/sign-in` page.
 - **Phones are the main screen.** The layout is derived from the desktop
   design; the owner's choice between a desktop sidebar and the floating tab
   bar at every size is pending (see the plan). Horizontal page overflow is

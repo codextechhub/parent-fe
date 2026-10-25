@@ -323,10 +323,10 @@ Blocked, this phase, on the backend.
 
 - **Sign in** on this app's own page: a device-session sign-in, as
   student-fe does it, with the CSRF and refresh plumbing copied from there.
-- **school-fe hand-off:** school-fe's sign-in page already hands pupils to
-  `/student/`; add the symmetric branch for parents: a guardian signed in
-  through school-fe is sent to `/parent/`, same as a pupil to `/student/`.
-  Backend adds the surface here.
+- **school-fe hand-off:** school-fe's sign-in page hands pupils to
+  `/student/` and parents to `/parent/`: the sign-in moves into the app's
+  device session and the account key is left under sessionStorage
+  `xvs.parent.handover`, which this app adopts on start-up.
 - **The shell:** the floating tab bar at every size (student-fe's pattern),
   More once there are more than five items; the sidebar from the design is
   kept for desktop (student-fe moved away from it on the owner's choice; the

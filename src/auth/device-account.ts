@@ -79,6 +79,41 @@ export async function setAccount(account: string): Promise<void> {
   await storage.write(account);
 }
 
+/**
+ * Where school-fe's sign-in page leaves the account it handed over.
+ *
+ * Same origin and same tab, so sessionStorage carries it across the page
+ * change. Only the opaque account travels; the parent's credential is the
+ * cookie the API set during the hand-over, and the access token is fetched
+ * from it by the ordinary refresh. school-fe writes this key; the two must
+ * agree.
+ */
+export const HANDOVER_KEY = "xvs.parent.handover";
+
+/**
+ * Takes over a sign-in school-fe handed across, before anything asks who is
+ * signed in.
+ *
+ * The key is removed as it is read, so it is used once: a reload later signs
+ * in from the stored account like any other visit. A handed-over account
+ * replaces whatever key was kept before, since it is the sign-in the parent
+ * has just made. Whether the cookie behind it still works is for the refresh
+ * to say; if it does not, the parent is led to sign-in as usual. Resolves
+ * true when an account was adopted.
+ */
+export async function adoptHandover(): Promise<boolean> {
+  let handedOver: string | null = null;
+  try {
+    handedOver = sessionStorage.getItem(HANDOVER_KEY);
+    sessionStorage.removeItem(HANDOVER_KEY);
+  } catch {
+    handedOver = null;
+  }
+  if (!handedOver) return false;
+  await setAccount(handedOver);
+  return true;
+}
+
 /** Forgets the account, as sign-out and an ended session do. */
 export async function clearAccount(): Promise<void> {
   current = null;

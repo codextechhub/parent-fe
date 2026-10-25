@@ -8,6 +8,7 @@ import "@fontsource-variable/geist/index.css";
 import "@fontsource-variable/geist-mono/index.css";
 
 import App from "./App";
+import { adoptHandover } from "./auth/device-account";
 import { captureInstallPrompt } from "./install/install-prompt";
 import { checkRelatedApps } from "./install/installed";
 import { applySchoolApp } from "./lib/school-app";
@@ -37,10 +38,16 @@ async function readSchoolName(slug: string): Promise<string> {
 captureInstallPrompt();
 void applySchoolApp(readSchoolName).then(() => checkRelatedApps());
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </StrictMode>,
-);
+// A sign-in handed across from school-fe is taken over first, so the first
+// read of who is signed in already finds it.
+void adoptHandover()
+  .catch(() => false)
+  .then(() => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </StrictMode>,
+    );
+  });
