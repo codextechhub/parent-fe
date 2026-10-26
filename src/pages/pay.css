@@ -108,3 +108,8 @@
 @media (min-width: 760px) { .pay-all-layout { grid-template-columns: minmax(0, 1.5fr) minmax(250px, .85fr); align-items: start; } }
 @media (max-width: 759px) { .pay-all-summary { padding: 23px; } .pay-all-current, .pay-all-upcoming { padding: 18px; } }
 @media (max-width: 480px) { .pay-all-summary-top { flex-wrap: wrap; } .pay-all-step-amount { display: block; } .pay-all-step-amount strong { display: block; margin-top: 3px; } }
+
+/* The sentence under the bill: set apart from the hero and read as help text. */
+.pay-help { margin: 14px 2px 0; color: #66758c; font-size: 13px; line-height: 1.5; }
+.pay-transfer .pay-section-heading { margin-top: 4px; }
+.pay-transfer .fees-transfer-switched, .pay-transfer .pay-note { margin: 0 0 12px; }

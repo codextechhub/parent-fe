@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { ChangePasswordCard } from "@/components/change-password";
 import { ChildAvatar } from "@/components/child-avatar";
+import { DeleteAccountCard } from "@/components/delete-account-card";
 import { InstallSetting } from "@/components/install-offer";
 import { PageShell } from "@/components/layout/page-shell";
 import { PushSetting } from "@/components/push-settings";
@@ -21,6 +22,7 @@ import {
   type ProfileData,
 } from "@/redux/services/portal-api";
 
+import "./delete-account.css";
 import "./profile.css";
 
 /**
@@ -61,6 +63,7 @@ export function ProfilePage() {
             <InstallSetting />
             <PushSetting />
             <ChangePasswordCard />
+            <DeleteAccountCard />
           </>
         )}
       </div>

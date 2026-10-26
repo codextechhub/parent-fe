@@ -2,6 +2,8 @@ import { Bell, Share, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { NativePushSetting } from "@/native/native-push-setting";
+import { isNativeApp } from "@/native/platform";
 import type { TurnOnResult } from "@/push/push";
 import { usePush } from "@/push/use-push";
 import { useAppSelector } from "@/redux/hooks";
@@ -79,9 +81,14 @@ export function PushOffer() {
  * The notifications setting on Profile for the signed-in parent.
  *
  * Says where things stand (on, off, blocked, install-first on iPhone, or
- * unavailable) and offers the one action that applies.
+ * unavailable) and offers the one action that applies. The store app has its
+ * own card for native push (`NativePushSetting`).
  */
 export function PushSetting() {
+  return isNativeApp() ? <NativePushSetting /> : <WebPushSetting />;
+}
+
+function WebPushSetting() {
   const { state, busy, turnOn, turnOff } = usePush();
   const offline = useAppSelector((s) => s.connectivity.offline);
   const firstName = useFirstName();

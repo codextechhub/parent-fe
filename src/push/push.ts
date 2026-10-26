@@ -1,6 +1,7 @@
 import type { ThunkDispatch, UnknownAction } from "@reduxjs/toolkit";
 
 import { getAccount } from "@/auth/device-account";
+import { isNativeApp } from "@/native/platform";
 import { pushApi, type ParentSubscription } from "@/redux/services/push-api";
 
 import { pushChoice, setPushChoice } from "./push-choice";
@@ -34,7 +35,12 @@ export function routerPath(path: string): string {
 
 export type PushSupport = "ready" | "install-first" | "unsupported";
 
+/**
+ * Whether this browser can show the school's notifications. The store app has
+ * no Web Push: its notifications are native push (`native/native-push`).
+ */
 export function pushSupport(): PushSupport {
+  if (isNativeApp()) return "unsupported";
   if (typeof window === "undefined" || typeof navigator === "undefined") return "unsupported";
   if (isAppleMobile(browserFacts()) && !runningInstalled()) return "install-first";
   if (

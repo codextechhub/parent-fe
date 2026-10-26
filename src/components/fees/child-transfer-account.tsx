@@ -30,6 +30,8 @@ type Props = {
    * the watch is not restarted by the screen changing shape.
    */
   showAccount?: boolean;
+  /** Says "Waiting for your transfer" under the number until a transfer shows, for the Pay step. */
+  waiting?: boolean;
 };
 
 /**
@@ -41,7 +43,7 @@ type Props = {
  * (`NONE`), or the school's sentence (`UNAVAILABLE`). The transfers are kept
  * current by the app's one watcher while this is on screen.
  */
-export function ChildTransferAccount({ childId, firstName, fullName, owing, title, hint = TRANSFER_HINT, showAccount = true }: Props) {
+export function ChildTransferAccount({ childId, firstName, fullName, owing, title, hint = TRANSFER_HINT, showAccount = true, waiting = false }: Props) {
   const { data: account, isLoading, isFetching, isError } = useChildTransferAccountQuery(childId, {
     refetchOnMountOrArgChange: true,
   });
@@ -96,14 +98,18 @@ export function ChildTransferAccount({ childId, firstName, fullName, owing, titl
         owing={owing}
         hint={hint}
       />
-      <TransferActivity deposits={deposits} firstName={firstName} />
+      <TransferActivity deposits={deposits} firstName={firstName} waiting={waiting} />
     </div>
   );
 }
 
 /** The transfers seen since the screen opened: on their way, then received with their receipt. */
-export function TransferActivity({ deposits, firstName }: { deposits: Deposit[]; firstName: string }) {
-  if (deposits.length === 0) return null;
+export function TransferActivity({ deposits, firstName, waiting = false }: { deposits: Deposit[]; firstName: string; waiting?: boolean }) {
+  if (deposits.length === 0) {
+    return waiting ? (
+      <p className="fees-transfer-waiting" role="status">Waiting for your transfer. Keep this page open to see it arrive.</p>
+    ) : null;
+  }
   return (
     <ul className="fees-transfer-activity" role="status" aria-label={`${firstName}'s transfers`}>
       {deposits.map((deposit) => {

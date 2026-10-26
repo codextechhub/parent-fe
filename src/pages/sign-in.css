@@ -298,3 +298,13 @@
   .signin-welcome h1 { font-size: 35px; font-weight: 650; letter-spacing: -.05em; }
   .signin-area { padding-inline: 19px; }
 }
+
+.signin-change-school {
+  display: block;
+  margin-top: 14px;
+  color: #4a659d;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: center;
+  text-decoration: none;
+}

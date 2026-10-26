@@ -15,3 +15,6 @@ body {
 :root {
   --font-weight-semibold: 650;
 }
+
+/* The store app's status bar sits over the sign-in's blue header: a strip of that blue keeps its light text readable as the card scrolls under it. */
+.status-bar-backdrop { position: fixed; z-index: 60; top: 0; right: 0; left: 0; height: env(safe-area-inset-top, 0px); background: #0d2250; pointer-events: none; }

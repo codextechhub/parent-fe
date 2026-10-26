@@ -7,11 +7,13 @@ import {
 } from "@reduxjs/toolkit/query/react";
 
 import { getAccessToken } from "@/auth/access-token";
+import { requestCredentials } from "@/auth/api";
 import { getCsrfToken } from "@/auth/csrf";
 import {
   markSessionInvalidated,
   refreshTokenSingleFlight,
 } from "@/auth/refresh";
+import { isNativeApp } from "@/native/platform";
 import { currentSchoolSlug } from "@/utils/school-host";
 
 const baseUrl = import.meta.env.VITE_BACKEND_URL;
@@ -66,13 +68,14 @@ const injectTenant = (args: string | FetchArgs): string | FetchArgs => {
  */
 export const baseQuery = fetchBaseQuery({
   baseUrl,
-  credentials: "include",
+  credentials: requestCredentials(),
   prepareHeaders: async (headers, { endpoint, type }) => {
     const accessToken = getAccessToken();
     if (accessToken && endpoint !== "login" && endpoint !== "logout") {
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
-    if (type === "mutation") {
+    // CSRF guards cookies; the store app sends none.
+    if (type === "mutation" && !isNativeApp()) {
       const csrf = await getCsrfToken();
       if (csrf) headers.set("X-CSRFToken", csrf);
     }

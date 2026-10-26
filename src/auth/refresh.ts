@@ -1,6 +1,10 @@
+import { getCredential, putCredential } from "@/native/credentials";
+import { isNativeApp } from "@/native/platform";
+
 import { clearAccessToken, setAccessToken } from "./access-token";
 import { authPost } from "./api";
 import { clearAccount, getAccount } from "./device-account";
+import { forgetCredential } from "./device-credential";
 
 export type RefreshOutcome =
   | { ok: true; access: string }
@@ -46,12 +50,41 @@ function withAccountLock<T>(account: string, task: () => Promise<T>): Promise<T>
   return locks.request(`refresh:${account}`, task) as unknown as Promise<T>;
 }
 
+/**
+ * What a refresh sends: the account, and in the store app the credential kept
+ * for it. There is no cookie in the store app, so a parent with no credential
+ * stored has nothing to refresh with and their sign-in is over, while a
+ * storage that cannot be read decides nothing.
+ */
+async function nativeRefreshBody(account: string): Promise<{ account: string; refresh?: string } | "none" | "unreadable"> {
+  try {
+    const refresh = await getCredential(account);
+    return refresh ? { account, refresh } : "none";
+  } catch {
+    return "unreadable";
+  }
+}
+
 async function refreshOnce(account: string, mayRetry: boolean): Promise<RefreshOutcome> {
-  const result = await authPost<{ access?: string }>("/user/auth/device/refresh/", { account });
+  const body = isNativeApp() ? await nativeRefreshBody(account) : { account };
+  if (body === "unreadable") return { ok: false, reason: "server_error" };
+  if (body === "none") {
+    await clearAccount();
+    return { ok: false, reason: "token_invalid" };
+  }
+  const result = await authPost<{ access?: string; refresh?: string }>("/user/auth/device/refresh/", body);
   if (result.ok) {
     const access = result.data.access ?? "";
     if (!access) return { ok: false, reason: "server_error" };
     if (sessionInvalidated) return { ok: false, reason: "token_invalid" };
+    if (isNativeApp()) {
+      if (!result.data.refresh) return { ok: false, reason: "server_error" };
+      try {
+        await putCredential(account, result.data.refresh);
+      } catch {
+        // Not kept: this launch carries on with its access token, and the next one asks for a sign-in.
+      }
+    }
     setAccessToken(access);
     return { ok: true, access };
   }
@@ -64,6 +97,7 @@ async function refreshOnce(account: string, mayRetry: boolean): Promise<RefreshO
   // Only a definitive 401 means the sign-in is over; anything else is transient.
   if (status === 401 && (ENDED.has(code) || !code)) {
     await clearAccount();
+    await forgetCredential(account);
     return { ok: false, reason: "token_invalid" };
   }
   if (status === 0) return { ok: false, reason: "network_error" };

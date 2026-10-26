@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { ArrowRight, Eye, EyeOff, LockKeyhole } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { setAccessToken } from "@/auth/access-token";
+import { clearAccount } from "@/auth/device-account";
+import { keepNativeCredential } from "@/auth/device-credential";
 import { SchoolMark } from "@/components/school-mark";
 import { useSchoolName } from "@/lib/use-school-name";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -12,14 +14,26 @@ import {
   useLoginMutation,
   useLogoutMutation,
 } from "@/redux/services/portal-api";
+import { isNativeApp } from "@/native/platform";
 import { schoolLogoUrl } from "@/utils/school-brand";
-import { currentSchoolSlug } from "@/utils/school-host";
+import { currentSchoolSlug, schoolWebAddress } from "@/utils/school-host";
 
 import "./sign-in.css";
 
 /** The school's own pages on this host: its staff sign-in and its password reset. */
 const SCHOOL_SIGN_IN = "/accounts";
 const FORGOT_PASSWORD = "/accounts/forgot-password";
+
+/**
+ * Where a link to the school's own website goes. In a browser it is a path on
+ * the address the parent is already at; the store app has no such address, so
+ * it is the school's website, which the phone opens in its own browser.
+ */
+function schoolLink(path: string, slug: string) {
+  return isNativeApp()
+    ? { href: `${schoolWebAddress(slug)}${path}`, target: "_blank", rel: "noreferrer" }
+    : { href: path };
+}
 
 type Refusal = { message: string; staff?: boolean };
 
@@ -87,6 +101,13 @@ export default function SignInPage() {
     setChecking(true);
     try {
       const result = await login({ email: typed, password }).unwrap();
+      // The store app keeps its credential in secure storage, before anything else can need it to sign out.
+      if (isNativeApp() && !(await keepNativeCredential(result.data.account, result.data.refresh))) {
+        setAccessToken("");
+        await clearAccount();
+        refuse({ message: "This phone could not keep your sign-in safe, so you were not signed in. Try again." });
+        return;
+      }
       // The platform tenant is XVS's own staff: never a school parent.
       if (result.data.tenant?.kind === "PLATFORM") {
         await logout().unwrap().catch(() => {});
@@ -161,12 +182,13 @@ export default function SignInPage() {
                     </button>
                   </div>
                 </div>
-                <a className="signin-forgot" href={FORGOT_PASSWORD}>Forgot password?</a>
-                {shown && <div className="signin-error" role="alert">{shown.message}{shown.staff && <><br /><a href={SCHOOL_SIGN_IN}>If you work here, go to the school&apos;s sign-in</a></>}</div>}
+                <a className="signin-forgot" {...schoolLink(FORGOT_PASSWORD, slug)}>Forgot password?</a>
+                {shown && <div className="signin-error" role="alert">{shown.message}{shown.staff && <><br /><a {...schoolLink(SCHOOL_SIGN_IN, slug)}>If you work here, go to the school&apos;s sign-in</a></>}</div>}
                 <button type="submit" className="signin-submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<ArrowRight size={18} aria-hidden="true" /></button>
               </form>
             )}
             <p className="signin-helper">Trouble signing in? <strong>Ask the school office.</strong></p>
+            {isNativeApp() && <Link to="/school" className="signin-change-school">Change school</Link>}
           </div>
         </section>
       </div>

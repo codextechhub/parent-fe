@@ -8,6 +8,8 @@ import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatNaira, parseNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { openCheckout } from "@/native/checkout";
+import { isNativeApp } from "@/native/platform";
 import { clearPayAllQueue, readPayAllQueue } from "@/pages/pay-all-queue";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { baseApi } from "@/redux/services/base-api";
@@ -82,15 +84,14 @@ export function PayPage() {
                   )}
                 </div>
               </section>
-              <p className="pay-help">{!cardOn
-                ? <>Pay by bank transfer into {childEntry.child.first_name}&apos;s own account number. It shows here as soon as it arrives.</>
-                : isPayAllStep
-                  ? "Pay all uses a separate secure checkout for each bill. You can review each amount before paying."
-                  : <>Card details go on the secure gateway page, never in this app. A transfer goes into {childEntry.child.first_name}&apos;s own account number.</>}</p>
+              {cardOn && <p className="pay-help">{isPayAllStep
+                ? "Pay all uses a separate secure checkout for each bill. You can review each amount before paying."
+                : <>Card details go on the secure gateway page, never in this app. A transfer goes into {childEntry.child.first_name}&apos;s own account number.</>}</p>}
             </div>
             <div className="pay-detail">
               {!cardOn ? (
-                <>
+                <div className="pay-transfer">
+                  <div className="pay-section-heading"><h2>Pay by bank transfer</h2></div>
                   {cardRefused && (
                     <p className="fees-transfer-switched" role="status">
                       Card payments aren&apos;t available at this school. Pay by bank transfer into{" "}
@@ -105,8 +106,9 @@ export function PayPage() {
                     owing={childEntry.owing}
                     title={`Pay into ${childEntry.child.first_name}'s account`}
                     showAccount={invoice.balance > 0}
+                    waiting
                   />
-                </>
+                </div>
               ) : invalidQueue ? (
                 <Note>This payment step has changed. Return to Fees and start Pay all balances again.</Note>
               ) : invoice.balance <= 0 ? (
@@ -132,6 +134,7 @@ export function PayPage() {
                         fullName={childEntry.child.full_name}
                         title={`Pay into ${childEntry.child.first_name}'s account`}
                         hint={SAVED_NUMBER_HINT}
+                        waiting
                       />
                       <p className="pay-transfer-note">
                         Transfer any amount from a bank app. There is no card-payment minimum for a
@@ -225,7 +228,16 @@ function CardPayment({ fees, invoice, queuedAmount, onCardOff }: {
     setError("");
     try {
       const checkout = await start({ invoiceRef: invoice.invoice_ref, amount }).unwrap();
-      window.location.assign(checkout.checkout_url);
+      if (!isNativeApp()) {
+        window.location.assign(checkout.checkout_url);
+        return;
+      }
+      // The store app opens the checkout in the phone's in-app browser and keeps the app where it is.
+      try {
+        await openCheckout(checkout.checkout_url, checkout.reference);
+      } catch {
+        setError("The payment page couldn't be opened. Try again.");
+      }
     } catch (failure) {
       if (refusalCode(failure) === CARD_PAYMENTS_OFF) {
         // A stale screen: read the fees again, which now say card is off, and show the transfer view.

@@ -160,6 +160,11 @@ describe("Pay a bill where families pay by transfer alone", () => {
     expect(text).toContain("0123456011");
     expect(text).toContain("Owing ₦5,000.00");
     expect(text).toContain("It shows here as soon as it arrives.");
+    expect(last.container.querySelector(".pay-section-heading h2")?.textContent).toBe("Pay by bank transfer");
+    expect(last.container.querySelector(".pay-help")).toBeNull();
+    expect(last.container.querySelector(".fees-transfer-waiting")?.textContent).toBe(
+      "Waiting for your transfer. Keep this page open to see it arrive.",
+    );
     expect(text).not.toContain("How would you like to pay?");
     expect(text).not.toContain("Continue to secure payment");
     expect(text).not.toContain("Card");

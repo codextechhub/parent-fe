@@ -20,6 +20,9 @@
  * function returns, not a failure to handle.
  */
 
+import { isNativeApp } from "@/native/platform";
+import { nativeSchoolCode } from "@/native/school-code";
+
 /** The domain the app is served under. Overridable so staging can differ. */
 const BASE_DOMAIN = (import.meta.env.VITE_APP_BASE_DOMAIN || "xvs.codexng.com")
   .trim()
@@ -86,8 +89,13 @@ export function schoolSlugFromHostname(
  * build. A production bundle ignores it entirely, so it can never be the reason
  * a live page asserts a tenant. `bright-star.localhost` also works, and is the
  * closer rehearsal of production.
+ *
+ * The store app has one address for every school, so there is no subdomain to
+ * read: its school is the code the parent entered (`native/school-code`), and
+ * "" until they have.
  */
 export function currentSchoolSlug(hostname: string = window.location.hostname): string {
+  if (isNativeApp()) return nativeSchoolCode();
   const fromHost = schoolSlugFromHostname(hostname)
     // Local development: browsers resolve *.localhost to the loopback address,
     // so this is a real subdomain read rather than a special case.
@@ -99,4 +107,12 @@ export function currentSchoolSlug(hostname: string = window.location.hostname): 
     if (SLUG.test(override)) return override;
   }
   return "";
+}
+
+/**
+ * The address of a school's own website, which the store app sends a parent to
+ * for what it does not do itself (a forgotten password, a staff sign-in).
+ */
+export function schoolWebAddress(slug: string): string {
+  return slug ? `https://${slug}.${BASE_DOMAIN}` : "";
 }

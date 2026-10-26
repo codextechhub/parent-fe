@@ -85,6 +85,11 @@ calls them.
 - **Money comes from the API as kobo.** Never compute a balance the API can
   give; after a payment, read `fees/` again.
 
+- **The store app is this app in a Capacitor shell.** Native code is additive,
+  asks `isNativeApp()` (`src/native/platform.ts`) and nowhere else, and never
+  changes the web behaviour. How it is built and what differs is in
+  `docs/native-app.md`.
+
 ## Running it
 
 - Use the arm64 Node (`node -p process.arch` says `arm64`); the Intel one at

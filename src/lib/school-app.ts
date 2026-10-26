@@ -104,7 +104,7 @@ export function nameThePage(name: string): void {
 
 type KeptName = { slug: string; name: string };
 
-function keptName(slug: string): KeptName | null {
+export function keptName(slug: string): KeptName | null {
   try {
     const kept = JSON.parse(localStorage.getItem(KEPT_NAME_KEY) ?? "null") as KeptName | null;
     return kept?.slug === slug && kept.name ? kept : null;
@@ -113,7 +113,7 @@ function keptName(slug: string): KeptName | null {
   }
 }
 
-function keepName(kept: KeptName) {
+export function keepName(kept: KeptName) {
   try {
     localStorage.setItem(KEPT_NAME_KEY, JSON.stringify(kept));
   } catch {

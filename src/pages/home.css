@@ -148,9 +148,7 @@
 .home-child-name { min-width: 0; flex: 1; }
 .home-child-name strong {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   color: #223153;
   font-size: 16px;
   font-weight: 650;
@@ -226,15 +224,25 @@
 .home-notice .home-empty { padding: 2px 0; }
 .home-notice-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 13px; background: #e8eef8; color: #4a659d; }
 .home-notice-body { display: block; min-width: 0; flex: 1; }
-.home-notice-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.home-notice-top strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #263755; font-size: 12px; font-weight: 700; }
-.home-notice-top time { flex: none; color: #8492a5; font-size: 11px; }
+.home-notice-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.home-notice-top strong { min-width: 0; overflow-wrap: anywhere; color: #263755; font-size: 13px; font-weight: 700; line-height: 1.35; }
+.home-notice-top time { flex: none; color: #8492a5; font-size: 11px; line-height: 1.5; }
 .home-unread-dot { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: #4a659d; vertical-align: 1px; }
 .home-notice-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 5px; color: #65738b; font-size: 11px; line-height: 1.45; }
 .home-notice-for { display: block; margin-top: 6px; color: #4a659d; font-size: 11px; font-weight: 700; }
 
-/* Unread payment notices, one tile each. */
-.home-payments { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+/* Unread payment notices: one card, one row each, never wider than the column. */
+.home-payments { display: block; margin: 0; padding: 4px 0; list-style: none; overflow: hidden; }
+.home-payments li { min-width: 0; }
+.home-payments li + li { border-top: 1px solid #edf0f6; }
+.home-payment { display: flex; align-items: flex-start; gap: 13px; min-width: 0; padding: 15px 17px; text-decoration: none; color: inherit; transition: background-color .2s; }
+.home-payment:hover { background: #f6f8fc; }
+.home-payment-body { display: block; min-width: 0; flex: 1; }
+.home-payment-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.home-payment-top strong { min-width: 0; overflow-wrap: anywhere; color: #223153; font-size: 20px; font-weight: 650; letter-spacing: -.03em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.home-payment-top time { flex: none; color: #8492a5; font-size: 11px; }
+.home-payment-for { display: block; margin-top: 3px; overflow-wrap: anywhere; color: #526482; font-size: 13px; line-height: 1.4; }
+.home-payment-view { display: inline-flex; align-items: center; gap: 2px; margin-top: 6px; color: #4a659d; font-size: 12px; font-weight: 700; }
 
 @media (min-width: 700px) {
   .home-children { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -250,5 +258,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-loading { animation: none; }
-  .home-notice-link { transition: none; }
+  .home-notice-link, .home-payment { transition: none; }
 }

@@ -18,3 +18,15 @@ export function noticePath(actionUrl: string | undefined): string {
   const id = RECEIPT_URL.exec(actionUrl ?? "")?.[1];
   return id ? `/fees/receipts/${id}` : "/fees";
 }
+
+/**
+ * The amount and the child a "payment received" subject names.
+ *
+ * The school words it "₦500.00 received from Amaka Okafor" (the amount, then
+ * the customer the payment was booked to, who is the child). A subject in any
+ * other shape has no amount to lead with and is shown whole.
+ */
+export function describeNotice(subject: string): { amount: string; child: string } | null {
+  const match = /^\s*(\S*\d\S*)\s+received from\s+(.+?)\s*$/i.exec(subject);
+  return match ? { amount: match[1], child: match[2] } : null;
+}

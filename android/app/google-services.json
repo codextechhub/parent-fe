@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "876723098579",
+    "project_id": "xvsystem-1",
+    "storage_bucket": "xvsystem-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876723098579:android:01bd4ff7dd3d5a64e85526",
+        "android_client_info": {
+          "package_name": "com.codexng.xvs.parent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqIFrkAFg_N1o27TXA1SHQ1oJz4W8SMlE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876723098579:android:bacb0f5d7ab3a9e3e85526",
+        "android_client_info": {
+          "package_name": "com.codexng.xvs.student"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqIFrkAFg_N1o27TXA1SHQ1oJz4W8SMlE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

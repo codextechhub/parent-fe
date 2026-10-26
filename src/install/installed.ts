@@ -22,6 +22,8 @@
  * only the installed app itself hides the offer, by its display mode.
  */
 
+import { isNativeApp } from "@/native/platform";
+
 const INSTALLED_KEY = "xvs.parent.installed";
 const DISPLAY_MODES = ["standalone", "fullscreen", "minimal-ui"] as const;
 
@@ -63,8 +65,12 @@ export function rememberInstall(): void {
   notify();
 }
 
-/** Whether the app is installed on this device, by any of the three checks. */
+/**
+ * Whether the app is installed on this device, by any of the three checks.
+ * The store app is installed by definition, so it is never offered an install.
+ */
 export function isInstalled(): boolean {
+  if (isNativeApp()) return true;
   return runningInstalled() || rememberedInstall() || relatedInstalled;
 }
 

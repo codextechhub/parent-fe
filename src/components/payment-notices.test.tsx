@@ -101,7 +101,9 @@ describe("PaymentNotices", () => {
     await settle();
     const text = last.container.textContent ?? "";
     expect(text).toContain("Payments");
-    expect(text).toContain("₦500.00 received from Amaka Okafor");
+    expect(text).toContain("₦500.00");
+    expect(text).toContain("Received for Amaka Okafor");
+    expect(text).toContain("View receipt");
     expect(text).toContain("25 Oct 2026");
     expect(last.container.querySelector("a")?.getAttribute("href")).toBe("/fees/receipts/42");
     const feed = calls.find((c) => c.url.includes("/notify/") && !c.url.includes("mark-read"));
@@ -132,7 +134,20 @@ describe("PaymentNotices", () => {
     const marked = calls.find((c) => c.url.includes("/notify/mark-read/"));
     expect(marked?.method).toBe("POST");
     expect(JSON.parse(marked!.body)).toEqual({ ids: [row().id] });
-    expect(last.container.textContent).not.toContain("₦500.00 received from Amaka Okafor");
+    expect(last.container.textContent).not.toContain("Received for Amaka Okafor");
+  });
+
+  it("lists several notices in one card and shows an unusual subject whole", async () => {
+    const { impl } = school([
+      row(),
+      row({ id: "6f0d9c52-0000-4000-8000-000000000009", subject: "A payment was booked", action_url: "/parent/fees/receipts/43" }),
+    ]);
+    last = render(impl);
+    await settle();
+    expect(last.container.querySelectorAll("ul").length).toBe(1);
+    expect(last.container.querySelectorAll("li").length).toBe(2);
+    expect(last.container.textContent).toContain("A payment was booked");
+    expect(last.container.textContent).toContain("2 new");
   });
 
   it("draws nothing when there is no unread payment notice", async () => {

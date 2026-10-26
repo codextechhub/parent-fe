@@ -91,6 +91,7 @@ export function AppShell() {
     : pathname.startsWith("/fees/pay-all") ? "Pay all"
     : pathname.startsWith("/fees/pay/") ? "Pay"
     : pathname === "/fees/paid" ? "Payment status"
+    : pathname === "/profile/delete-account" ? "Delete my account"
     : current?.key === "home"
       ? "Home"
       : current?.key === "timetable" ? "Timetable"

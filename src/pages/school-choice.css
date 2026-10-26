@@ -1,0 +1,82 @@
+.school-choice-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
+  background: #fff;
+  color: #212d42;
+}
+.school-choice-card { width: min(100%, 430px); text-align: center; }
+.school-choice-mark { display: flex; justify-content: center; margin-bottom: 24px; }
+.school-choice-card h1 {
+  margin: 0;
+  color: #212d42;
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -.05em;
+}
+.school-choice-eyebrow { margin: 0; color: #66758a; font-size: 14px; }
+.school-choice-name { margin-top: 6px !important; margin-bottom: 28px !important; line-height: 1.2; }
+.school-choice-hint { margin: 8px 0 0; color: #66758a; font-size: 14px; line-height: 1.5; }
+.school-choice-form { display: grid; gap: 14px; margin-top: 30px; text-align: left; }
+.school-choice-form label { color: #33435c; font-size: 13px; font-weight: 650; }
+.school-choice-form input {
+  width: 100%;
+  height: 49px;
+  padding: 0 14px;
+  border: 1px solid #dbe0eb;
+  border-radius: 10px;
+  outline: none;
+  background: #f9fafc;
+  color: #24324b;
+  font-size: 16px;
+}
+.school-choice-form input::placeholder { color: #8b99ad; }
+.school-choice-form input:focus { border-color: #4a659d; box-shadow: 0 0 0 3px #4a659d26; background: #fff; }
+.school-choice-form input[aria-invalid=true] { border-color: #c36b64; }
+.school-choice-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 10px;
+  background: #4a659d;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  box-shadow: 0 10px 22px #4a659d26;
+}
+.school-choice-submit:disabled { opacity: .6; cursor: not-allowed; }
+.school-choice-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 1px solid #dbe0eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #526482;
+  font-size: 14px;
+  font-weight: 700;
+}
+.school-choice-error {
+  padding: 12px;
+  border: 1px solid #f0d7d2;
+  border-radius: 10px;
+  background: #fff5f3;
+  color: #9c4d44;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}
+.school-choice-card > .school-choice-error { margin-bottom: 14px; }
+.school-choice-page button:focus-visible, .school-choice-page input:focus-visible, .school-choice-page a:focus-visible {
+  outline: 3px solid #94afe7;
+  outline-offset: 3px;
+}

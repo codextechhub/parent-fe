@@ -150,6 +150,13 @@ function render(world: World) {
 }
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 40)));
+const disclosure = (container: HTMLElement, word: "Show" | "Hide") =>
+  [...container.querySelectorAll("button")].find((b) => b.textContent?.includes(`${word} account number`));
+/** Opens the "Show account numbers" disclosure below Payment history. */
+async function openAccounts(container: HTMLElement) {
+  await act(async () => disclosure(container, "Show")?.click());
+  await settle();
+}
 const tick = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
 const depositCalls = (world: World) => world.calls.filter((call) => call.includes("/deposits/"));
 
@@ -183,12 +190,22 @@ afterEach(() => {
 });
 
 describe("Fees where families pay by transfer alone", () => {
-  it("gives each child who owes an account card, with no card button and no Pay all", async () => {
+  it("puts no account box above the bills, and opens the account cards from a disclosure below Payment history", async () => {
     const world = newWorld(false);
     last = render(world);
     await settle();
+    // Collapsed: no account number anywhere, and nothing asked of the school for one.
+    expect(last.container.textContent).not.toContain("0123456011");
+    expect(last.container.querySelector("#fees-transfer-heading")).toBeNull();
+    expect(world.calls.some((call) => call.includes("transfer-account"))).toBe(false);
+    const html = last.container.innerHTML;
+    expect(html.indexOf('id="fees-children-heading"')).toBeLessThan(html.indexOf('aria-controls="fees-payment-history"'));
+    expect(html.indexOf('aria-controls="fees-payment-history"')).toBeLessThan(html.indexOf('aria-controls="fees-bank-transfer"'));
+    const toggle = disclosure(last.container, "Show");
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+
+    await openAccounts(last.container);
     const text = last.container.textContent ?? "";
-    expect(text).toContain("Pay by bank transfer");
     expect(text).toContain("0123456011");
     expect(text).toContain("0123456022");
     expect(text).toContain("For Tobi Okafor");
@@ -199,21 +216,50 @@ describe("Fees where families pay by transfer alone", () => {
     expect(text).toContain("Pay any amount by transfer from your bank app. It shows here as soon as it arrives.");
     expect(text).not.toContain("Pay all balances");
     expect(last.container.querySelector('a[href="/fees/pay-all"]')).toBeNull();
-    expect(last.container.querySelector('a[href^="/fees/pay/"]')).toBeNull();
-    expect(text).not.toContain("Pay Tobi");
     expect(text).not.toContain("by card");
   });
 
-  it("keeps the other children's numbers until asked, then offers Grace a number to get", async () => {
+  it("lets a parent go from a bill that is owed to the Pay step, with no card or method choice on Fees", async () => {
+    last = render(newWorld(false));
+    await settle();
+    expect(last.container.querySelector('a[href="/fees/pay/111"]')?.textContent).toContain("Pay Tobi");
+    expect(last.container.querySelector('a[href="/fees/pay/122"]')?.textContent).toContain("Pay Somto");
+    // Grace owes nothing, so there is nothing to pay for her.
+    expect(last.container.querySelector('a[href^="/fees/pay/13"]')).toBeNull();
+    expect(last.container.textContent).not.toContain("Pay all balances");
+    const bills = [...last.container.querySelectorAll("button")].find((b) => b.textContent?.includes("Bills"));
+    await act(async () => bills?.click());
+    expect(last.container.querySelectorAll('.fees-simple-bills a[href^="/fees/pay/"]').length).toBeGreaterThan(0);
+    expect(last.container.textContent).not.toContain("How would you like to pay?");
+  });
+
+  it("closes the account cards again with Hide", async () => {
+    last = render(newWorld(false));
+    await settle();
+    await openAccounts(last.container);
+    const hide = disclosure(last.container, "Hide");
+    expect(hide?.getAttribute("aria-expanded")).toBe("true");
+    expect(last.container.textContent).toContain("0123456011");
+    expect(last.container.querySelector("#fees-bank-transfer")?.hasAttribute("hidden")).toBe(false);
+
+    await act(async () => hide?.click());
+    await settle();
+    expect(last.container.textContent).not.toContain("0123456011");
+    expect(last.container.querySelector("#fees-bank-transfer")?.hasAttribute("hidden")).toBe(true);
+    expect(disclosure(last.container, "Show")?.getAttribute("aria-expanded")).toBe("false");
+
+    await openAccounts(last.container);
+    expect(last.container.textContent).toContain("0123456011");
+  });
+
+  it("lists every child's account in the disclosure, and offers Grace a number to get", async () => {
     const world = newWorld(false);
     last = render(world);
     await settle();
     expect(last.container.textContent).not.toContain("Get Grace");
     expect(world.calls.some((call) => call.includes("children/33/"))).toBe(false);
 
-    const more = [...last.container.querySelectorAll("button")].find((b) => b.textContent?.includes("other children's account numbers"));
-    await act(async () => more?.click());
-    await settle();
+    await openAccounts(last.container);
     const get = [...last.container.querySelectorAll("button")].find((b) => b.textContent?.includes("Get Grace's account number"));
     expect(get).toBeDefined();
     await act(async () => get?.click());
@@ -230,6 +276,7 @@ describe("Fees where families pay by transfer alone", () => {
     };
     last = render(world);
     await settle();
+    await openAccounts(last.container);
     expect(last.container.textContent).toContain(
       "Your payment account is being set up. Try again later, or contact the school office.",
     );
@@ -244,6 +291,7 @@ describe("Fees where families pay by transfer alone", () => {
     });
     last = render(newWorld(false));
     await settle();
+    await openAccounts(last.container);
     const copy = last.container.querySelector<HTMLButtonElement>(".student-transfer-number");
     expect(copy?.textContent).toContain("Copy");
     await act(async () => { copy?.click(); await Promise.resolve(); });
@@ -255,8 +303,8 @@ describe("Fees where families pay by transfer alone", () => {
     const world = newWorld(false);
     last = render(world);
     await settle();
+    await openAccounts(last.container);
     expect(last.container.querySelector(".fees-simple-children")?.textContent).toContain("₦5,000.00");
-
     world.deposits[11] = [{ reference: "D1", amount: 250_000, status: "PENDING", status_label: "Arriving", received_at: AS_OF, payment_ref: null, has_receipt: false }];
     await tick(5_000);
     await settle();
@@ -278,6 +326,7 @@ describe("Fees where families pay by transfer alone", () => {
     const world = newWorld(false);
     last = render(world);
     await settle();
+    await openAccounts(last.container);
     world.deposits[11] = [{ reference: "D1", amount: 500_000, status: "CONFIRMED", status_label: "Received", received_at: AS_OF, payment_ref: 78, has_receipt: true }];
     world.fees = feesBody(false, { tobi: 0, somto: 300_000 });
     await tick(5_000);
@@ -290,6 +339,7 @@ describe("Fees where families pay by transfer alone", () => {
     const world = newWorld(false);
     last = render(world);
     await settle();
+    await openAccounts(last.container);
     expect(depositCalls(world)).toHaveLength(0);
 
     await tick(5_000);
@@ -308,6 +358,7 @@ describe("Fees where families pay by transfer alone", () => {
     const world = newWorld(false);
     last = render(world);
     await settle();
+    await openAccounts(last.container);
     await tick(5_000);
     await settle();
     const before = depositCalls(world).length;
@@ -333,8 +384,7 @@ describe("Fees where the school takes cards", () => {
     expect(last.container.querySelector('a[href="/fees/pay-all"]')).not.toBeNull();
     expect(last.container.querySelector('a[href="/fees/pay/111"]')).not.toBeNull();
     expect(last.container.querySelector("#fees-transfer-heading")).toBeNull();
-    const toggle = [...last.container.querySelectorAll("button")].find((b) => b.textContent?.includes("Pay by bank transfer"));
-    expect(toggle).toBeDefined();
+    expect(disclosure(last.container, "Show")).toBeDefined();
     await tick(10_000);
     expect(world.calls.some((call) => call.includes("transfer-account"))).toBe(false);
   });

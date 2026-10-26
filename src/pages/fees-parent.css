@@ -325,3 +325,13 @@
 .fees-transfer-others:hover { text-decoration: underline; }
 .fees-transfer-others:focus-visible { outline: 3px solid #7895c5; outline-offset: 3px; }
 .fees-transfer-switched { margin: 0 0 12px; padding: 11px 12px; border-radius: 12px; background: #fff5e9; color: #95621f; font-size: 13px; line-height: 1.45; }
+
+/* Under a number on the Pay step, until a transfer shows. */
+.fees-transfer-waiting { margin: 12px 0 0; padding: 10px 12px; border-radius: 11px; background: #f3f5f9; color: #6a7a97; font-size: 13px; line-height: 1.4; }
+
+/* In the opened account-numbers section every child is one card: the offer to get a number
+   carries no border of its own inside the card around it. */
+.fees-transfer-card .fees-get-account { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.fees-transfer-card .fees-get-account h3 { font-size: 16px; letter-spacing: -.02em; }
+.fees-transfer-card .fees-get-account p { font-size: 13px; }
+.fees-transfer-card .fees-get-account-action { width: 100%; }

@@ -4,6 +4,16 @@ import { Toaster } from "sonner";
 import { AppShell } from "@/components/shell/app-shell";
 import { InstallListener } from "@/components/install-offer";
 import { PageShell } from "@/components/layout/page-shell";
+import { NativeCheckoutReturn } from "@/native/native-checkout";
+import { NativeLinks } from "@/native/native-links";
+import { NativePushListener } from "@/native/native-push";
+import { isNativeApp, routerBasename } from "@/native/platform";
+import { SplashGate } from "@/native/splash-gate";
+import { StatusBarGate } from "@/native/status-bar-gate";
+import { VersionGate } from "@/native/version-gate";
+import { DeleteAccountPage } from "@/pages/delete-account";
+import { SchoolChoicePage } from "@/pages/school-choice";
+import { currentSchoolSlug } from "@/utils/school-host";
 import { UpdateBar } from "@/components/update-bar";
 import { RequireParent } from "@/pages/guard";
 import SignInPage from "@/pages/sign-in";
@@ -31,14 +41,51 @@ import { TimetablePage } from "@/pages/timetable";
  * parent) or 401 (session expired). Phase 2 ships the shell, the child
  * switcher, auth, and placeholder screens for Home, Results, Fees, Notices
  * and Profile; later phases replace each placeholder.
+ *
+ * The store app is the same app on its own origin: the basename is `/`, there
+ * is no install offer, service worker or Web Push (`NativePushListener` does
+ * native push instead), the splash stays up until the first real screen is
+ * drawn (`SplashGate`), links from a school's website open the right screen
+ * (`NativeLinks`), a card payment's checkout browser hands back to the result
+ * screen (`NativeCheckoutReturn`), the version check can block or nudge
+ * (`VersionGate`), and until a school code has been entered the only screen is
+ * the one that asks for it. Choosing a school reloads the app, so this reads
+ * the school once per load.
  */
 export default function App() {
+  const native = isNativeApp();
+  if (native && !currentSchoolSlug()) {
+    return (
+      <BrowserRouter basename={routerBasename()}>
+        <SchoolChoicePage />
+        <SplashGate ready />
+        <StatusBarGate />
+        <NativeLinks />
+        <VersionGate />
+        <Toaster position="top-center" richColors closeButton />
+      </BrowserRouter>
+    );
+  }
   return (
-    <BrowserRouter basename="/parent">
-      <PushListener />
-      <InstallListener />
+    <BrowserRouter basename={routerBasename()}>
+      {native ? (
+        <>
+          <NativePushListener />
+          <SplashGate />
+          <StatusBarGate />
+          <NativeLinks />
+          <NativeCheckoutReturn />
+          <VersionGate />
+        </>
+      ) : (
+        <>
+          <PushListener />
+          <InstallListener />
+        </>
+      )}
       <Routes>
         <Route path="/sign-in" element={<SignInPage />} />
+        {native && <Route path="/school" element={<SchoolChoicePage />} />}
         <Route
           element={
             <RequireParent>
@@ -63,10 +110,11 @@ export default function App() {
           <Route path="messages/new" element={<MessagesPage />} />
           <Route path="messages/:id" element={<MessagesPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/delete-account" element={<DeleteAccountPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
-      <UpdateBar />
+      {!native && <UpdateBar />}
       <Toaster position="top-center" richColors closeButton />
     </BrowserRouter>
   );

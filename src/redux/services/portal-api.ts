@@ -1,7 +1,8 @@
 import { setAccessToken } from "@/auth/access-token";
-import { authPost } from "@/auth/api";
 import { clearAccount, getAccount, setAccount } from "@/auth/device-account";
+import { deviceSignOut } from "@/auth/device-credential";
 import { resetSessionInvalidation } from "@/auth/refresh";
+import { isNativeApp } from "@/native/platform";
 import {
   meLoaded,
   meRefused,
@@ -27,6 +28,8 @@ export type LoginRequest = { email: string; password: string };
 export type LoginData = {
   access: string;
   account: string;
+  /** The refresh credential, in the body for the store app only; a browser's is a cookie. */
+  refresh?: string;
   session_id: number;
   user: { email: string; first_name: string; last_name: string; full_name: string };
   school: { name?: string; logo?: string } | null;
@@ -66,7 +69,7 @@ export const portalApi = baseApi.injectEndpoints({
       queryFn: async () => {
         const account = await getAccount();
         if (!account) return { data: undefined };
-        const result = await authPost("/user/auth/device/sign-out/", { account });
+        const result = await deviceSignOut(account);
         // A 200 with no payload is still a sign-out; only a refusal is an error.
         if (!result.ok && result.refusal.status !== 200) {
           const { status, message } = result.refusal;
@@ -85,6 +88,17 @@ export const portalApi = baseApi.injectEndpoints({
           await dropPushOnSignOut(dispatch);
         } catch {
           // Push state teardown never blocks sign-out.
+        }
+        try {
+          // The store app's phone push: the school forgets this phone, and the choice goes with the sign-in.
+          if (isNativeApp()) {
+            const { forgetDevice } = await import("@/native/push-register");
+            const { setPushChoice } = await import("@/push/push-choice");
+            await forgetDevice();
+            setPushChoice(null);
+          }
+        } catch {
+          // Never blocks sign-out.
         }
         try {
           await queryFulfilled;
