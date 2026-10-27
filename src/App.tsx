@@ -1,9 +1,8 @@
-import { BrowserRouter, Link, Route, Routes } from "react-router";
+import { BrowserRouter, Route, Routes } from "react-router";
 import { Toaster } from "sonner";
 
 import { AppShell } from "@/components/shell/app-shell";
 import { InstallListener } from "@/components/install-offer";
-import { PageShell } from "@/components/layout/page-shell";
 import { NativeCheckoutReturn } from "@/native/native-checkout";
 import { NativeLinks } from "@/native/native-links";
 import { NativePushListener } from "@/native/native-push";
@@ -12,6 +11,7 @@ import { SplashGate } from "@/native/splash-gate";
 import { StatusBarGate } from "@/native/status-bar-gate";
 import { VersionGate } from "@/native/version-gate";
 import { DeleteAccountPage } from "@/pages/delete-account";
+import { NotFoundPage } from "@/pages/not-found";
 import { SchoolChoicePage } from "@/pages/school-choice";
 import { currentSchoolSlug } from "@/utils/school-host";
 import { UpdateBar } from "@/components/update-bar";
@@ -111,22 +111,11 @@ export default function App() {
           <Route path="messages/:id" element={<MessagesPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/delete-account" element={<DeleteAccountPage />} />
-          <Route path="*" element={<NotFoundPage />} />
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {!native && <UpdateBar />}
       <Toaster position="top-center" richColors closeButton />
     </BrowserRouter>
-  );
-}
-
-function NotFoundPage() {
-  return (
-    <PageShell className="min-h-dvh flex flex-col items-center justify-center gap-4 text-center">
-      <h1 className="font-mont text-xl font-semibold text-black-01">Page not found</h1>
-      <Link to="/" className="text-sm text-primary underline underline-offset-4">
-        Go back to the start
-      </Link>
-    </PageShell>
   );
 }

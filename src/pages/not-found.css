@@ -1,0 +1,36 @@
+/* Page not found (design 5m): the crest and name at the top, a tilted 404 card with a pin, the words, and "Go to Home" at the foot. Self-contained: student-fe and parent-fe keep the same file. */
+.not-found-page { min-width: 0; min-height: 100dvh; padding: 0; background: radial-gradient(circle at 50% 30%, #e3e8fb 0, transparent 24rem), #f4f6fa; color: #223153; }
+.not-found-wrap { display: flex; flex-direction: column; width: min(100%, 460px); min-height: 100dvh; margin: 0 auto; padding: max(20px, calc(env(safe-area-inset-top) + 14px)) 20px max(24px, env(safe-area-inset-bottom)); }
+.not-found-header { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.not-found-header strong { font-size: 15px; font-weight: 600; }
+
+/* Two cards, the front one tilted the other way, and the pin over their corner. */
+.not-found-art { position: relative; flex: none; height: 300px; margin-top: 40px; }
+.not-found-back-card { position: absolute; top: 30px; left: 50%; width: 190px; height: 230px; margin-left: -70px; border-radius: 26px; background: #dfe5f3; transform: rotate(8deg); }
+.not-found-card { position: absolute; top: 20px; left: 50%; display: flex; flex-direction: column; width: 200px; height: 240px; margin-left: -110px; padding: 18px; border-radius: 26px; background: #fff; box-shadow: 0 24px 50px -20px rgba(34, 49, 83, .35); transform: rotate(-4deg); }
+.not-found-card-dots { display: flex; gap: 5px; }
+.not-found-card-dots i { width: 8px; height: 8px; border-radius: 9px; background: #d5dbe6; }
+.not-found-number { margin-top: 34px; color: #4a659d; font-size: 64px; line-height: 1; font-weight: 650; letter-spacing: -.06em; }
+.not-found-card-line { height: 8px; margin-top: 22px; border-radius: 9px; background: #eef1f6; }
+.not-found-card-line.is-short { width: 60%; margin-top: 8px; }
+.not-found-pin { position: absolute; top: 200px; left: 50%; display: grid; place-items: center; width: 60px; height: 60px; margin-left: 58px; border-radius: 50%; background: #4a659d; box-shadow: 0 12px 24px -10px rgba(45, 71, 120, .7); color: #fff; }
+
+.not-found-copy { padding: 20px 8px 0; text-align: center; }
+.not-found-eyebrow { color: #4a659d; font-size: 13px; font-weight: 600; }
+.not-found-copy h1 { margin: 6px 0 0; font-size: 28px; line-height: 1.12; font-weight: 650; letter-spacing: -.045em; }
+.not-found-copy p { margin: 10px 0 0; color: #65738b; font-size: 14.5px; line-height: 1.5; }
+
+.not-found-foot { margin-top: auto; padding-top: 28px; }
+.not-found-home { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 54px; border-radius: 17px; background: #4a659d; box-shadow: 0 10px 24px -10px rgba(45, 71, 120, .7); color: #fff; font-size: 16px; font-weight: 600; text-decoration: none; transition: transform .15s, background-color .15s; }
+.not-found-home:hover { background: #425b8f; }
+.not-found-home:active { transform: scale(.98); }
+.not-found-home:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+
+/* A wide screen: the picture, words and button together in the middle, the button under the words. */
+@media (min-width: 801px) {
+  .not-found-body { margin: auto 0 0; }
+  .not-found-art { margin-top: 0; }
+  .not-found-foot { margin: 0 0 auto; }
+}
+
+@media (prefers-reduced-motion: reduce) { .not-found-home { transition: none; } }
