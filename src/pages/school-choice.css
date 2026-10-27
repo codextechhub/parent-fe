@@ -1,82 +1,37 @@
-.school-choice-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
-  background: #fff;
-  color: #212d42;
-}
-.school-choice-card { width: min(100%, 430px); text-align: center; }
-.school-choice-mark { display: flex; justify-content: center; margin-bottom: 24px; }
-.school-choice-card h1 {
-  margin: 0;
-  color: #212d42;
-  font-size: 28px;
-  font-weight: 650;
-  letter-spacing: -.05em;
-}
-.school-choice-eyebrow { margin: 0; color: #66758a; font-size: 14px; }
-.school-choice-name { margin-top: 6px !important; margin-bottom: 28px !important; line-height: 1.2; }
-.school-choice-hint { margin: 8px 0 0; color: #66758a; font-size: 14px; line-height: 1.5; }
-.school-choice-form { display: grid; gap: 14px; margin-top: 30px; text-align: left; }
-.school-choice-form label { color: #33435c; font-size: 13px; font-weight: 650; }
-.school-choice-form input {
-  width: 100%;
-  height: 49px;
-  padding: 0 14px;
-  border: 1px solid #dbe0eb;
-  border-radius: 10px;
-  outline: none;
-  background: #f9fafc;
-  color: #24324b;
-  font-size: 16px;
-}
-.school-choice-form input::placeholder { color: #8b99ad; }
-.school-choice-form input:focus { border-color: #4a659d; box-shadow: 0 0 0 3px #4a659d26; background: #fff; }
-.school-choice-form input[aria-invalid=true] { border-color: #c36b64; }
-.school-choice-submit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 50px;
-  border: 0;
-  border-radius: 10px;
-  background: #4a659d;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 650;
-  box-shadow: 0 10px 22px #4a659d26;
-}
-.school-choice-submit:disabled { opacity: .6; cursor: not-allowed; }
-.school-choice-secondary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  margin-top: 12px;
-  border: 1px solid #dbe0eb;
-  border-radius: 10px;
-  background: #fff;
-  color: #526482;
-  font-size: 14px;
-  font-weight: 700;
-}
-.school-choice-error {
-  padding: 12px;
-  border: 1px solid #f0d7d2;
-  border-radius: 10px;
-  background: #fff5f3;
-  color: #9c4d44;
-  font-size: 13px;
-  line-height: 1.4;
-  text-align: left;
-}
-.school-choice-card > .school-choice-error { margin-bottom: 14px; }
-.school-choice-page button:focus-visible, .school-choice-page input:focus-visible, .school-choice-page a:focus-visible {
-  outline: 3px solid #94afe7;
-  outline-offset: 3px;
-}
+/* School code (designs 5a, 5b): one white card on a faint blue wash, and a red note under it when something went wrong. Self-contained: student-fe keeps the same file. */
+.school-choice-page { display: flex; justify-content: center; align-items: center; min-height: 100dvh; padding: max(28px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom)); background: radial-gradient(circle at 50% 0%, #e3e8fb 0, transparent 26rem), #f4f6fa; color: #223153; font-family: var(--font-geist); }
+.school-choice-wrap { width: min(100%, 430px); margin-bottom: 8vh; }
+.school-choice-card { display: flex; flex-direction: column; padding: 30px 22px 24px; border-radius: 30px; background: #fff; box-shadow: 0 1px 2px rgba(34, 49, 83, .05), 0 20px 44px -18px rgba(34, 49, 83, .25); text-align: center; }
+.school-choice-card.is-found { align-items: center; padding-top: 34px; }
+
+/* The crest: XVS in a tile while asking, the school's in a ringed circle while confirming. */
+.school-choice-mark { display: grid; place-items: center; align-self: center; width: 72px; height: 72px; border-radius: 22px; background: #f4f6fa; }
+.school-choice-crest { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #e3e8f1, 0 0 0 10px #f4f6fa; }
+
+.school-choice-card h1 { margin: 20px 0 0; font-size: 26px; line-height: 1.15; font-weight: 650; letter-spacing: -.04em; overflow-wrap: anywhere; }
+.school-choice-hint { margin: 8px 0 0; color: #65738b; font-size: 14px; line-height: 1.5; }
+.school-choice-eyebrow { margin: 24px 0 0; color: #7a869d; font-size: 13px; font-weight: 600; }
+.school-choice-card h1.school-choice-name { margin-top: 4px; font-size: 28px; line-height: 1.1; letter-spacing: -.045em; }
+
+.school-choice-form { display: grid; margin-top: 22px; text-align: left; }
+.school-choice-form label { margin-bottom: 7px; color: #41506b; font-size: 13px; font-weight: 600; }
+.school-choice-form input { width: 100%; height: 52px; padding: 0 16px; border: 1px solid #e3e8f1; border-radius: 15px; outline: none; background: #f6f8fb; color: #223153; font: 400 16px var(--font-geist); }
+.school-choice-form input::placeholder { color: #9aa5b8; }
+.school-choice-form input:focus { border-color: #4a659d; box-shadow: 0 0 0 3px rgba(74, 101, 157, .15); background: #fff; }
+.school-choice-form input[aria-invalid="true"] { border-color: #d04848; }
+
+.school-choice-submit { display: flex; align-items: center; justify-content: center; gap: 8px; align-self: stretch; height: 54px; margin-top: 16px; border: 0; border-radius: 17px; background: #4a659d; box-shadow: 0 10px 24px -10px rgba(45, 71, 120, .7); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform .15s, background-color .15s; }
+.school-choice-card.is-found .school-choice-submit { margin-top: 24px; }
+.school-choice-submit:hover { background: #425b8f; }
+.school-choice-submit:active { transform: scale(.98); }
+.school-choice-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.school-choice-secondary { align-self: stretch; height: 50px; margin-top: 8px; border: 0; border-radius: 16px; background: transparent; color: #41506b; font-size: 15px; font-weight: 600; cursor: pointer; }
+.school-choice-secondary:hover { background: #f4f6fa; }
+.school-choice-secondary:disabled { opacity: .6; cursor: not-allowed; }
+.school-choice-cancel { align-self: center; margin-top: 14px; padding: 4px; color: #4a659d; font-size: 13.5px; font-weight: 600; text-decoration: none; }
+
+.school-choice-error { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: #fdeeee; color: #7d2020; font-size: 13px; line-height: 1.45; text-align: left; }
+.school-choice-error svg { flex: none; margin-top: 1px; color: #a81e1e; }
+
+.school-choice-page :is(button, input, a):focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .school-choice-submit { transition: none; } }
