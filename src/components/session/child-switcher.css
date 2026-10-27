@@ -1,186 +1,145 @@
+/* The child switcher (design 1c): the showing child's avatar in the header, ringed in their colour, and the sheet it opens. */
 .child-switcher-trigger {
+  --child-ring: #4a659d;
   display: grid;
   place-items: center;
   flex: none;
-  width: 42px;
-  height: 42px;
-  padding: 3px;
-  border: 2px solid #4a659d;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   background: #fff;
-  color: #4a659d;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--child-ring);
   cursor: pointer;
+  transition: transform .15s;
 }
-
-.child-switcher-trigger:disabled {
-  cursor: default;
-}
-
-.child-switcher-trigger:hover:not(:disabled),
-.child-switcher-trigger[data-state="open"] {
-  background: #f2f5fb;
-  box-shadow: 0 3px 13px #26396019;
-}
+.child-switcher-trigger:active { transform: scale(.94); }
 
 .child-switcher-overlay {
   position: fixed;
   z-index: 40;
   inset: 0;
-  background: #17244579;
+  background: rgba(23, 36, 69, .42);
 }
 
+/* A wide screen: the sheet drops from the avatar. */
 .child-switcher-sheet {
   position: fixed;
   z-index: 50;
-  right: 16px;
   top: 68px;
-  width: 330px;
-  max-width: calc(100vw - 30px);
+  right: 16px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
   max-height: 85dvh;
   overflow-y: auto;
-  padding: 18px;
-  border: 1px solid #e5eaf4;
-  border-radius: 22px;
+  padding: 16px 12px 14px;
+  border-radius: 28px;
   background: #fff;
-  box-shadow: 0 24px 58px #1e305a33;
+  box-shadow: 0 20px 50px rgba(23, 36, 69, .3);
+  color: #223153;
   outline: none;
 }
 
 .child-switcher-sheet h2 {
-  margin: 2px 35px 13px 4px;
-  color: #2d4062;
-  font-size: 18px;
+  margin: 4px 48px 10px 8px;
+  font-size: 20px;
   font-weight: 650;
   letter-spacing: -.03em;
 }
 
 .child-switcher-close {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 14px;
+  right: 18px;
   display: grid;
   place-items: center;
-  width: 29px;
-  height: 29px;
+  width: 32px;
+  height: 32px;
   border: 0;
-  border-radius: 8px;
-  background: #f0f3f9;
-  color: #5a6c86;
+  border-radius: 50%;
+  background: #f4f6fa;
+  color: #5f6f86;
   cursor: pointer;
 }
 
-.child-switcher-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.child-switcher-list li + li {
-  margin-top: 4px;
-}
+.child-switcher-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 
 .child-switcher-list button {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   width: 100%;
-  min-height: 56px;
-  padding: 7px 8px;
+  padding: 10px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 20px;
   background: transparent;
-  color: #314464;
+  color: #223153;
   text-align: left;
-  font-size: 13px;
-  font-weight: 650;
   cursor: pointer;
+  transition: background-color .15s;
 }
+.child-switcher-list button:hover { background: #f4f6fa; }
+.child-switcher-list button.is-current { background: #eef2fa; }
 
-.child-switcher-list button:hover {
-  background: #f3f6fc;
-}
+.child-switcher-sheet .child-switcher-text { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
+.child-switcher-sheet .child-switcher-text > strong { font-size: 15.5px; font-weight: 600; overflow-wrap: anywhere; }
+.child-switcher-sheet .child-switcher-text > small { color: #7a869d; font-size: 12.5px; }
 
-.child-switcher-list button.is-current {
-  background: #f0f4ff;
-}
+.child-switcher-check { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; background: #4a659d; color: #fff; }
 
-.child-switcher-sheet .child-switcher-text {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.child-switcher-note { margin: 12px 10px 0; color: #7a869d; font-size: 12.5px; line-height: 1.5; }
 
-.child-switcher-sheet .child-switcher-text > strong {
-  overflow-wrap: anywhere;
-  font-weight: 650;
+/* The parent's own account under the children: My profile, then Sign out, in one grey group. */
+.child-switcher-actions { margin-top: 14px; padding: 0 14px; border-radius: 20px; background: #f4f6fa; }
+.child-switcher-actions button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 0;
+  border: 0; background: transparent; color: #223153; text-align: left; cursor: pointer;
 }
-
-.child-switcher-sheet .child-switcher-text > small {
-  color: #6a7a97;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.child-switcher-list button > svg {
-  flex: none;
-  color: #4567c4;
-}
-
-.child-switcher-note {
-  margin: 13px 7px 0;
-  padding-top: 13px;
-  border-top: 1px solid #e9edf5;
-  color: #6a7a97;
-  font-size: 12px;
-  line-height: 1.45;
-}
+.child-switcher-actions button + button { min-height: 54px; border-top: 1px solid #e6eaf2; }
+.child-switcher-actions button > svg { flex: none; color: #5f6f86; }
+.child-switcher-actions .child-switcher-text > strong { font-size: 15px; }
+.child-switcher-actions .child-switcher-chevron { color: #9aa5b8; }
+.child-switcher-actions button.is-signout,
+.child-switcher-actions button.is-signout > svg { color: #a81e1e; font-size: 15px; font-weight: 600; }
+.child-switcher-actions button:disabled { opacity: .55; cursor: not-allowed; }
 
 .child-switcher-trigger:focus-visible,
 .child-switcher-sheet button:focus-visible {
-  outline: 3px solid #6b84e8;
+  outline: 3px solid #5975ff;
   outline-offset: 3px;
 }
 
+/* A phone: the sheet floats up from the bottom, with a grabber. */
 @media (max-width: 767px) {
   .child-switcher-sheet {
     top: auto;
-    right: 0;
-    bottom: 0;
-    width: 100%;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 8px;
+    width: auto;
     max-width: none;
-    max-height: 85dvh;
-    padding: 21px 18px max(20px, env(safe-area-inset-bottom));
-    border-radius: 24px 24px 0 0;
+    padding: 10px 12px 18px;
+    border-radius: 34px;
   }
   .child-switcher-sheet::before {
     display: block;
     content: "";
     width: 38px;
-    height: 4px;
-    margin: -8px auto 14px;
-    border-radius: 99px;
+    height: 5px;
+    margin: 2px auto 10px;
+    border-radius: 9px;
     background: #cfd8e8;
   }
+  .child-switcher-close { top: 26px; }
 }
-
-/* The parent's own account under the children: My profile, then Sign out. */
-.child-switcher-actions { margin-top: 13px; padding-top: 13px; border-top: 1px solid #e9edf5; display: grid; gap: 4px; }
-.child-switcher-actions button {
-  display: flex; align-items: center; gap: 11px; width: 100%; min-height: 48px; padding: 7px 8px;
-  border: 0; border-radius: 12px; background: transparent; color: #314464; text-align: left;
-  font-size: 13px; font-weight: 650; cursor: pointer;
-}
-.child-switcher-actions button:hover:not(:disabled) { background: #f3f6fc; }
-.child-switcher-actions button > svg { flex: none; color: #7186a7; }
-.child-switcher-actions button.is-signout,
-.child-switcher-actions button.is-signout > svg { color: #a34f49; }
-.child-switcher-actions button:disabled { opacity: .55; cursor: not-allowed; }
-.child-switcher-actions button:focus-visible { outline: 3px solid #6b84e8; outline-offset: 2px; }
 
 /* The parent's initials in the header when no child is linked. */
 .child-switcher-initials {
-  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
-  background: #4a659d; color: #fff; font-size: 12px; font-weight: 650;
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: #4a659d; color: #fff; font-size: 13px; font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .child-switcher-trigger, .child-switcher-list button { transition: none; }
 }

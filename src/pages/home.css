@@ -1,265 +1,110 @@
-/* Home for the parent app.
-   Adapted from student-fe's home.css; see the design in docs. Layout is a
-   single column on a phone and a hero + content pair on a wide screen. */
+/* Home (design 1b): the large title, the deep blue fees card, a card per child, payments and the latest notice. Shared pieces are in screen.css. */
+.home-page { padding: 8px 16px 32px; color: var(--xs-ink); }
+.home-layout { display: grid; gap: 12px; width: 100%; max-width: 640px; margin: 0 auto; }
+.home-side, .home-content, .home-section { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.home-side > .home-banner { margin-top: 8px; }
+.home-chip-icon { margin-right: 5px; }
 
-.home-page {
-  min-height: calc(100dvh - 8rem);
-  padding: 18px 20px 42px;
-  background: #f7f9fc;
-  color: #26354d;
-}
-
-.home-layout { width: 100%; display: grid; gap: 23px; }
-.home-side { display: grid; align-content: start; gap: 18px; min-width: 0; }
-
-.home-hero {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-width: 0;
-  padding: 24px;
-  border-radius: 25px;
-  background: linear-gradient(135deg, #2d4778 0%, #4a659d 60%, #6d84ae 100%);
-  box-shadow: 0 18px 42px #1b356d20;
-  color: white;
-}
-.home-hero::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background-image: radial-gradient(#c2d7ff 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: .16;
-  -webkit-mask-image: linear-gradient(110deg, transparent 22%, #000 90%);
-  mask-image: linear-gradient(110deg, transparent 22%, #000 90%);
-}
-.home-hero-orb {
-  position: absolute;
-  z-index: -1;
-  width: 410px;
-  height: 410px;
-  right: -100px;
-  top: -180px;
-  border: 1px solid #ffffff30;
-  border-radius: 50%;
-  box-shadow: 0 0 0 70px #ffffff0c, 0 0 0 140px #ffffff08;
-}
-.home-hero-date { margin: 0; color: #d3e0f6; font-size: 12px; font-weight: 650; letter-spacing: .02em; }
-.home-hero h1 {
-  margin: 16px 0 0;
-  font-size: clamp(27px, 6.3vw, 35px);
-  line-height: 1.09;
-  letter-spacing: -.05em;
-  font-weight: 650;
-  overflow-wrap: anywhere;
-}
-.home-hero-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
-.home-glass-chip {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  min-height: 27px;
-  padding: 5px 9px;
-  border: 1px solid #ffffff55;
-  border-radius: 8px;
-  background: #ffffff22;
-  color: #eef4ff;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-.home-hero-bell {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 14px 0 0;
-  color: #eef4ff;
-  font-size: 11px;
-  font-weight: 650;
-}
-
-.home-content { min-width: 0; display: grid; align-content: start; gap: 26px; }
-.home-content > section { min-width: 0; }
-.home-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 10px; margin-bottom: 13px; }
-.home-section-heading h2 { margin: 0; font-size: 21px; line-height: 1.2; font-weight: 650; letter-spacing: -.03em; }
-.home-section-heading p { margin: 3px 0 0; color: #7a869d; font-size: 11px; font-weight: 650; }
-.home-section-link { display: inline-flex; align-items: center; gap: 2px; flex: none; padding: 6px 0; color: #4a659d; font-size: 12px; font-weight: 650; text-decoration: none; }
-.home-section-link:hover { text-decoration: underline; }
-
-.home-surface { min-width: 0; border: 1px solid #dbe0eb; border-radius: 18px; background: #fff; box-shadow: 0 7px 22px #2638590a; }
-.home-empty { margin: 0; padding: 18px 2px; color: #65738b; font-size: 12px; line-height: 1.5; }
-.home-loading { min-height: 190px; border-radius: 24px; background: #e7ecf4; animation: home-pulse 1.4s ease-in-out infinite alternate; }
+.home-loading { height: 220px; border-radius: 28px; background: #e4e9f2; animation: home-pulse 1.4s ease-in-out infinite alternate; }
 @keyframes home-pulse { to { opacity: .55; } }
-.home-error { padding: 18px; color: #65738b; font-size: 12px; }
-.home-error button { color: #4a659d; font-weight: 700; cursor: pointer; }
+.home-error { padding: 16px; color: var(--xs-muted); font-size: 14px; }
+.home-error button { border: 0; background: none; color: var(--xs-brand); font-weight: 600; cursor: pointer; }
+.home-empty-card { margin: 0; padding: 16px; color: var(--xs-muted); font-size: 14px; line-height: 1.5; }
 
-/* Family fees banner. */
-.home-banner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  border-radius: 20px;
-  min-height: 0;
-}
-.home-banner--green { background: #ecf6f1; border-color: #cce6d9; color: #19483a; }
-.home-banner--amber { background: #fff8ec; border-color: #f4d9a7; color: #6a4310; }
-.home-banner-icon {
-  display: grid; place-items: center;
-  width: 38px; height: 38px; flex: none;
-  border-radius: 13px;
-  background: #e8eef8;
-  color: #4a659d;
-}
-.home-banner--green .home-banner-icon { background: #cfe9db; color: #1d7656; }
-.home-banner--amber .home-banner-icon { background: #ffe9c0; color: #8a5a08; }
-.home-banner-text { min-width: 0; flex: 1; font-size: 13px; line-height: 1.4; }
-.home-banner-text strong { display: block; font-size: 16px; font-weight: 650; letter-spacing: -.025em; color: inherit; }
-.home-banner-text p { margin: 3px 0 0; color: #65738b; }
-.home-banner--green .home-banner-text p { color: #4b6a5c; }
-.home-banner--amber .home-banner-text p { color: #7f5a1f; }
-.home-banner-cta {
-  flex: none;
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 36px;
-  padding: 7px 13px;
-  border-radius: 11px;
-  background: #4a659d;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-}
-.home-banner-cta:hover { background: #3a5389; }
+/* The family's fees on the deep blue card: amount, each child's share, then Pay all and Open Fees. */
+.home-fees { position: relative; overflow: hidden; isolation: isolate; padding: 20px; border-radius: 28px; background: var(--xs-brand-deep); box-shadow: 0 20px 40px -16px rgba(45, 71, 120, .7); color: #fff; }
+.home-fees::before { content: ""; position: absolute; z-index: -1; inset: 0; background-image: radial-gradient(#c2d7ff 1px, transparent 1px); background-size: 24px 24px; opacity: .12; }
+.home-fees > :not(.screen-orb) { position: relative; z-index: 1; }
+.home-fees-label { display: block; color: #c3d2ee; font-size: 13px; font-weight: 600; }
+.home-fees-amount { display: block; margin-top: 6px; font-size: 36px; line-height: 1; font-weight: 650; letter-spacing: -.05em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.home-fees-amount span { color: #c3d2ee; font-size: 21px; }
+.home-fees-bar { display: flex; gap: 3px; height: 8px; margin-top: 16px; overflow: hidden; border-radius: 9px; }
+.home-fees-bar span { flex-basis: 0; min-width: 6px; }
+.home-fees-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 0 0; padding: 0; list-style: none; color: var(--xs-on-brand); font-size: 12px; font-variant-numeric: tabular-nums; }
+.home-fees-legend li { display: flex; align-items: center; gap: 6px; }
+.home-fees-dot { flex: none; width: 7px; height: 7px; border-radius: 9px; }
+.home-fees-note { margin: 12px 0 0; color: var(--xs-on-brand); font-size: 12.5px; line-height: 1.45; }
+.home-fees-actions { display: flex; gap: 8px; margin-top: 18px; }
+.home-fees-pay, .home-fees-open { display: flex; align-items: center; justify-content: center; gap: 7px; height: 46px; border-radius: 15px; font-size: 15px; font-weight: 600; text-decoration: none; }
+.home-fees-pay { flex: 1; background: #fff; color: var(--xs-brand-deep); }
+.home-fees-pay:hover { background: #eef2fa; }
+.home-fees-open { flex: none; padding: 0 16px; border: 1px solid rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .14); color: #fff; font-size: 14px; }
+.home-fees-open:hover { background: rgba(255, 255, 255, .22); }
+:is(.home-fees-pay, .home-fees-open):focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
-/* Per-child cards. */
-.home-children { display: grid; gap: 14px; grid-template-columns: 1fr; }
-.home-child-empty { padding: 20px; text-align: center; }
-.home-child {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-}
-.home-child-head { display: flex; align-items: center; gap: 11px; }
-.home-child-name { min-width: 0; flex: 1; }
-.home-child-name strong {
-  display: block;
-  overflow-wrap: anywhere;
-  color: #223153;
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: -.025em;
-}
-.home-child-name span {
-  display: block;
-  margin-top: 2px;
-  color: #7a869d;
-  font-size: 12px;
-  font-weight: 650;
-}
-.home-child-link {
-  flex: none;
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 10px;
-  background: #e8eef8;
-  color: #4a659d;
-  text-decoration: none;
-}
-.home-child-link:hover { background: #d6def0; }
-.home-child-timetable { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: 12px; background: #f4f6fa; color: #4a659d; font-size: 13px; font-weight: 600; text-decoration: none; }
-.home-child-timetable svg:last-child { margin-left: auto; color: #8b97aa; }
-.home-child-timetable:hover { background: #e8eef8; }
-.home-child-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0;
-}
-.home-stat { min-width: 0; display: block; margin: 0; }
-.home-stat dt {
-  color: #7a869d;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-.home-stat dd { margin: 4px 0 0; }
-.home-stat strong {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #223153;
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: -.025em;
-  font-variant-numeric: tabular-nums;
-}
-.home-stat span {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  margin-top: 3px;
-  color: #65738b;
-  font-size: 11px;
-  line-height: 1.35;
-}
-.home-child-branch {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0;
-  color: #65738b;
-  font-size: 11px;
-  font-weight: 650;
+/* Nothing owed (green) or the school cannot show fees now (amber): a light card with its sentence. */
+.home-banner--green, .home-banner--amber { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 22px; }
+.home-banner--green { background: var(--xs-good-soft); color: #1d5c45; }
+.home-banner--amber { flex-wrap: wrap; background: var(--xs-warn-soft); color: #6b4a12; }
+.home-banner-icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: #fff; }
+.home-banner--green .home-banner-icon { color: var(--xs-good); }
+.home-banner--amber .home-banner-icon { color: var(--xs-warn); }
+.home-banner-text { flex: 1; min-width: 0; }
+.home-banner-text strong { display: block; font-size: 14.5px; font-weight: 600; }
+.home-banner-text p { margin: 3px 0 0; font-size: 13px; line-height: 1.45; }
+.home-banner-link { margin-left: 48px; color: inherit; font-size: 13px; font-weight: 600; }
+
+/* A child at a glance. */
+.home-child { padding: 16px; }
+.home-child-head { display: flex; align-items: center; gap: 12px; min-width: 0; border-radius: 16px; color: inherit; text-decoration: none; }
+.home-child-name { flex: 1; min-width: 0; }
+.home-child-name strong { display: block; font-size: 16px; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.home-child-name span { display: block; color: var(--xs-faint); font-size: 12.5px; overflow-wrap: anywhere; }
+.home-child-go { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--xs-bg); color: var(--xs-muted); transition: background-color .2s; }
+.home-child-head:hover .home-child-go { background: var(--xs-brand-soft); color: var(--xs-brand); }
+.home-child-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.home-stat { display: block; min-width: 0; padding: 12px; border-radius: 16px; background: #f6f8fb; color: inherit; text-decoration: none; transition: background-color .2s; }
+.home-stat:hover { background: #eef2f8; }
+.home-stat-label { display: block; color: var(--xs-faint); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.home-stat strong { display: block; margin-top: 3px; font-size: 22px; font-weight: 650; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.home-stat-sub { display: block; color: #65738b; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.home-child-fees { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding: 11px 12px; border-radius: 16px; text-decoration: none; }
+.home-child-fees.is-owing { background: #fff6e6; color: var(--xs-warn-text); }
+.home-child-fees.is-clear { background: var(--xs-good-soft); color: var(--xs-good); }
+.home-child-fees.is-grey { background: var(--xs-bg); color: var(--xs-muted); }
+.home-child-fees-label { display: flex; flex: none; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.home-child-fees-sub { min-width: 0; font-size: 13px; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.home-child-fees.is-grey .home-child-fees-sub { font-weight: 500; }
+.home-child-fees-figure { min-width: 0; text-align: right; }
+.home-child-fees-figure strong { display: block; color: var(--xs-ink); font-size: 15px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.home-child-fees-figure span { display: block; font-size: 11.5px; font-weight: 600; overflow-wrap: anywhere; }
+:is(.home-child-head, .home-stat, .home-child-fees):focus-visible { outline: 3px solid #5975ff; outline-offset: 2px; }
+
+/* Payments the school has booked: a green card each. */
+.home-payments ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.home-payment { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; background: var(--xs-good-soft); color: #1d5c45; font-size: 13px; line-height: 1.45; text-decoration: none; overflow-wrap: anywhere; }
+.home-payment:hover { background: #e1f3ea; }
+.home-payment:focus-visible { outline: 3px solid #5975ff; outline-offset: 2px; }
+.home-payment-icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--xs-good); }
+.home-payment-text { flex: 1; min-width: 0; }
+.home-payment-text strong { display: block; font-size: 14px; font-weight: 600; }
+.home-payment-go { flex: none; color: var(--xs-good-dot); }
+
+/* The latest notice. */
+.home-notice { display: flex; gap: 13px; padding: 16px; color: inherit; }
+.home-notice-icon { width: 40px; height: 40px; border-radius: 13px; }
+.home-notice-body { flex: 1; min-width: 0; }
+.home-notice-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.home-notice-top strong { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 14px; font-weight: 600; }
+.home-notice-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-notice-top time { flex: none; color: #8492a5; font-size: 12px; }
+.home-unread-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--xs-brand); }
+.home-notice-excerpt { display: -webkit-box; margin-top: 5px; overflow: hidden; color: #65738b; font-size: 13px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow-wrap: anywhere; }
+.home-notice-for { display: inline-block; margin-top: 8px; padding: 3px 8px; border-radius: 8px; background: var(--xs-bg); color: var(--xs-muted); font-size: 12px; font-weight: 600; }
+
+/* A wide screen: the title and money on the left, the children and the notice on the right. */
+@media (min-width: 900px) {
+  .home-page { padding: 16px 28px 40px; }
+  .home-layout { grid-template-columns: minmax(340px, 1fr) minmax(380px, 1.1fr); gap: 20px 28px; max-width: 1080px; align-items: start; }
 }
 
-/* Latest notice tile. */
-.home-notice { display: flex; gap: 13px; padding: 17px; }
-.home-notice-link { text-decoration: none; transition: transform .2s, border-color .2s, box-shadow .2s; }
-.home-notice:hover { transform: translateY(-2px); border-color: #aabbd8; box-shadow: 0 12px 30px #26385916; }
-.home-notice .home-empty { padding: 2px 0; }
-.home-notice-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 13px; background: #e8eef8; color: #4a659d; }
-.home-notice-body { display: block; min-width: 0; flex: 1; }
-.home-notice-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.home-notice-top strong { min-width: 0; overflow-wrap: anywhere; color: #263755; font-size: 13px; font-weight: 700; line-height: 1.35; }
-.home-notice-top time { flex: none; color: #8492a5; font-size: 11px; line-height: 1.5; }
-.home-unread-dot { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: #4a659d; vertical-align: 1px; }
-.home-notice-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 5px; color: #65738b; font-size: 11px; line-height: 1.45; }
-.home-notice-for { display: block; margin-top: 6px; color: #4a659d; font-size: 11px; font-weight: 700; }
-
-/* Unread payment notices: one card, one row each, never wider than the column. */
-.home-payments { display: block; margin: 0; padding: 4px 0; list-style: none; overflow: hidden; }
-.home-payments li { min-width: 0; }
-.home-payments li + li { border-top: 1px solid #edf0f6; }
-.home-payment { display: flex; align-items: flex-start; gap: 13px; min-width: 0; padding: 15px 17px; text-decoration: none; color: inherit; transition: background-color .2s; }
-.home-payment:hover { background: #f6f8fc; }
-.home-payment-body { display: block; min-width: 0; flex: 1; }
-.home-payment-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
-.home-payment-top strong { min-width: 0; overflow-wrap: anywhere; color: #223153; font-size: 20px; font-weight: 650; letter-spacing: -.03em; line-height: 1.2; font-variant-numeric: tabular-nums; }
-.home-payment-top time { flex: none; color: #8492a5; font-size: 11px; }
-.home-payment-for { display: block; margin-top: 3px; overflow-wrap: anywhere; color: #526482; font-size: 13px; line-height: 1.4; }
-.home-payment-view { display: inline-flex; align-items: center; gap: 2px; margin-top: 6px; color: #4a659d; font-size: 12px; font-weight: 700; }
-
-@media (min-width: 700px) {
-  .home-children { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1024px) {
-  .home-page { padding: clamp(24px, 3vw, 50px); }
-  .home-layout { grid-template-columns: minmax(300px, .72fr) minmax(460px, 1.28fr); gap: clamp(18px, 2vw, 32px); align-items: start; }
-  .home-hero { padding: clamp(24px, 2.5vw, 35px); }
-  .home-hero h1 { font-size: clamp(33px, 3vw, 50px); font-weight: 650; letter-spacing: -.05em; }
-  .home-content { gap: 27px; }
+@media (max-width: 360px) {
+  .home-fees-amount { font-size: 31px; }
+  .home-fees-actions { flex-wrap: wrap; }
+  .home-fees-open { flex: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .home-loading { animation: none; }
-  .home-notice-link, .home-payment { transition: none; }
+  .home-stat, .home-child-go { transition: none; }
 }

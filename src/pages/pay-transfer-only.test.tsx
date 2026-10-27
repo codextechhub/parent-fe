@@ -239,7 +239,7 @@ describe("Home where families pay by transfer alone", () => {
   it("says nothing of transfer where the school takes cards", async () => {
     last = render({ cardPayments: true, payStatus: 409, calls: [] }, "/");
     await settle();
-    expect(last.container.textContent).toContain("still due on bills and charges");
+    expect(last.container.textContent).toContain("Still due on bills and charges");
     expect(last.container.textContent).not.toContain("Pay by transfer to each child's account");
   });
 });

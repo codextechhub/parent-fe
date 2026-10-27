@@ -40,6 +40,16 @@ export function subjectHues(names: Iterable<string>): Map<string, number> {
   return new Map(unique.map((name, index) => [name.toLowerCase(), SPREAD[index % SPREAD.length]]));
 }
 
+/**
+ * A hue for each of the parent's children, all different while there are ten
+ * or fewer: each child keeps one colour everywhere (their avatar, their share
+ * of the family's fees). They are taken in the order the school lists them,
+ * which is the same on every screen and every phone.
+ */
+export function childHues(ids: readonly number[]): Map<number, number> {
+  return new Map(ids.map((id, index) => [id, SPREAD[index % SPREAD.length]]));
+}
+
 /** The soft background and strong text for a hue, as a style. */
 export function toneOf(hue: number): { background: string; color: string } {
   return { background: `oklch(0.95 0.035 ${hue})`, color: `oklch(0.45 0.11 ${hue})` };
@@ -48,4 +58,14 @@ export function toneOf(hue: number): { background: string; color: string } {
 /** The bright dot or bar colour for a hue. */
 export function dotOf(hue: number): string {
   return `oklch(0.64 0.14 ${hue})`;
+}
+
+/** The deep fill for a hue: a child's avatar, with white initials on it. */
+export function solidOf(hue: number): string {
+  return `oklch(0.52 0.12 ${hue})`;
+}
+
+/** The light fill for a hue, for marks on the deep blue fees card. */
+export function paleOf(hue: number): string {
+  return `oklch(0.8 0.1 ${hue})`;
 }

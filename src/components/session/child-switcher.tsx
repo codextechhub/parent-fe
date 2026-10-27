@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Check, LogOut, UserRound, X } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { Check, ChevronRight, LogOut, UserRound, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 
-import { ChildAvatar } from "@/components/child-avatar";
+import { ChildAvatar, useChildHue } from "@/components/child-avatar";
+import { solidOf } from "@/lib/name-hue";
 import { itemFor } from "@/components/shell/nav";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { childFocused, type Child } from "@/redux/features/auth-slice";
@@ -49,9 +50,11 @@ export function useFollowAddressedChild(): void {
 }
 
 /**
- * The header's avatar and the sheet it opens, as the student app's switcher:
- * which child the per-child screens are reading, then the parent's own
- * account, with My profile and Sign out.
+ * The header's avatar and the sheet it opens (design 1c), as the student
+ * app's switcher: which child the per-child screens are reading, then the
+ * parent's own account, with My profile and Sign out. The avatar is ringed in
+ * the showing child's colour; the sheet comes up from the bottom on a phone
+ * and drops from the avatar on a wide screen.
  *
  * Choosing a child on any screen puts them in focus for every screen: a
  * family-wide screen such as Fees looks the same, and Results, Attendance
@@ -69,6 +72,7 @@ export function ChildSwitcher() {
   const [open, setOpen] = useState(false);
   const [logout, signingOut] = useLogoutMutation();
   const dispatch = useAppDispatch();
+  const hue = useChildHue(active?.id);
 
   const signOut = async () => {
     await logout().unwrap().catch(() => {});
@@ -99,6 +103,7 @@ export function ChildSwitcher() {
         <button
           type="button"
           className="child-switcher-trigger"
+          style={hue === null ? undefined : ({ "--child-ring": solidOf(hue) } as CSSProperties)}
           aria-label={
             active
               ? `Showing ${active.first_name}. Switch child or sign out.`
@@ -106,7 +111,7 @@ export function ChildSwitcher() {
           }
         >
           {active ? (
-            <ChildAvatar name={active.full_name} childId={active.id} size={32} />
+            <ChildAvatar name={active.full_name} childId={active.id} size={36} />
           ) : (
             <span aria-hidden="true" className="child-switcher-initials">{parent?.initials ?? ""}</span>
           )}
@@ -127,7 +132,7 @@ export function ChildSwitcher() {
                   onClick={() => choose(child.id)}
                   className={active && child.id === active.id ? "is-current" : ""}
                 >
-                  <ChildAvatar name={child.full_name} childId={child.id} size={38} />
+                  <ChildAvatar name={child.full_name} childId={child.id} size={44} />
                   <span className="child-switcher-text">
                     <strong>{child.full_name}</strong>
                     <small>
@@ -137,7 +142,7 @@ export function ChildSwitcher() {
                     </small>
                   </span>
                   {active && child.id === active.id && (
-                    <Check size={18} aria-label="Showing" />
+                    <span className="child-switcher-check"><Check size={15} strokeWidth={3} aria-label="Showing" /></span>
                   )}
                 </button>
               </li>
@@ -154,6 +159,7 @@ export function ChildSwitcher() {
                 <strong>My profile</strong>
                 {parent?.full_name && <small>{parent.full_name}</small>}
               </span>
+              <ChevronRight size={18} aria-hidden="true" className="child-switcher-chevron" />
             </button>
             <button type="button" className="is-signout" disabled={signingOut.isLoading} onClick={signOut}>
               <LogOut size={18} aria-hidden="true" />

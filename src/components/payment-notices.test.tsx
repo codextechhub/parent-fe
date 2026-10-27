@@ -100,11 +100,9 @@ describe("PaymentNotices", () => {
     last = render(impl);
     await settle();
     const text = last.container.textContent ?? "";
-    expect(text).toContain("Payments");
-    expect(text).toContain("₦500.00");
-    expect(text).toContain("Received for Amaka Okafor");
-    expect(text).toContain("View receipt");
-    expect(text).toContain("25 Oct 2026");
+    expect(text).toContain("Payment received");
+    expect(text).toContain("₦500.00 for Amaka, booked by the school on 25 Oct 2026.");
+    expect(last.container.querySelector("a")?.getAttribute("aria-label")).toBe("Payment received: ₦500.00 for Amaka Okafor. View receipt");
     expect(last.container.querySelector("a")?.getAttribute("href")).toBe("/fees/receipts/42");
     const feed = calls.find((c) => c.url.includes("/notify/") && !c.url.includes("mark-read"));
     expect(feed?.url).toContain("event_type_key=billing.payment_received");
@@ -134,10 +132,10 @@ describe("PaymentNotices", () => {
     const marked = calls.find((c) => c.url.includes("/notify/mark-read/"));
     expect(marked?.method).toBe("POST");
     expect(JSON.parse(marked!.body)).toEqual({ ids: [row().id] });
-    expect(last.container.textContent).not.toContain("Received for Amaka Okafor");
+    expect(last.container.textContent).not.toContain("for Amaka");
   });
 
-  it("lists several notices in one card and shows an unusual subject whole", async () => {
+  it("lists several notices, a card each, and shows an unusual subject whole", async () => {
     const { impl } = school([
       row(),
       row({ id: "6f0d9c52-0000-4000-8000-000000000009", subject: "A payment was booked", action_url: "/parent/fees/receipts/43" }),

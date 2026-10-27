@@ -154,7 +154,7 @@ describe("HomePage", () => {
     const r = render(fetchStub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 20)));
-    expect(r.container.textContent).toContain("still due on bills and charges");
+    expect(r.container.textContent).toContain("Still due on bills and charges");
     expect(r.container.textContent).toContain("Welcome, Patricia");
     expect(r.container.textContent).toContain("2 children across 2 branches");
     expect(r.container.textContent).toContain("Tobi");
@@ -221,7 +221,7 @@ describe("HomePage", () => {
     last = r;
     await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
     const banner = r.container.querySelector(".home-banner")?.textContent ?? "";
-    expect(banner).toContain("₦500.00 still due on bills and charges");
+    expect(banner).toContain("Still due on bills and charges₦500.00");
     expect(banner).toContain("₦500.00 credit held by the school. Ask the school to apply it before you pay.");
     expect(banner).not.toContain("All fees are paid");
     const tobi = r.container.querySelector('[aria-label="Tobi\'s card"]')?.textContent ?? "";
@@ -245,7 +245,7 @@ describe("HomePage", () => {
     last = r;
     await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
     const banner = r.container.querySelector(".home-banner")?.textContent ?? "";
-    expect(banner).toContain("₦1,500.00 still due");
+    expect(banner).toContain("Still due on bills and charges₦1,500.00");
     expect(banner).toContain("₦2,000.00 credit held by the school");
     expect(r.container.textContent).not.toContain("All fees are paid");
     const tobi = r.container.querySelector('[aria-label="Tobi\'s card"]')?.textContent ?? "";
@@ -270,7 +270,7 @@ describe("HomePage", () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
     const banner = r.container.querySelector(".home-banner")?.textContent ?? "";
     expect(banner).toContain("₦500.00 in credit");
-    expect(banner).not.toContain("still due");
+    expect(banner).not.toContain("Still due");
   });
 
   it("shows the fees-unavailable sentence from the family block instead of a figure", async () => {
@@ -300,5 +300,50 @@ describe("HomePage", () => {
     expect(r.container.textContent).toContain("Tobi's fees cannot be shown right now.");
     // No figure anywhere, since every fee block is unavailable.
     expect(r.container.textContent).not.toContain("₦");
+  });
+});
+
+describe("the redesigned Home (1b)", () => {
+  const FAMILY_FEES = {
+    card_payments: true,
+    pay_all: { total: 500000, charges_total: 0, steps: [{ child_id: 11, first_name: "Tobi", invoice_ref: 101, number: "IV-1", title: "First Term", amount: 500000 }], complete: true },
+  };
+  const routed = (familyFees: unknown) => vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+    const url = input instanceof Request ? input.url : String(input);
+    const body = /\/portal\/parent\/fees\/(\?|$)/.test(url) ? { data: familyFees } : homePayload();
+    return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+  });
+
+  it("splits what is due by child, and offers Pay all balances where the school takes cards", async () => {
+    const r = render(routed(FAMILY_FEES) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 40)));
+    const banner = r.container.querySelector(".home-fees")!;
+    expect(banner.textContent).toContain("Tobi ₦5,000");
+    expect(banner.textContent).toContain("Somto paid up");
+    expect(banner.querySelectorAll(".home-fees-bar span").length).toBe(1);
+    expect(banner.querySelector('a[href="/fees/pay-all"]')?.textContent).toContain("Pay all balances");
+    expect(banner.querySelector('a[href="/fees"]')?.textContent).toBe("Open Fees");
+  });
+
+  it("offers no Pay all where the school takes transfers only", async () => {
+    const r = render(routed({ ...FAMILY_FEES, card_payments: false }) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 40)));
+    expect(r.container.querySelector('a[href="/fees/pay-all"]')).toBeNull();
+    expect(r.container.textContent).toContain("Pay by transfer to each child's account on the Fees screen.");
+  });
+
+  it("opens a child's timetable from their card, and their attendance and results from the tiles", async () => {
+    const r = render(routed(FAMILY_FEES) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 40)));
+    const tobi = r.container.querySelector('[aria-label="Tobi\'s card"]')!;
+    expect(tobi.querySelector('a[aria-label="Open Tobi\'s timetable"]')?.getAttribute("href")).toBe("/timetable?child=11");
+    expect(tobi.querySelector('a[href="/attendance?child=11"]')?.textContent).toContain("92%");
+    expect(tobi.querySelector('a[href="/results?child=11"]')?.textContent).toContain("72%");
+    expect(tobi.querySelector(".home-child-fees.is-owing")?.textContent).toContain("1 open bill");
+    const somto = r.container.querySelector('[aria-label="Somto\'s card"]')!;
+    expect(somto.querySelector(".home-child-fees.is-clear")?.textContent).toContain("Paid up");
   });
 });
