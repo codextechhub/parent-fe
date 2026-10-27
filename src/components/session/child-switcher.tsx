@@ -50,6 +50,28 @@ export function useFollowAddressedChild(): void {
 }
 
 /**
+ * Puts a child in focus for every screen: remembered for the next per-child
+ * screen, and named in the address (`?child=`) where the screen showing is
+ * about one child, so a reload stays on them. The switcher and the picker
+ * under a per-child screen's title both choose through this.
+ */
+export function useChooseChild(): (childId: number) => void {
+  const dispatch = useAppDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (childId: number) => {
+    dispatch(childFocused(childId));
+    const current = itemFor(location.pathname);
+    const next = new URLSearchParams(location.search);
+    // The choice is remembered either way; the address names the child only where the screen is about one.
+    if (current?.perChild) next.set(CHILD_PARAM, String(childId));
+    else next.delete(CHILD_PARAM);
+    const query = next.toString();
+    navigate(`${location.pathname}${query ? `?${query}` : ""}`, { replace: true });
+  };
+}
+
+/**
  * The header's avatar and the sheet it opens (design 1c), as the student
  * app's switcher: which child the per-child screens are reading, then the
  * parent's own account, with My profile and Sign out. The avatar is ringed in
@@ -66,12 +88,10 @@ export function ChildSwitcher() {
   const children = useAppSelector((s) => s.auth.me?.children ?? []);
   const showBranch = useAppSelector((s) => s.auth.me?.show_branch ?? false);
   const parent = useAppSelector((s) => s.auth.me?.parent);
-  const location = useLocation();
   const navigate = useNavigate();
   const active = useActiveChild();
   const [open, setOpen] = useState(false);
   const [logout, signingOut] = useLogoutMutation();
-  const dispatch = useAppDispatch();
   const hue = useChildHue(active?.id);
 
   const signOut = async () => {
@@ -85,15 +105,9 @@ export function ChildSwitcher() {
     navigate("/profile");
   };
 
+  const showChild = useChooseChild();
   const choose = (childId: number) => {
-    dispatch(childFocused(childId));
-    const current = itemFor(location.pathname);
-    const next = new URLSearchParams(location.search);
-    // The choice is remembered either way; the address names the child only where the screen is about one.
-    if (current?.perChild) next.set(CHILD_PARAM, String(childId));
-    else next.delete(CHILD_PARAM);
-    const query = next.toString();
-    navigate(`${location.pathname}${query ? `?${query}` : ""}`, { replace: true });
+    showChild(childId);
     setOpen(false);
   };
 

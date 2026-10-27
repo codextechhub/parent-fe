@@ -177,7 +177,7 @@ describe("ResultsPage", () => {
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
     expect(r.container.textContent).toContain("Math");
-    expect(r.container.textContent).toContain("Third Term");
+    expect(r.container.textContent).toContain("Tobi's third term · 2025/2026");
     expect(r.container.textContent).toContain("Keep it up.");
     expect(r.container.textContent).toContain("Mrs. Smith");
   });
@@ -232,3 +232,37 @@ describe("ResultsPage", () => {
     expect(eleven).toBe(0);
   });
 });
+
+describe("the children under the title (1d)", () => {
+  const stub = () => vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+    const url = input instanceof Request ? input.url : String(input);
+    return new Response(JSON.stringify(pickTermPayload(url)), { status: 200, headers: { "content-type": "application/json" } });
+  });
+  const chip = (container: HTMLElement, name: string) =>
+    Array.from(container.querySelectorAll<HTMLButtonElement>(".child-picker-chip")).find((b) => b.textContent?.includes(name))!;
+
+  it("shows each child, the one showing pressed, and the report card for that child", async () => {
+    const r = render("/results?child=11", stub() as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 30)));
+    expect(chip(r.container, "Tobi").getAttribute("aria-pressed")).toBe("true");
+    expect(chip(r.container, "Somto").getAttribute("aria-pressed")).toBe("false");
+    expect(r.container.querySelector(".results-card-link")?.getAttribute("href")).toBe("/results/card/43?child=11");
+  });
+
+  it("reads the other child's results when their chip is tapped", async () => {
+    const fetchStub = stub();
+    const r = render("/results?child=11", fetchStub as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 30)));
+    await act(async () => {
+      chip(r.container, "Somto").click();
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    expect(chip(r.container, "Somto").getAttribute("aria-pressed")).toBe("true");
+    const asked = fetchStub.mock.calls.some(([input]) => /\/children\/22\/results\//.test(String(input instanceof Request ? input.url : input)));
+    expect(asked).toBe(true);
+    expect(r.container.textContent).toContain("Somto's third term");
+  });
+});
+
