@@ -1,4 +1,4 @@
-import { Bell, CheckCircle2, ChevronRight, Users, Wallet } from "lucide-react";
+import { Bell, CalendarDays, CheckCircle2, ChevronRight, Users, Wallet } from "lucide-react";
 import { Link } from "react-router";
 
 import { PageShell } from "@/components/layout/page-shell";
@@ -247,6 +247,12 @@ function ChildCard({ child, showBranchName }: { child: ChildHomeBlock; showBranc
       {!showBranchName ? null : (
         <ChildBranchLine child={child} />
       )}
+      {/* Timetable left the tab bar; it opens from the child's card. */}
+      <Link to={`/timetable?child=${child.id}`} className="home-child-timetable">
+        <CalendarDays size={16} aria-hidden="true" />
+        {child.first_name}&apos;s timetable
+        <ChevronRight size={15} aria-hidden="true" />
+      </Link>
     </article>
   );
 }
@@ -353,7 +359,7 @@ function NoticeSection({ block, unread }: { block: Home["notices"]; unread: numb
         title="From your school"
         subtitle={unread ? `${unread} unread` : "Latest announcement"}
         id="home-notice-title"
-        href={block.available ? "/notices" : undefined}
+        href={block.available ? "/inbox?show=notices" : undefined}
         linkLabel="See all"
       />
       {!block.available ? (

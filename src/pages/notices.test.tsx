@@ -1,7 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Provider } from "react-redux";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
 import { Toaster } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -85,7 +85,7 @@ function render(path: string, fetchImpl: typeof fetch) {
     root.render(
       <Provider store={store}>
         <MemoryRouter initialEntries={[path]}>
-          <NoticesPage />
+          <Routes><Route path="/notices/:id" element={<NoticesPage />} /></Routes>
           <Toaster />
         </MemoryRouter>
       </Provider>,
@@ -111,19 +111,17 @@ afterEach(() => {
   }
 });
 
-function noticesStub(initialList: typeof LIST_PAGE_1, overrides: {
-  markAll?: boolean;
-} = {}) {
-  // The stub keeps a mutable list so a mark-all-read's invalidation refetch
-  // sees the "server" state as the backend would after the write.
+function noticesStub(initialList: typeof LIST_PAGE_1) {
+  // A mutable copy, so a mark-read's invalidation refetch sees the "server" state after the write.
   const list: typeof LIST_PAGE_1 = JSON.parse(JSON.stringify(initialList));
   return vi.fn(async (input: Parameters<typeof fetch>[0]) => {
     const url = input instanceof Request ? input.url : String(input);
-    if (url.endsWith("/portal/parent/notices/read-all/") && overrides.markAll) {
-      for (const row of list.data) row.unread = false;
-      list.unread_count = 0;
+    const markOne = url.match(/\/portal\/parent\/notices\/(\d+)\/read\/(\?|$)/);
+    if (markOne) {
+      const row = list.data.find((n) => n.id === Number(markOne[1]));
+      if (row) row.unread = false;
       return new Response(
-        JSON.stringify({ success: true, message: "ok", data: { marked: 1, unread_count: 0 } }),
+        JSON.stringify({ success: true, message: "ok", data: { unread_count: 0 } }),
         { status: 200, headers: { "content-type": "application/json" } },
       );
     }
@@ -147,45 +145,50 @@ function noticesStub(initialList: typeof LIST_PAGE_1, overrides: {
   });
 }
 
-describe("NoticesPage", () => {
-  it("renders the list with the unread count and the children a notice is for", async () => {
-    const r = render("/notices", noticesStub(LIST_PAGE_1) as unknown as typeof fetch);
+describe("a notice on its own screen", () => {
+  it("shows the notice whole, whom it is for, and the way back to the Inbox", async () => {
+    const r = render("/notices/7", noticesStub(LIST_PAGE_1) as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
-    expect(r.container.textContent).toContain("1 unread");
     expect(r.container.textContent).toContain("PTA meeting");
-    expect(r.container.textContent).toContain("Mid-term break");
-    // First row's "For Tobi" badge.
+    expect(r.container.textContent).toContain("This Saturday at 10am.");
     expect(r.container.textContent).toContain("For Tobi");
-    expect(r.container.textContent).toContain("Mark all as read");
+    expect(r.container.querySelector('a[aria-label="Back to the inbox"]')?.getAttribute("href")).toBe("/inbox");
   });
 
-  it("says All read when nothing is unread", async () => {
-    const payload = { ...LIST_PAGE_1, data: LIST_PAGE_1.data.map((n) => ({ ...n, unread: false })), unread_count: 0 };
-    const r = render("/notices", noticesStub(payload) as unknown as typeof fetch);
+  it("is not marked read by opening it: the parent marks it", async () => {
+    const stub = noticesStub(LIST_PAGE_1);
+    const r = render("/notices/7", stub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
-    expect(r.container.textContent).toContain("All read");
-    expect(r.container.textContent).not.toContain("Mark all as read");
-  });
-
-  it("fires the mark-all mutation when the parent clicks Mark all as read", async () => {
-    const stub = noticesStub(LIST_PAGE_1, { markAll: true });
-    const r = render("/notices", stub as unknown as typeof fetch);
-    last = r;
-    await act(() => new Promise((r) => setTimeout(r, 30)));
-    const button = Array.from(r.container.querySelectorAll("button")).find(
-      (b) => b.textContent?.includes("Mark all"),
-    ) as HTMLButtonElement | undefined;
+    const marked = () => (stub.mock.calls as Array<Parameters<typeof fetch>>).some(([input, init]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      const method = input instanceof Request ? input.method : init?.method;
+      return /\/notices\/7\/read\/$/.test(new URL(url, "http://t").pathname) && method === "POST";
+    });
+    expect(marked()).toBe(false);
+    const button = Array.from(r.container.querySelectorAll("button")).find((b) => b.textContent?.includes("Mark as read"));
     expect(button).toBeTruthy();
     await act(async () => {
       button!.click();
       await new Promise((r) => setTimeout(r, 60));
     });
-    const calledReadAll = (stub.mock.calls as Array<Parameters<typeof fetch>>).some(([input]) => {
-      const url = input instanceof Request ? input.url : String(input);
-      return url.includes("/portal/parent/notices/read-all/");
-    });
-    expect(calledReadAll).toBe(true);
+    expect(marked()).toBe(true);
+  });
+
+  it("says when a notice is already read", async () => {
+    const r = render("/notices/8", noticesStub(LIST_PAGE_1) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 30)));
+    expect(r.container.textContent).toContain("You've marked this notice as read");
+    expect(r.container.textContent).not.toContain("Mark as read");
+  });
+
+  it("says a notice is gone, with the way back to the notices", async () => {
+    const r = render("/notices/99", noticesStub(LIST_PAGE_1) as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 30)));
+    expect(r.container.textContent).toContain("This notice isn't available any more.");
+    expect(r.container.querySelector('a[href="/inbox?show=notices"]')).not.toBeNull();
   });
 });

@@ -79,9 +79,9 @@ calls them.
   gets the access token from the cookie. The key name is school-fe's
   contract. Sign-in also works on this app's own `/parent/sign-in` page.
 - **Phones are the main screen.** The layout is derived from the desktop
-  design; the owner's choice between a desktop sidebar and the floating tab
-  bar at every size is pending (see the plan). Horizontal page overflow is
-  a bug.
+  design. Navigation is the redesign's split bar at every size, desktop
+  included (the owner's choice, recorded in the plan): four tabs and the
+  Inbox button. Horizontal page overflow is a bug.
 - **Money comes from the API as kobo.** Never compute a balance the API can
   give; after a payment, read `fees/` again.
 

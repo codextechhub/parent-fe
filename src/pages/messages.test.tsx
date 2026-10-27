@@ -298,55 +298,12 @@ function typeInto(el: HTMLTextAreaElement, text: string) {
 const button = (container: HTMLElement, label: RegExp) =>
   Array.from(container.querySelectorAll("button")).find((b) => label.test(b.textContent ?? "") || label.test(b.getAttribute("aria-label") ?? "")) as HTMLButtonElement | undefined;
 
-describe("Messages list", () => {
-  it("shows staff, their label, the child and the unread count, and sets watched conversations apart", async () => {
+describe("The old list address", () => {
+  it("opens the Inbox on Messages, where the conversations are listed now", async () => {
     const s = server();
     last = render("/messages", s.fn);
     await settle();
-    const text = last.container.textContent ?? "";
-    expect(text).toContain("2 unread");
-    expect(text).toContain("Your conversations");
-    expect(text).toContain("Mrs Funke Bello");
-    expect(text).toContain("Class teacher, JSS1 A");
-    expect(text).toContain("About Tobi");
-    expect(text).toContain("Your child's conversations with staff");
-    // The section note says the rule once; the watched row does not repeat it.
-    expect(text.split("You can read these but not reply").length - 1).toBe(1);
-    expect(text).not.toContain("You can read it but not reply");
-    // The watched row reads like an ordinary one: staff label and child chip, no unread badge.
-    const watched = last.container.querySelector('a[href="/messages/52"]');
-    expect(watched?.getAttribute("aria-label")).toBe("Open Adaeze's conversation with Mr Kunle Adebayo");
-    expect(watched?.textContent).toContain("Mr Kunle Adebayo");
-    expect(watched?.textContent).toContain("Mathematics");
-    expect(watched?.textContent).toContain("About Adaeze");
-    expect(watched?.querySelector(".msg-unread")).toBeNull();
-  });
-
-  it("leaves the child chips and the About line out for a parent with one child", async () => {
-    const s = server({ rows: [FAMILY_ROW] });
-    last = render("/messages", s.fn, ONE_CHILD);
-    await settle();
-    expect(last.container.textContent).not.toContain("All children");
-    expect(last.container.textContent).not.toContain("About Tobi");
-  });
-
-  it("asks the API for one child when a chip is chosen", async () => {
-    const s = server();
-    last = render("/messages", s.fn);
-    await settle();
-    await act(async () => {
-      button(last!.container, /^Adaeze$/)!.click();
-      await new Promise((r) => setTimeout(r, 40));
-    });
-    const asked = s.fn.mock.calls.some(([input]) => String(input instanceof Request ? input.url : input).includes("child=2"));
-    expect(asked).toBe(true);
-  });
-
-  it("says so when there is nothing yet", async () => {
-    const s = server({ rows: [] });
-    last = render("/messages", s.fn);
-    await settle();
-    expect(last.container.textContent).toContain("No messages yet");
+    expect(last.container.querySelector('[data-testid="where"]')?.textContent).toBe("/inbox");
   });
 });
 
@@ -600,12 +557,12 @@ describe("Open conversation layout", () => {
     expect(body.contains(thread.querySelector(".msg-head"))).toBe(false);
     expect(body.contains(thread.querySelector(".msg-composer"))).toBe(false);
     expect(last.container.querySelector(".msg-page")!.classList.contains("is-fixed")).toBe(true);
-    expect(last.container.querySelector('a[aria-label="All messages"]')?.getAttribute("href")).toBe("/messages");
+    expect(last.container.querySelector('a[aria-label="Back to the inbox"]')?.getAttribute("href")).toBe("/inbox?show=messages");
   });
 
-  it("does not fix the layout on the list or the new message form", async () => {
+  it("does not fix the layout on the new message form", async () => {
     const s = server();
-    last = render("/messages", s.fn);
+    last = render("/messages/new", s.fn);
     await settle(80);
     expect(last.container.querySelector(".msg-page")!.classList.contains("is-fixed")).toBe(false);
   });

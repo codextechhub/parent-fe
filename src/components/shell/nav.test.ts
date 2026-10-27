@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isConversationPath, itemFor, NAV, splitTabs } from "./nav";
+import { INBOX, isConversationPath, isDetailPath, itemFor, NAV, TABS } from "./nav";
 
 describe("itemFor", () => {
   it("matches the exact path", () => {
@@ -10,6 +10,7 @@ describe("itemFor", () => {
     expect(itemFor("/attendance")?.key).toBe("attendance");
     expect(itemFor("/timetable")?.key).toBe("timetable");
     expect(itemFor("/messages")?.key).toBe("messages");
+    expect(itemFor("/inbox")?.key).toBe("inbox");
   });
 
   it("matches a child path to the parent item", () => {
@@ -25,23 +26,25 @@ describe("itemFor", () => {
   });
 });
 
-describe("splitTabs", () => {
-  it("keeps the owner's four tabs and puts the rest under More (8 items)", () => {
-    expect(NAV.length).toBe(8);
-    const { tabs, more } = splitTabs(NAV);
-    expect(tabs.map((item) => item.key)).toEqual(["home", "results", "fees", "notices"]);
-    expect(more.map((item) => item.key)).toEqual(["timetable", "attendance", "messages", "profile"]);
+describe("the split bar", () => {
+  it("has Home, Results, Attendance and Fees as tabs, and the Inbox button for notices and messages", () => {
+    expect(TABS.map((item) => item.key)).toEqual(["home", "results", "attendance", "fees"]);
+    expect(INBOX.map((item) => item.key)).toEqual(["inbox", "notices", "messages"]);
   });
 
-  it("does not carry a child on Messages", () => {
-    expect(NAV.find((item) => item.key === "messages")?.perChild).toBeFalsy();
+  it("carries the child showing on Results, Attendance and Timetable, and not on Fees or the Inbox", () => {
+    const carries = NAV.filter((item) => item.perChild).map((item) => item.key);
+    expect(carries).toEqual(["results", "attendance", "timetable"]);
   });
+});
 
-  it("keeps every item as a tab when at or under the slot count", () => {
-    const trimmed = NAV.slice(0, 5);
-    const { tabs, more } = splitTabs(trimmed);
-    expect(tabs.length).toBe(5);
-    expect(more.length).toBe(0);
+describe("isDetailPath", () => {
+  it("is true for a notice and a new message, which draw their own back bar", () => {
+    expect(isDetailPath("/notices/12")).toBe(true);
+    expect(isDetailPath("/messages/new")).toBe(true);
+    expect(isDetailPath("/inbox")).toBe(false);
+    expect(isDetailPath("/notices")).toBe(false);
+    expect(isDetailPath("/messages/41")).toBe(false);
   });
 });
 

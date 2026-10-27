@@ -1,0 +1,51 @@
+/* The Inbox: notices and messages in one list (design 1j). Shared pieces are in screen.css. */
+.inbox-page { padding: 8px 16px 32px; }
+.inbox-wrap { display: grid; gap: 12px; width: 100%; max-width: 640px; margin: 0 auto; }
+
+.inbox-eyebrow { color: var(--xs-brand); font-weight: 600; }
+.inbox-new { display: inline-flex; flex: none; align-items: center; gap: 7px; height: 40px; padding: 0 14px; border-radius: 99px; background: var(--xs-brand); box-shadow: 0 8px 18px -8px rgba(45, 71, 120, .7); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+.inbox-new:hover { background: #425b8f; }
+.inbox-new:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+
+/* The switch (Segmented, in screen.css): All, Notices, Messages, each with its unread count. */
+.inbox-filters { grid-template-columns: 1fr 1.2fr 1.3fr; margin-top: 4px; }
+
+
+.inbox-mark-all { display: flex; justify-content: flex-end; padding: 0 4px; }
+.inbox-mark-all button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--xs-brand); font-size: 13px; font-weight: 600; cursor: pointer; }
+.inbox-mark-all button:disabled { opacity: .55; cursor: not-allowed; }
+
+.inbox-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.inbox-list > li { min-width: 0; }
+/* A read row recedes: translucent, a hairline in place of the shadow, lighter type. */
+.inbox-row { display: flex; gap: 12px; align-items: flex-start; min-width: 0; padding: 14px; border-radius: 22px; background: rgba(255, 255, 255, .55); box-shadow: 0 0 0 1px #e6eaf2; color: var(--xs-ink); text-decoration: none; transition: background-color .2s, box-shadow .2s; }
+.inbox-row.is-unread { background: #fff; box-shadow: 0 1px 2px rgba(34, 49, 83, .05), 0 8px 24px -6px rgba(34, 49, 83, .1); }
+.inbox-row:hover { background: #fff; }
+.inbox-row:focus-visible { outline: 3px solid #5975ff; outline-offset: 2px; }
+.inbox-row-mark { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 999px; font-size: 14.5px; font-weight: 650; }
+.inbox-row-mark--notice { border-radius: 14px; background: var(--xs-brand-soft); color: var(--xs-brand); }
+.inbox-row-main { flex: 1; min-width: 0; }
+.inbox-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.inbox-row-top strong { min-width: 0; overflow: hidden; color: var(--xs-ink-2); font-size: 15px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-row.is-unread .inbox-row-top strong { color: var(--xs-ink); font-weight: 650; }
+.inbox-row-top time { flex: none; color: #8492a5; font-size: 12px; }
+.inbox-row-sub { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: var(--xs-faint); font-size: 12px; }
+.inbox-row-sub-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-edited { flex: none; padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+.inbox-row-body { display: -webkit-box; margin-top: 5px; overflow: hidden; color: var(--xs-muted); font-size: 13.5px; line-height: 1.42; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.inbox-row-dot { flex: none; width: 9px; height: 9px; margin-top: 6px; border-radius: 9px; background: var(--xs-brand); }
+
+.inbox-loading { min-height: 220px; border-radius: 22px; background: #e7ecf4; animation: inbox-pulse 1.4s ease-in-out infinite alternate; }
+@keyframes inbox-pulse { to { opacity: .55; } }
+.inbox-failed { padding: 14px 16px; border-radius: 18px; background: #fff; box-shadow: var(--xs-shadow); color: var(--xs-muted); font-size: 13px; }
+.inbox-failed button { border: 0; background: transparent; color: var(--xs-brand); font-weight: 600; cursor: pointer; }
+.inbox-empty { display: grid; justify-items: center; gap: 6px; padding: 36px 20px; border-radius: 24px; background: #fff; box-shadow: var(--xs-shadow); text-align: center; }
+.inbox-empty .icon-tile { width: 48px; height: 48px; border-radius: 15px; }
+.inbox-empty h2 { margin: 8px 0 0; color: var(--xs-ink); font-size: 17px; font-weight: 600; }
+.inbox-empty p { max-width: 300px; margin: 0; color: var(--xs-muted); font-size: 13.5px; line-height: 1.45; }
+.inbox-older { display: inline-flex; justify-self: center; align-items: center; gap: 4px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 99px; background: #fff; box-shadow: 0 0 0 1px var(--xs-field); color: var(--xs-brand); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .inbox-loading { animation: none; }
+  .inbox-row { transition: none; }
+}

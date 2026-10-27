@@ -1,14 +1,18 @@
 .app-shell--design {
-  background: radial-gradient(circle at 12% 0%, #e9eafe 0, transparent 31rem), #f5f7fc;
+  background: radial-gradient(circle at 12% 0%, #e9eafe 0, transparent 26rem), #f4f6fa;
 }
 
-.app-shell--design :is(.home-page, .timetable-page, .results-page, .fees-page, .pay-page, .paid-page, .receipt-page, .attendance-page, .notices-page, .profile-page, .report-page) {
+.app-shell--design :is(.home-page, .timetable-page, .results-page, .fees-page, .pay-page, .paid-page, .receipt-page, .attendance-page, .profile-page, .report-page, .inbox-page, .notice-page) {
   background: transparent;
 }
 
 .app-shell--design :is(.report-hero, .attendance-hero, .receipt-summary, .paid-cover) {
   min-height: 0;
 }
+
+/* A screen with a large title keeps its name out of the header until the large title has gone under it. */
+.app-shell-title { transition: opacity .2s; }
+.app-shell-title[data-hidden] { opacity: 0; }
 
 /* An open conversation: the frame is the visible screen and nothing outside the message list scrolls. */
 .app-shell--fixed {
@@ -18,25 +22,35 @@
   left: 0;
   height: var(--vv-height, 100dvh);
   overflow: hidden;
-  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
-  /* What a fixed screen leaves free at its bottom for the home bar; the tab bar's room is the padding above. */
-  --screen-inset-bottom: 0px;
+  /* What the screen leaves free at its edges: the home bar below, the notch above, as the shell header is gone. */
+  --screen-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --screen-inset-top: env(safe-area-inset-top, 0px);
+}
+/* The offline bar sits first while it shows and clears the notch itself. */
+.app-shell--fixed.app-shell--offline {
   --screen-inset-top: 0px;
 }
+/* The keyboard covers the home bar, so its inset is not wanted above the keys. */
+.app-shell--fixed[data-keyboard] {
+  --screen-inset-bottom: 0px;
+}
 
-@media (max-width: 899px) {
-  .app-shell--fixed {
-    padding-bottom: 0;
-    --screen-inset-bottom: env(safe-area-inset-bottom, 0px);
-    /* With the shell header gone the screen starts at the status bar, so its first row clears the notch. */
-    --screen-inset-top: env(safe-area-inset-top, 0px);
-  }
-  /* The offline bar sits first while it shows and clears the notch itself. */
-  .app-shell--fixed.app-shell--offline {
-    --screen-inset-top: 0px;
-  }
-  /* The keyboard covers the home bar, so its inset is not wanted above the keys. */
-  .app-shell--fixed[data-keyboard] {
-    --screen-inset-bottom: 0px;
-  }
+/* The split bar: a frosted pill of four tabs and, beside it, the round Inbox button. */
+.app-shell-tabs { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 14px max(14px, env(safe-area-inset-bottom)); pointer-events: none; }
+.tab-bar, .tab-bar-inbox { border: 1px solid rgba(255, 255, 255, .9); background: rgba(255, 255, 255, .74); box-shadow: 0 12px 32px -10px rgba(34, 49, 83, .28), 0 0 0 .5px rgba(34, 49, 83, .08); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); pointer-events: auto; }
+.tab-bar { position: relative; display: flex; flex: 1; gap: 2px; min-width: 0; max-width: 380px; padding: 6px; border-radius: 999px; }
+/* The tinted pill behind the tab showing: it slides from tab to tab, and fades on a screen that is no tab. */
+.tab-bar-pill { position: absolute; top: 6px; bottom: 6px; left: 6px; border-radius: 999px; background: rgba(74, 101, 157, .13); transition: transform .32s cubic-bezier(.3, .7, .2, 1), opacity .2s; pointer-events: none; }
+.tab-bar-pill[data-hidden] { opacity: 0; }
+.tab-bar-tab { position: relative; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 0; height: 50px; border-radius: 999px; color: #5f6f86; font-weight: 500; text-decoration: none; transition: color .25s; }
+.tab-bar-tab:hover { color: #3d568c; }
+.tab-bar-tab.active { color: #3d568c; font-weight: 600; }
+.tab-bar-label { max-width: 100%; overflow: hidden; font-size: 10.5px; line-height: 1; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; }
+.tab-bar-inbox { position: relative; display: grid; text-decoration: none; place-items: center; flex: none; width: 62px; height: 62px; padding: 0; border-radius: 999px; color: #3d568c; cursor: pointer; transition: background-color .25s, color .25s; }
+.tab-bar-inbox[data-showing] { background: rgba(74, 101, 157, .9); color: #fff; }
+.tab-bar-inbox-count { position: absolute; top: 8px; right: 9px; display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; border: 1.5px solid #fff; border-radius: 99px; background: #4a659d; color: #fff; font-size: 10px; font-weight: 600; line-height: 1; }
+.tab-bar-tab:focus-visible, .tab-bar-inbox:focus-visible { outline: 3px solid #5975ff; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-bar-tab, .tab-bar-pill, .tab-bar-inbox, .app-shell-title { transition: none; }
 }

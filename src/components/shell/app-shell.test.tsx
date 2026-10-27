@@ -47,16 +47,6 @@ const empty = () =>
     { status: 200, headers: { "content-type": "application/json" } },
   );
 
-/** Pretends the window is `narrow` (a phone) or wide (two panes) for the media query the shell reads. */
-function screenIs(narrow: boolean) {
-  window.matchMedia = ((query: string) => ({
-    matches: query.includes("max-width") ? narrow : !narrow,
-    media: query,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  })) as unknown as typeof window.matchMedia;
-}
-
 let view: { root: Root; container: HTMLDivElement; store: ReturnType<typeof configureStore> } | null = null;
 
 function render(path: string) {
@@ -75,10 +65,12 @@ function render(path: string) {
         <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route element={<AppShell />}>
-              <Route path="messages" element={<p>List</p>} />
+              <Route path="inbox" element={<p>Inbox</p>} />
+              <Route path="notices/:id" element={<p>Notice</p>} />
               <Route path="messages/new" element={<p>New</p>} />
               <Route path="messages/:id" element={<p>Thread</p>} />
               <Route path="fees" element={<p>Fees</p>} />
+              <Route path="results" element={<p>Results</p>} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -105,17 +97,15 @@ afterEach(() => {
 });
 
 describe("App shell around an open conversation", () => {
-  it("takes the tab bar and the app header away on a phone while a conversation is open", () => {
-    screenIs(true);
+  it("takes the tab bar and the app header away while a conversation is open, at every size", () => {
     const container = render("/messages/41");
     expect(tabBar(container)).toBeNull();
     expect(appHeader(container)).toBeNull();
     expect(frame(container).classList.contains("app-shell--fixed")).toBe(true);
   });
 
-  it("brings the tab bar and the app header back on the list and on every other screen", () => {
-    screenIs(true);
-    for (const path of ["/messages", "/messages/new", "/fees"]) {
+  it("brings the tab bar and the app header back on the Inbox and on every other tab", () => {
+    for (const path of ["/inbox", "/fees"]) {
       const container = render(path);
       expect(tabBar(container), path).not.toBeNull();
       expect(appHeader(container), path).not.toBeNull();
@@ -126,16 +116,7 @@ describe("App shell around an open conversation", () => {
     }
   });
 
-  it("keeps the app header and the tab bar beside the two panes on a wide screen", () => {
-    screenIs(false);
-    const container = render("/messages/41");
-    expect(tabBar(container)).not.toBeNull();
-    expect(appHeader(container)).not.toBeNull();
-    expect(frame(container).classList.contains("app-shell--fixed")).toBe(true);
-  });
-
-  it("makes the offline bar clear the top inset when it is the first thing on a phone's conversation", () => {
-    screenIs(true);
+  it("makes the offline bar clear the top inset when it is the first thing on a conversation", () => {
     const container = render("/messages/41");
     act(() => {
       view!.store.dispatch(wentOffline());
@@ -145,8 +126,7 @@ describe("App shell around an open conversation", () => {
   });
 
   it("leaves the offline bar under the app header elsewhere", () => {
-    screenIs(true);
-    const container = render("/messages");
+    const container = render("/inbox");
     act(() => {
       view!.store.dispatch(wentOffline());
     });
@@ -154,7 +134,6 @@ describe("App shell around an open conversation", () => {
   });
 
   it("follows the visual viewport so the box rides above the keyboard, and lets go on leaving", () => {
-    screenIs(true);
     const listeners: Record<string, () => void> = {};
     const viewport = {
       height: 500,
@@ -180,6 +159,46 @@ describe("App shell around an open conversation", () => {
       view = null;
     } finally {
       Object.defineProperty(window, "visualViewport", { value: undefined, configurable: true });
+    }
+  });
+});
+
+describe("The split bar", () => {
+  const tabs = (container: HTMLElement) =>
+    Array.from(tabBar(container)!.querySelectorAll(".tab-bar-tab")).map((a) => a.textContent);
+
+  it("has Home, Results, Attendance and Fees, and an Inbox button beside them", () => {
+    const container = render("/fees");
+    expect(tabs(container)).toEqual(["Home", "Results", "Attendance", "Fees"]);
+    const inbox = container.querySelector(".tab-bar-inbox");
+    expect(inbox?.getAttribute("href")).toBe("/inbox");
+    expect(inbox?.hasAttribute("data-showing")).toBe(false);
+  });
+
+  it("carries the child showing on Results and Attendance, and not on Fees", () => {
+    const container = render("/fees");
+    const href = (label: string) =>
+      Array.from(container.querySelectorAll(".tab-bar-tab")).find((a) => a.textContent === label)?.getAttribute("href");
+    expect(href("Results")).toBe("/results?child=1");
+    expect(href("Attendance")).toBe("/attendance?child=1");
+    expect(href("Fees")).toBe("/fees");
+  });
+
+  it("turns the Inbox button blue on the Inbox and fades the tab pill", () => {
+    const container = render("/inbox");
+    expect(container.querySelector(".tab-bar-inbox")?.hasAttribute("data-showing")).toBe(true);
+    expect(container.querySelector(".tab-bar-pill")?.hasAttribute("data-hidden")).toBe(true);
+  });
+
+  it("steps aside, with the header, for a notice and a new message, which have their own back bar", () => {
+    for (const path of ["/notices/7", "/messages/new"]) {
+      const container = render(path);
+      expect(tabBar(container), path).toBeNull();
+      expect(appHeader(container), path).toBeNull();
+      expect(frame(container).classList.contains("app-shell--fixed"), path).toBe(false);
+      act(() => view!.root.unmount());
+      container.remove();
+      view = null;
     }
   });
 });

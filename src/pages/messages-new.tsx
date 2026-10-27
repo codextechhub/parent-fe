@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, Check } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Check } from "lucide-react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { useActiveChild } from "@/components/session/child-switcher";
@@ -68,11 +68,7 @@ export function NewMessage() {
 
   return (
     <section className="msg-new-card" aria-labelledby="msg-new-title">
-      <Link to="/messages" className="msg-detail-back">
-        <ArrowLeft size={17} aria-hidden="true" />
-        All messages
-      </Link>
-      <h2 id="msg-new-title" className="msg-new-title">
+      <h2 id="msg-new-title" className="sr-only">
         New message
       </h2>
 

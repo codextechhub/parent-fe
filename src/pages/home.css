@@ -171,6 +171,9 @@
   text-decoration: none;
 }
 .home-child-link:hover { background: #d6def0; }
+.home-child-timetable { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: 12px; background: #f4f6fa; color: #4a659d; font-size: 13px; font-weight: 600; text-decoration: none; }
+.home-child-timetable svg:last-child { margin-left: auto; color: #8b97aa; }
+.home-child-timetable:hover { background: #e8eef8; }
 .home-child-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

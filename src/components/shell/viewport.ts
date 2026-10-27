@@ -1,32 +1,7 @@
-import { useEffect, useSyncExternalStore, type RefObject } from "react";
-
-/**
- * The width, in px, from which Messages shows its list and an open
- * conversation side by side. `messages.css` switches its layout at the same
- * number; below it the two are separate screens.
- */
-export const TWO_PANES_MIN_PX = 900;
+import { useEffect, type RefObject } from "react";
 
 /** How much shorter the visible screen has to be than the window before it counts as a keyboard. */
 const KEYBOARD_MIN_PX = 120;
-
-const NARROW = `(max-width: ${TWO_PANES_MIN_PX - 1}px)`;
-
-function subscribeNarrow(notify: () => void): () => void {
-  if (typeof window.matchMedia !== "function") return () => {};
-  const query = window.matchMedia(NARROW);
-  query.addEventListener("change", notify);
-  return () => query.removeEventListener("change", notify);
-}
-
-/** True below `TWO_PANES_MIN_PX`: a phone, or a tablet held upright. */
-export function useNarrowScreen(): boolean {
-  return useSyncExternalStore(
-    subscribeNarrow,
-    () => typeof window.matchMedia === "function" && window.matchMedia(NARROW).matches,
-    () => false,
-  );
-}
 
 /**
  * Sizes `ref`'s element to the part of the screen the parent can see.

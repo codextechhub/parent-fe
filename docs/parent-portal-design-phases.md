@@ -332,6 +332,11 @@ Blocked, this phase, on the backend.
   kept for desktop (student-fe moved away from it on the owner's choice; the
   parent app's owner choice is open; the plan assumes the same floating-tab
   bar at every size unless the owner wants a desktop sidebar).
+  **Decided (the XVS Parent Redesign, `designs/`):** the student app's split
+  bar at every size, desktop included: Home, Results, Attendance and Fees as
+  tabs, and a round Inbox button beside them for notices and messages in one
+  list. No More sheet and no sidebar. Timetable opens from a child's card on
+  Home, Profile from the switcher behind the avatar.
 - **The child switcher** in the header: `me.children`, one per button, with
   initials and class; the active child is held in a URL segment (`?child=`)
   so a reload stays on the same child. Links to screens that are not

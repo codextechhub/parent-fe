@@ -1,0 +1,135 @@
+/* The redesign's shared pieces: the colours, the large title, section titles,
+   borderless white cards on the cool grey, icon tiles, pills, the blue info
+   note, and the bars of a screen opened from another (back bar on top, action
+   bar at the bottom). Each page's own stylesheet builds on these. */
+
+:root {
+  --xs-ink: #223153;
+  --xs-ink-2: #41506b;
+  --xs-muted: #5f6f86;
+  --xs-faint: #7a869d;
+  --xs-hint: #8b97aa;
+  --xs-line: #f0f2f7;
+  --xs-field: #e3e8f1;
+  --xs-bg: #f4f6fa;
+  --xs-brand: #4a659d;
+  --xs-brand-deep: #2d4778;
+  --xs-brand-soft: #e8eef8;
+  --xs-brand-text: #3d568c;
+  --xs-on-brand: #dbe5f7;
+  --xs-good: #1d7656;
+  --xs-good-soft: #ecf8f3;
+  --xs-good-dot: #2f9e6e;
+  --xs-warn: #97601e;
+  --xs-warn-text: #8a5a08;
+  --xs-warn-soft: #fff4df;
+  --xs-warn-dot: #d08a1c;
+  --xs-bad: #a81e1e;
+  --xs-bad-soft: #fdeeee;
+  --xs-bad-dot: #d04848;
+  --xs-violet: #5b4aa3;
+  --xs-violet-soft: #efeafd;
+  --xs-note: #eceffb;
+  --xs-shadow: 0 1px 2px rgba(34, 49, 83, .05), 0 8px 24px -6px rgba(34, 49, 83, .08);
+  --xs-shadow-strong: 0 20px 40px -16px rgba(45, 71, 120, .6);
+}
+
+/* The large title at the top of a tab's screen: a small grey line over it, an action on the right. */
+.screen-title { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; min-width: 0; padding: 4px 4px 0; }
+.screen-title > div { min-width: 0; }
+.screen-title-eyebrow { margin: 0; color: var(--xs-faint); font-size: 13px; font-weight: 500; }
+.screen-title h1 { margin: 2px 0 0; color: var(--xs-ink); font-size: 34px; line-height: 1.08; font-weight: 650; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.screen-title-below { margin-top: 12px; }
+
+/* A section's title over its card: 17px, with a quiet note or a link on the right. */
+.screen-section { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; min-width: 0; padding: 10px 4px 0; }
+.screen-section h2 { margin: 0; color: var(--xs-ink); font-size: 17px; line-height: 1.25; font-weight: 600; letter-spacing: -.02em; }
+.screen-section-sub { display: block; color: var(--xs-faint); font-size: 12.5px; font-weight: 400; letter-spacing: 0; }
+.screen-section-aside { flex: none; color: var(--xs-faint); font-size: 13px; }
+.screen-section-link { display: inline-flex; align-items: center; gap: 1px; flex: none; color: var(--xs-brand); font-size: 13px; font-weight: 600; text-decoration: none; }
+.screen-section-link:hover { text-decoration: underline; }
+
+.screen-card { min-width: 0; border-radius: 24px; background: #fff; box-shadow: var(--xs-shadow); color: var(--xs-ink); }
+/* :where keeps a link card's defaults weaker than the page's own layout for it (a flex row, a column). */
+:where(a.screen-card, button.screen-card) { display: block; text-decoration: none; transition: transform .2s, box-shadow .2s; }
+:where(a.screen-card, button.screen-card):hover { transform: translateY(-1px); box-shadow: 0 1px 2px rgba(34, 49, 83, .06), 0 12px 28px -8px rgba(34, 49, 83, .14); }
+:is(.screen-card, .screen-section-link, .detail-bar-button):focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+
+/* Rows inside a card, divided by a hairline. */
+.screen-rows > * + * { border-top: 1px solid var(--xs-line); }
+
+.icon-tile { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 12px; background: var(--xs-brand-soft); color: var(--xs-brand); }
+.icon-tile--good { background: var(--xs-good-soft); color: var(--xs-good); }
+.icon-tile--warn { background: var(--xs-warn-soft); color: var(--xs-warn); }
+.icon-tile--violet { background: var(--xs-violet-soft); color: var(--xs-violet); }
+.icon-tile--grey { background: var(--xs-bg); color: var(--xs-muted); }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 4px 9px; border-radius: 99px; background: var(--xs-brand-soft); color: var(--xs-brand-text); font-size: 11.5px; font-weight: 600; line-height: 1.3; }
+.pill--good { background: var(--xs-good-soft); color: var(--xs-good); }
+.pill--warn { background: var(--xs-warn-soft); color: var(--xs-warn-text); }
+.pill--bad { background: var(--xs-bad-soft); color: var(--xs-bad); }
+.pill--grey { background: var(--xs-bg); color: var(--xs-muted); }
+.pill--brand { background: var(--xs-brand); color: #fff; }
+/* The white chips under a large title ("JSS 3 Gold", "First term · 2026/2027"). */
+.chip { display: inline-flex; align-items: center; max-width: 100%; padding: 5px 10px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 1px var(--xs-field); color: var(--xs-muted); font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.chip--brand { color: var(--xs-brand); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* The switch between views of one screen: the chosen option's white pill slides to the one tapped. */
+.segmented { position: relative; display: grid; grid-auto-columns: 1fr; grid-auto-flow: column; gap: 3px; padding: 3px; border-radius: 13px; background: rgba(118, 128, 150, .14); }
+.segmented-pill { position: absolute; top: 3px; bottom: 3px; left: 0; border-radius: 10px; background: #fff; box-shadow: 0 2px 6px rgba(34, 49, 83, .1); transition: transform .32s cubic-bezier(.3, .7, .2, 1), width .32s cubic-bezier(.3, .7, .2, 1); }
+.segmented button { position: relative; z-index: 1; height: 34px; padding: 0 6px; border: 0; border-radius: 10px; background: transparent; color: var(--xs-muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: color .2s; }
+.segmented button[aria-pressed="true"] { color: var(--xs-ink); font-weight: 600; }
+.segmented button:focus-visible { outline: 3px solid #5975ff; outline-offset: 1px; }
+
+/* The blue note: a word of explanation in the flow of a screen. */
+.info-note { display: flex; gap: 11px; align-items: flex-start; padding: 13px 15px; border-radius: 18px; background: var(--xs-note); color: var(--xs-ink-2); font-size: 13px; line-height: 1.5; }
+.info-note > svg { flex: none; margin-top: 1px; color: var(--xs-brand); }
+.info-note p { margin: 0; }
+.info-note strong { color: var(--xs-ink); font-weight: 600; }
+
+/* The live dot: pulses while something is under way or being waited for. */
+.live-dot { flex: none; width: 8px; height: 8px; border-radius: 9px; background: #fff; animation: live-pulse 1.8s ease-out infinite; }
+.live-dot--good { background: var(--xs-good); animation-name: live-pulse-good; }
+@keyframes live-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, .7); } 70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
+@keyframes live-pulse-good { 0% { box-shadow: 0 0 0 0 rgba(29, 118, 86, .5); } 70% { box-shadow: 0 0 0 8px rgba(29, 118, 86, 0); } 100% { box-shadow: 0 0 0 0 rgba(29, 118, 86, 0); } }
+
+/* The orb rings of a blue card, top right. */
+.screen-orb { position: absolute; z-index: 0; width: 300px; height: 300px; right: -120px; top: -140px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 50%; box-shadow: 0 0 0 52px rgba(255, 255, 255, .05), 0 0 0 104px rgba(255, 255, 255, .035); pointer-events: none; }
+
+/* A screen opened from another: a back button, the title in the middle, an action on the right. */
+.detail-bar { position: sticky; z-index: 30; top: 0; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; min-width: 0; padding: max(10px, env(safe-area-inset-top)) 16px 10px; transition: background-color .2s, backdrop-filter .2s, box-shadow .2s; }
+.detail-bar.is-scrolled { background: rgba(244, 246, 250, .82); box-shadow: 0 .5px 0 rgba(34, 49, 83, .1); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5); }
+.detail-bar-title { min-width: 0; text-align: center; }
+.detail-bar-title h1 { margin: 0; overflow: hidden; color: var(--xs-ink); font-size: 16px; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.detail-bar-title p { margin: 0; overflow: hidden; color: var(--xs-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.detail-bar-button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .85); box-shadow: 0 0 0 .5px rgba(34, 49, 83, .1), 0 4px 14px -6px rgba(34, 49, 83, .25); color: var(--xs-ink-2); cursor: pointer; }
+.detail-bar-button:hover { background: #fff; }
+.detail-bar-button:disabled { opacity: .5; cursor: not-allowed; }
+/* With a pill that names where Back goes, the title stays centred between two flexible sides. */
+.detail-bar.has-pill { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.detail-bar-pill { display: inline-flex; justify-self: start; align-items: center; gap: 2px; height: 44px; padding: 0 14px 0 8px; border-radius: 99px; background: rgba(255, 255, 255, .85); box-shadow: 0 0 0 .5px rgba(34, 49, 83, .1), 0 4px 14px -6px rgba(34, 49, 83, .25); color: var(--xs-ink-2); font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.detail-bar-pill:hover { background: #fff; }
+.detail-bar-pill:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+.detail-bar-action { display: flex; justify-self: end; align-items: center; min-width: 0; }
+
+/* The action bar at the foot of a screen opened from another, where the tab bar would be. */
+.bottom-bar { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; padding: 12px 16px max(16px, env(safe-area-inset-bottom)); background: rgba(244, 246, 250, .85); box-shadow: 0 -.5px 0 rgba(34, 49, 83, .1); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.bottom-bar > div { display: flex; gap: 10px; width: 100%; max-width: 560px; }
+.bottom-bar-space { height: calc(92px + env(safe-area-inset-bottom)); }
+
+/* Buttons the redesign shares: the blue one, and the white one beside it. */
+.xs-button { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 18px; border: 0; border-radius: 16px; background: var(--xs-brand); box-shadow: 0 10px 24px -10px rgba(45, 71, 120, .7); color: #fff; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; transition: transform .15s, background-color .15s; }
+.xs-button:hover { background: #425b8f; }
+.xs-button:active { transform: scale(.98); }
+.xs-button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.xs-button:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+.xs-button--plain { flex: 1 1 0; background: #fff; box-shadow: 0 0 0 1px #dde3ee; color: var(--xs-ink); }
+.xs-button--plain:hover { background: #f7f9fc; }
+.xs-button--wide { flex: 1.4 1 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none; }
+  .segmented-pill, .segmented button { transition: none; }
+  a.screen-card, button.screen-card, .xs-button { transition: none; }
+}

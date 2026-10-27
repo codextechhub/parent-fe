@@ -193,7 +193,7 @@ export function ThreadView({ id }: { id: number }) {
   if (isGone(rowError) || isGone(threadError)) {
     return (
       <div className="msg-detail-error" role="alert">
-        This conversation isn&apos;t available any more. <Link to="/messages">Back to messages</Link>
+        This conversation isn&apos;t available any more. <Link to="/inbox?show=messages">Back to the inbox</Link>
       </div>
     );
   }
@@ -281,7 +281,7 @@ function ThreadHeader({ convo, childFirst }: { convo: Conversation | undefined; 
   const watching = convo?.kind === "PUPIL";
   return (
     <header className="msg-head">
-      <Link to="/messages" className="msg-head-back" aria-label="All messages">
+      <Link to="/inbox?show=messages" className="msg-head-back" aria-label="Back to the inbox">
         <ArrowLeft size={20} aria-hidden="true" />
       </Link>
       {convo ? (
