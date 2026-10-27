@@ -27,7 +27,7 @@ const UNREAD_POLL_MS = 60_000;
  * their name out until the large title has scrolled away under it, as on an
  * iPhone, so the name is never on screen twice.
  */
-const LARGE_TITLE: ReadonlySet<NavItem["key"]> = new Set(["home", "results", "inbox"]);
+const LARGE_TITLE: ReadonlySet<NavItem["key"]> = new Set(["home", "results", "attendance", "inbox"]);
 
 /** How far down, in px, a large title has gone under the header. */
 const LARGE_TITLE_PAST = 56;

@@ -182,6 +182,33 @@ describe("AttendancePage", () => {
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 30)));
     expect(r.container.textContent).toContain("Not yet");
-    expect(r.container.textContent).toContain("No registered days yet");
+    expect(r.container.textContent).toContain("No register has been taken this term yet.");
+    expect(r.container.textContent).toContain("Somto's attendance this term");
   });
 });
+
+describe("the children under the title (1e)", () => {
+  it("names the child showing, and reads another child's attendance when their chip is tapped", async () => {
+    const fetchStub = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return new Response(JSON.stringify(payload(url.includes("/children/22/") ? "Somto" : "Tobi")), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    const r = render("/attendance?child=11", fetchStub as unknown as typeof fetch);
+    last = r;
+    await act(() => new Promise((r) => setTimeout(r, 30)));
+    expect(r.container.textContent).toContain("Tobi was present");
+    const chip = (name: string) => Array.from(r.container.querySelectorAll<HTMLButtonElement>(".child-picker-chip")).find((b) => b.textContent?.includes(name))!;
+    await act(async () => {
+      chip("Somto").click();
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    expect(chip("Somto").getAttribute("aria-pressed")).toBe("true");
+    const asked = fetchStub.mock.calls.some(([input]) => /\/children\/22\/attendance\//.test(String(input instanceof Request ? input.url : input)));
+    expect(asked).toBe(true);
+    expect(r.container.textContent).toContain("Somto's attendance this term");
+  });
+});
+

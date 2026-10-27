@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useLayoutEffect, useRef, type CSSProperties } from "react";
 
 import { ChildAvatar } from "@/components/child-avatar";
 import { childHues, solidOf } from "@/lib/name-hue";
@@ -14,7 +14,9 @@ import "./child-picker.css";
  * in one tap. The child showing is white and ringed in their colour; the
  * others are faint. Choosing goes through `useChooseChild`, as the switcher
  * does, so every screen follows. The row scrolls sideways when the children
- * do not fit, and a parent with one child sees that child alone. The column
+ * do not fit, and is brought round to the child showing whenever it is
+ * drawn, so a fourth child chosen is never off the edge. A parent with one
+ * child sees that child alone. The column
  * it sits in needs a `minmax(0, 1fr)` track, or the row widens the page
  * instead of scrolling.
  */
@@ -23,9 +25,15 @@ export function ChildPicker() {
   const active = useActiveChild();
   const choose = useChooseChild();
   const hues = childHues(children.map((child) => child.id));
+  const row = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const chip = row.current?.querySelector<HTMLElement>(".is-showing");
+    // Centred in the row by scrolling the row alone; scrollIntoView would move the page too.
+    if (row.current && chip) row.current.scrollLeft = chip.offsetLeft - (row.current.clientWidth - chip.offsetWidth) / 2;
+  }, [active?.id]);
   if (children.length === 0) return null;
   return (
-    <div className="child-picker" role="group" aria-label="Whose record">
+    <div ref={row} className="child-picker" role="group" aria-label="Whose record">
       {children.map((child) => {
         const showing = child.id === active?.id;
         const hue = hues.get(child.id);

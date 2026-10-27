@@ -1,5 +1,5 @@
 /* The children under a per-child screen's title: the one showing white and ringed in their colour. */
-.child-picker { display: flex; gap: 8px; margin: 0 -16px; padding: 2px 16px 4px; overflow-x: auto; scrollbar-width: none; }
+.child-picker { position: relative; display: flex; gap: 8px; margin: 0 -16px; padding: 2px 16px 4px; overflow-x: auto; scrollbar-width: none; }
 .child-picker::-webkit-scrollbar { display: none; }
 .child-picker-chip {
   --child-ring: #4a659d;
