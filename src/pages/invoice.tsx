@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { ArrowLeft, CircleAlert, Download } from "lucide-react";
+import { CircleAlert, Download } from "lucide-react";
 import { Link, useParams } from "react-router";
 
+import { ChildAvatar } from "@/components/child-avatar";
 import { ChildTransferAccount } from "@/components/fees/child-transfer-account";
 import { BlockTitle, Fact, Letterhead } from "@/components/fees/finance-document";
 import { PageShell } from "@/components/layout/page-shell";
+import { BottomBar, DetailBar } from "@/components/layout/screen";
 import { formatDate, formatNaira } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
 import {
@@ -16,9 +18,17 @@ import {
   type InvoiceSheet,
 } from "@/redux/services/portal-api";
 
-import "./receipt.css";
+import "./invoice.css";
 
-/** One invoice: the summary and its actions beside the invoice in the school's printed design. */
+/**
+ * One invoice (design 1l), a screen of its own over Fees with a back bar.
+ *
+ * A white card says whose it is, what is left on it, its status and when it
+ * is due; the invoice itself sits under it as a sheet of paper. Where the
+ * school takes transfers only, the child's account number comes between the
+ * two, with their transfers arriving live. At the foot: the PDF, and Pay this
+ * invoice while something is owed and the school takes cards.
+ */
 export function InvoicePage() {
   const { invoiceRef } = useParams();
   const ref = Number(invoiceRef);
@@ -27,8 +37,10 @@ export function InvoicePage() {
   const [fetchPdf, { isFetching }] = useLazyInvoicePdfQuery();
   const [pdfError, setPdfError] = useState("");
   const { data: fees } = useFamilyFeesQuery();
+  const offline = useAppSelector((s) => s.connectivity.offline);
   const transferOnly = !!fees && !cardPaymentsOn(fees);
   const owing = fees?.children.find((entry) => entry.available && entry.child.id === invoice?.child.id);
+  const canPay = !!invoice && invoice.balance > 0 && !transferOnly && !offline;
 
   const download = async () => {
     setPdfError("");
@@ -45,90 +57,82 @@ export function InvoicePage() {
   };
 
   return (
-    <PageShell className="receipt-page">
-      <div className="receipt-wrap">
-        <Link to="/fees" className="receipt-back">
-          <ArrowLeft size={17} aria-hidden="true" />
-          Fees
-        </Link>
-        {isLoading && !invoice && (
-          <div className="receipt-loading" role="status" aria-label="Loading invoice" />
+    <PageShell className="invoice-page">
+      <DetailBar
+        title="Invoice"
+        back="/fees"
+        backLabel="Back to Fees"
+        action={invoice && (
+          <button type="button" className="detail-bar-button" onClick={download} disabled={isFetching} aria-label="Download PDF invoice">
+            <Download size={19} aria-hidden="true" />
+          </button>
         )}
+      />
+      <div className="invoice-wrap">
+        {isLoading && !invoice && <div className="invoice-loading" role="status" aria-label="Loading invoice" />}
         {(!validRef || isError) && !invoice && (
-          <section className="receipt-unavailable" role="status">
-            <span className="receipt-unavailable-icon">
-              <CircleAlert size={27} aria-hidden="true" />
-            </span>
+          <section className="screen-card invoice-unavailable" role="status">
+            <span className="invoice-unavailable-icon"><CircleAlert size={27} aria-hidden="true" /></span>
             <h2>Invoice not available</h2>
             <p>This invoice is not on your family&apos;s account.</p>
-            <Link to="/fees" className="receipt-secondary">
-              Back to Fees
-            </Link>
+            <Link to="/fees" className="xs-button xs-button--plain">Back to Fees</Link>
           </section>
         )}
         {invoice && (
-          <div className="receipt-layout">
-            <div className="receipt-overview">
-              <section className="receipt-summary" aria-label="Invoice summary">
-                <span className="receipt-summary-label">
-                  Invoice for {invoice.child.first_name}
-                </span>
-                <strong className="receipt-summary-amount">
-                  {formatNaira(Math.max(0, invoice.balance))}
-                </strong>
-                <div className="receipt-summary-bottom">
-                  <span className="receipt-status">
-                    {invoice.balance <= 0 ? "Fully paid" : invoice.status_label}
-                  </span>
-                  {invoice.due_date && (
-                    <span>Due {formatDate(invoice.due_date)}</span>
-                  )}
-                </div>
-              </section>
-              <button
-                type="button"
-                className="receipt-download"
-                onClick={download}
-                disabled={isFetching}
-              >
-                <Download size={18} aria-hidden="true" />
-                {isFetching ? "Preparing PDF…" : "Download PDF invoice"}
-              </button>
-              {pdfError && (
-                <p role="alert" className="receipt-pdf-error">
-                  {pdfError}
-                </p>
-              )}
-              {invoice.balance > 0 && !transferOnly && (
-                <Link
-                  to={`/fees/pay/${invoice.invoice_ref}`}
-                  className="receipt-secondary"
-                >
-                  Pay this invoice
-                </Link>
-              )}
-              {transferOnly && (
-                <ChildTransferAccount
-                  childId={invoice.child.id}
-                  firstName={invoice.child.first_name}
-                  fullName={owing?.child.full_name ?? invoice.child.first_name}
-                  owing={owing?.available ? owing.owing : undefined}
-                  title={`Pay into ${invoice.child.first_name}'s account`}
-                  showAccount={invoice.balance > 0}
-                />
-              )}
-            </div>
+          <>
+            <InvoiceSummary invoice={invoice} />
+            {transferOnly && (
+              <ChildTransferAccount
+                childId={invoice.child.id}
+                firstName={invoice.child.first_name}
+                fullName={owing?.child.full_name ?? invoice.child.first_name}
+                owing={owing?.available ? owing.owing : undefined}
+                title={`Pay into ${invoice.child.first_name}'s account`}
+                showAccount={invoice.balance > 0}
+              />
+            )}
             <InvoiceDocument invoice={invoice} />
-          </div>
+            {pdfError && <p role="alert" className="invoice-pdf-error">{pdfError}</p>}
+          </>
         )}
       </div>
+      {invoice && (
+        <BottomBar>
+          <button type="button" className="xs-button xs-button--plain" onClick={download} disabled={isFetching}>
+            <Download size={18} aria-hidden="true" />
+            {isFetching ? "Preparing PDF…" : "PDF invoice"}
+          </button>
+          {canPay && <Link to={`/fees/pay/${invoice.invoice_ref}`} className="xs-button xs-button--wide">Pay this invoice</Link>}
+        </BottomBar>
+      )}
     </PageShell>
   );
 }
 
+/** Whose invoice, what is left on it, its status and when it is due, in a white card. */
+function InvoiceSummary({ invoice }: { invoice: InvoiceSheet }) {
+  const fullName = useAppSelector((s) => s.auth.me?.children.find((child) => child.id === invoice.child.id)?.full_name);
+  const paid = invoice.balance <= 0;
+  const tone = paid ? "pill--good" : invoice.paid > 0 ? "pill--warn" : "pill--bad";
+  return (
+    <section className="screen-card invoice-summary" aria-label="Invoice summary">
+      <ChildAvatar name={fullName ?? invoice.child.first_name} childId={invoice.child.id} size={40} />
+      <div className="invoice-summary-text">
+        <span>Invoice for {invoice.child.first_name}</span>
+        <strong>{formatNaira(Math.max(0, invoice.balance))}</strong>
+      </div>
+      <div className="invoice-summary-side">
+        <span className={`pill ${tone}`}>{paid ? "Fully paid" : invoice.status_label}</span>
+        {invoice.due_date && <span>Due {formatDate(invoice.due_date)}</span>}
+      </div>
+    </section>
+  );
+}
+
 /**
- * The invoice in the school's printed design: letterhead, billed-to account,
- * lines with their VAT, totals, and the bank to pay into.
+ * The invoice as a sheet of paper: letterhead, billed-to account, lines with
+ * their VAT, totals, and the bank to pay into, in the PDF's order and with
+ * its figures, set in the app's type (design 1l, `fdoc--app` in invoice.css).
  *
  * It draws from `invoice.document`, the same figures the PDF prints. A server
  * that predates that block sends only the summary fields, and the sheet then
@@ -155,7 +159,7 @@ function InvoiceDocument({ invoice }: { invoice: InvoiceSheet }) {
   const balance = doc?.balance_due ?? invoice.balance;
 
   return (
-    <article className="fdoc" aria-label="Invoice">
+    <article className="fdoc fdoc--app" aria-label="Invoice">
       <Letterhead
         letterhead={letterhead}
         kind="Tax Invoice"

@@ -39,9 +39,11 @@ describe("the split bar", () => {
 });
 
 describe("isDetailPath", () => {
-  it("is true for a notice and a new message, which draw their own back bar", () => {
+  it("is true for a notice, a new message and an invoice, which draw their own back bar", () => {
     expect(isDetailPath("/notices/12")).toBe(true);
     expect(isDetailPath("/messages/new")).toBe(true);
+    expect(isDetailPath("/fees/invoices/101")).toBe(true);
+    expect(isDetailPath("/fees")).toBe(false);
     expect(isDetailPath("/inbox")).toBe(false);
     expect(isDetailPath("/notices")).toBe(false);
     expect(isDetailPath("/messages/41")).toBe(false);
