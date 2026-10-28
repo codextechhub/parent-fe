@@ -59,12 +59,12 @@ export function itemFor(pathname: string): NavItem | undefined {
 
 /**
  * Whether the path is a screen opened from another, drawn with its own back
- * bar at the top (a notice, a new message, an invoice, paying a bill or all of them, and the payment's result). The shell's header and tab bar
+ * bar at the top (a notice, a new message, an invoice, a receipt, paying a bill or all of them, and the payment's result). The shell's header and tab bar
  * step aside for it at every size, as an iPhone pushes a screen over its
  * tabs. More screens join as the redesign reaches them.
  */
 export function isDetailPath(pathname: string): boolean {
-  return /^\/notices\/[^/]+\/?$/.test(pathname) || /^\/messages\/new\/?$/.test(pathname) || /^\/fees\/(invoices|pay)\/[^/]+\/?$/.test(pathname) || /^\/fees\/(pay-all|paid)\/?$/.test(pathname);
+  return /^\/notices\/[^/]+\/?$/.test(pathname) || /^\/messages\/new\/?$/.test(pathname) || /^\/fees\/(invoices|pay|receipts)\/[^/]+\/?$/.test(pathname) || /^\/fees\/(pay-all|paid)\/?$/.test(pathname);
 }
 
 /**

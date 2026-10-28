@@ -46,6 +46,7 @@ describe("isDetailPath", () => {
     expect(isDetailPath("/fees/pay/101")).toBe(true);
     expect(isDetailPath("/fees/pay-all")).toBe(true);
     expect(isDetailPath("/fees/paid")).toBe(true);
+    expect(isDetailPath("/fees/receipts/77")).toBe(true);
     expect(isDetailPath("/fees")).toBe(false);
     expect(isDetailPath("/inbox")).toBe(false);
     expect(isDetailPath("/notices")).toBe(false);

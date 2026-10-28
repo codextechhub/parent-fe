@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ArrowLeft, CircleAlert, Download } from "lucide-react";
+import { Clock3, Download } from "lucide-react";
 import { Link, useParams } from "react-router";
 
 import { BlockTitle, Fact, Letterhead } from "@/components/fees/finance-document";
 import { PageShell } from "@/components/layout/page-shell";
+import { BottomBar, DetailBar } from "@/components/layout/screen";
 import { accountBalanceWords, formatDate, formatNaira } from "@/lib/format";
 import { useAppSelector } from "@/redux/hooks";
 import {
@@ -15,7 +16,14 @@ import {
 
 import "./receipt.css";
 
-/** A confirmed payment's receipt. The balance is frozen when it was booked. */
+/**
+ * A confirmed payment's receipt (design 1p), a screen of its own over Fees.
+ *
+ * The payment in a green card (for whom, how much, when), the receipt under
+ * it as a sheet of paper, and Download PDF receipt at the foot. The balance
+ * on the receipt is the one frozen when the payment was booked. Before a
+ * payment is confirmed there is no receipt yet, and the screen says so (1t).
+ */
 export function ReceiptPage() {
   const { paymentRef } = useParams();
   const ref = Number(paymentRef);
@@ -40,71 +48,53 @@ export function ReceiptPage() {
 
   return (
     <PageShell className="receipt-page">
+      <DetailBar title="Receipt" back="/fees" backText="Fees" backLabel="Back to Fees" />
       <div className="receipt-wrap">
-        <Link to="/fees" className="receipt-back">
-          <ArrowLeft size={17} aria-hidden="true" />
-          Fees
-        </Link>
-        {isLoading && !receipt && (
-          <div className="receipt-loading" role="status" aria-label="Loading receipt" />
-        )}
+        {isLoading && !receipt && <div className="receipt-loading" role="status" aria-label="Loading receipt" />}
         {(!validRef || isError) && !receipt && <Unavailable />}
         {receipt && (
-          <div className="receipt-layout">
-            <div className="receipt-overview">
-              <section className="receipt-summary" aria-label="Confirmed payment">
-                <span className="receipt-summary-label">
-                  Payment received for {receipt.child.first_name}
-                </span>
-                <strong className="receipt-summary-amount">{formatNaira(receipt.amount)}</strong>
-                <div className="receipt-summary-bottom">
-                  <span className="receipt-status">Received</span>
-                  <span>{formatDate(receipt.paid_on)}</span>
-                </div>
-              </section>
-              <button
-                type="button"
-                className="receipt-download"
-                onClick={download}
-                disabled={isFetching}
-              >
-                <Download size={18} aria-hidden="true" />
-                {isFetching ? "Preparing PDF…" : "Download PDF receipt"}
-              </button>
-              {pdfError && (
-                <p role="alert" className="receipt-pdf-error">
-                  {pdfError}
-                </p>
-              )}
-            </div>
+          <>
+            <section className="receipt-summary" aria-label="Confirmed payment">
+              <div className="screen-orb" aria-hidden="true" />
+              <span className="receipt-summary-label">Payment received for {receipt.child.first_name}</span>
+              <strong className="receipt-summary-amount">{formatNaira(receipt.amount)}</strong>
+              <div className="receipt-summary-bottom">
+                <span className="receipt-status">Received</span>
+                <span>{formatDate(receipt.paid_on)}</span>
+              </div>
+            </section>
             <ReceiptDocument receipt={receipt} />
-          </div>
+            {pdfError && <p role="alert" className="receipt-pdf-error">{pdfError}</p>}
+          </>
         )}
       </div>
+      {receipt && (
+        <BottomBar>
+          <button type="button" className="xs-button" onClick={download} disabled={isFetching}>
+            <Download size={18} aria-hidden="true" />
+            {isFetching ? "Preparing PDF…" : "Download PDF receipt"}
+          </button>
+        </BottomBar>
+      )}
     </PageShell>
   );
 }
 
 function Unavailable() {
   return (
-    <section className="receipt-unavailable" role="status">
-      <span className="receipt-unavailable-icon">
-        <CircleAlert size={27} aria-hidden="true" />
-      </span>
+    <section className="screen-card receipt-unavailable" role="status">
+      <span className="receipt-unavailable-icon"><Clock3 size={28} aria-hidden="true" /></span>
       <h2>Receipt not available yet</h2>
-      <p>
-        A payment gets its receipt once it is confirmed. Check its status in Fees.
-      </p>
-      <Link to="/fees" className="receipt-secondary">
-        Back to Fees
-      </Link>
+      <p>A payment gets its receipt once it is confirmed. Check its status in Fees.</p>
+      <Link to="/fees" className="xs-button xs-button--plain">Back to Fees</Link>
     </section>
   );
 }
 
 /**
- * The receipt in the school's printed design: letterhead, the amount received
- * in figures and words, what it settled, and the account's balance after it.
+ * The receipt as a sheet of paper: letterhead, the amount received in
+ * figures and words, what it settled, and the account's balance after it, in
+ * the PDF's order and figures, set in the app's type (`fdoc--app`).
  *
  * The balance is the one frozen when the payment was booked, which is why the
  * sheet says so under it. A server that predates the letterhead sends only the
@@ -123,7 +113,7 @@ function ReceiptDocument({ receipt }: { receipt: Receipt }) {
   };
 
   return (
-    <article className="fdoc" aria-label="Payment receipt">
+    <article className="fdoc fdoc--app" aria-label="Payment receipt">
       <div className="fdoc-stamp" aria-hidden="true">Received</div>
       <Letterhead
         letterhead={letterhead}
