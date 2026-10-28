@@ -72,6 +72,7 @@ function render(path: string) {
               <Route path="fees" element={<p>Fees</p>} />
               <Route path="results" element={<p>Results</p>} />
               <Route path="timetable" element={<p>Timetable</p>} />
+              <Route path="profile" element={<p>Profile</p>} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -204,13 +205,18 @@ describe("The split bar", () => {
   });
 });
 
-describe("The way back from Timetable", () => {
+describe("The way back from Timetable and Profile", () => {
   it("puts a round back button to Home where the crest is, and keeps the tab bar", () => {
     const container = render("/timetable?child=1");
     expect(container.querySelector('a[aria-label="Back to Home"]')?.getAttribute("href")).toBe("/");
     expect(tabBar(container)).not.toBeNull();
     act(() => view!.root.unmount());
     container.remove();
+    view = null;
+    const profile = render("/profile");
+    expect(profile.querySelector('a[aria-label="Back to Home"]')?.getAttribute("href")).toBe("/");
+    act(() => view!.root.unmount());
+    profile.remove();
     view = null;
     const fees = render("/fees");
     expect(fees.querySelector('a[aria-label="Back to Home"]')).toBeNull();

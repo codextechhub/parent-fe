@@ -27,7 +27,7 @@ const UNREAD_POLL_MS = 60_000;
  * their name out until the large title has scrolled away under it, as on an
  * iPhone, so the name is never on screen twice.
  */
-const LARGE_TITLE: ReadonlySet<NavItem["key"]> = new Set(["home", "results", "attendance", "timetable", "fees", "inbox"]);
+const LARGE_TITLE: ReadonlySet<NavItem["key"]> = new Set(["home", "results", "attendance", "timetable", "fees", "inbox", "profile"]);
 
 /** How far down, in px, a large title has gone under the header. */
 const LARGE_TITLE_PAST = 56;
@@ -141,8 +141,8 @@ export function AppShell() {
               : "border-transparent bg-transparent",
           )}
         >
-          {current?.key === "timetable" ? (
-            // Timetable opens from a child's card on Home and is no tab, so its way back takes the crest's place.
+          {current?.key === "timetable" || current?.key === "profile" ? (
+            // Timetable and Profile are no tab (one opens from a child's card, one from the switcher), so the way back takes the crest's place.
             <Link to="/" className="app-shell-back" aria-label="Back to Home">
               <ChevronLeft size={22} aria-hidden="true" />
             </Link>

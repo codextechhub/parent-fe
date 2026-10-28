@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { CircleCheck, KeyRound } from "lucide-react";
+import { ChevronRight, CircleCheck, KeyRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -17,7 +17,9 @@ const RULES_FALLBACK =
 type Field = "current_password" | "password" | "confirm_password";
 
 /**
- * The password change card the Profile screen shows.
+ * The Change password row in Profile's settings list (design 1k), which
+ * opens the form under itself. Cancel, or the row again, clears typed
+ * passwords and closes it.
  *
  * The same `/user/auth/password/change/` and `/user/auth/password/policy/`
  * endpoints the staff app uses. A refusal lands under the box it is about;
@@ -26,7 +28,7 @@ type Field = "current_password" | "password" | "confirm_password";
  * revokes the account's other sessions, and on this device the current
  * access token keeps working until it expires or they sign out.
  */
-export function ChangePasswordCard() {
+export function ChangePassword() {
   const [open, setOpen] = useState(false);
   const { data: policy } = usePasswordPolicyQuery(undefined, { skip: !open });
   const [change, { isLoading }] = useChangePasswordMutation();
@@ -72,26 +74,15 @@ export function ChangePasswordCard() {
   const rules = policy?.requirements ?? [];
 
   return (
-    <section aria-labelledby="password-heading" className="profile-surface profile-card profile-password">
-      <div className="profile-card-top">
-        <div className="profile-card-heading">
-          <span className="profile-card-icon">
-            <KeyRound size={19} aria-hidden="true" />
-          </span>
-          <div>
-            <h2 id="password-heading">Password</h2>
-            <p>Keep your account secure</p>
-          </div>
-        </div>
-        {!open && (
-          <button type="button" className="profile-edit-button" onClick={() => setOpen(true)}>
-            Change password
-          </button>
-        )}
-      </div>
+    <section aria-labelledby="password-heading" className="settings-item">
+      <button type="button" className="settings-row" aria-expanded={open} aria-controls="profile-password-form" onClick={() => (open ? close() : setOpen(true))}>
+        <span className="settings-icon is-brand"><KeyRound size={16} aria-hidden="true" /></span>
+        <span className="settings-label" id="password-heading">Change password</span>
+        <ChevronRight className="settings-chevron" size={17} aria-hidden="true" />
+      </button>
 
       {open && (
-        <form onSubmit={submit} noValidate className="profile-password-form">
+        <form id="profile-password-form" onSubmit={submit} noValidate className="settings-panel profile-password-form">
           <div className="min-w-0 space-y-4">
             <Box
               id="current_password"

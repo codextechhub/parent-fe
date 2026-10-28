@@ -1,12 +1,12 @@
 import { useRef, useState, type FormEvent } from "react";
-import { Camera, ChevronRight, ImagePlus, Info, KeyRound, LockKeyhole, Pencil, Trash2, Users } from "lucide-react";
+import { Camera, ImagePlus, KeyRound, LogOut, Trash2 } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
-import { ChangePasswordCard } from "@/components/change-password";
+import { ChangePassword } from "@/components/change-password";
 import { ChildAvatar } from "@/components/child-avatar";
-import { DeleteAccountCard } from "@/components/delete-account-card";
+import { DeleteAccountRow } from "@/components/delete-account-card";
 import { InstallSetting } from "@/components/install-offer";
 import { PageShell } from "@/components/layout/page-shell";
 import { PushSetting } from "@/components/push-settings";
@@ -14,6 +14,7 @@ import { useShownImage } from "@/lib/shown-image";
 import { useAppSelector } from "@/redux/hooks";
 import {
   refusal,
+  useLogoutMutation,
   useProfileQuery,
   useRemovePhotoMutation,
   useUpdateProfileMutation,
@@ -26,13 +27,15 @@ import "./delete-account.css";
 import "./profile.css";
 
 /**
- * The parent's profile.
+ * The parent's profile (design 1k), opened from My profile in the child
+ * switcher, with a way back to Home where the school's crest would be.
  *
- * "Managed by the school" is read-only (name, sign-in email, children). The
- * email box carries the backend's sentence about not being changeable here.
- * "Your details" edits phone, alt_phone and address; each refusal lands
- * under its own box, and Save is off until something changed. Linked
- * children links to that child's Results screen with `?child=`.
+ * Their photo (the camera changes it), name and school, centred. Then their
+ * contact details (phone, second phone, address editable; the sign-in email
+ * read-only with the school's sentence), their children as the school has
+ * linked them (each opens that child's Results), and the settings as one
+ * list: password, notifications, installing the app. Sign out and Delete my
+ * account sit apart, in a card of their own.
  */
 export function ProfilePage() {
   const me = useAppSelector((s) => s.auth.me);
@@ -57,17 +60,39 @@ export function ProfilePage() {
             <ProfileHero profile={profile} schoolName={me?.school.name ?? ""} />
             <div className="profile-cards">
               <EditableDetails profile={profile} />
-              <SchoolDetails profile={profile} />
+              <LinkedChildren profile={profile} showBranch={me?.show_branch ?? false} />
             </div>
-            <LinkedChildren profile={profile} showBranch={me?.show_branch ?? false} />
-            <InstallSetting />
-            <PushSetting />
-            <ChangePasswordCard />
-            <DeleteAccountCard />
           </>
         )}
+        <div className="profile-settings-column">
+          <div className="screen-card profile-settings">
+            <ChangePassword />
+            <PushSetting />
+            <InstallSetting />
+          </div>
+          <div className="screen-card profile-account">
+            <SignOutRow />
+            <DeleteAccountRow />
+          </div>
+        </div>
       </div>
     </PageShell>
+  );
+}
+
+/** Sign out, as the child switcher's: the session ends and the sign-in screen opens. */
+function SignOutRow() {
+  const navigate = useNavigate();
+  const [logout, { isLoading }] = useLogoutMutation();
+  const signOut = async () => {
+    await logout().unwrap().catch(() => {});
+    navigate("/sign-in", { replace: true });
+  };
+  return (
+    <button type="button" className="settings-row" onClick={() => void signOut()} disabled={isLoading}>
+      <LogOut size={18} aria-hidden="true" className="settings-plain-icon" />
+      <span className="settings-label">{isLoading ? "Signing out…" : "Sign out"}</span>
+    </button>
   );
 }
 
@@ -76,7 +101,7 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 /**
  * The parent's banner: their photograph (or initials) with the camera that
- * changes it, their name, and how many children they have at the school.
+ * changes it, their name, and the school.
  *
  * The photograph is the one on their guardian record, the one the school sees,
  * so it is fetched with the parent's token (`useShownImage`). The camera stays
@@ -84,8 +109,6 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
  */
 function ProfileHero({ profile, schoolName }: { profile: ProfileData; schoolName: string }) {
   const name = profile.managed_by_school.full_name;
-  const count = profile.managed_by_school.children.length;
-  const childWord = count === 1 ? "child" : "children";
   // The server's initials: a title such as "Mrs." is not the parent's first initial.
   const initials = useAppSelector((s) => s.auth.me?.parent.initials) ?? "";
   const offline = useAppSelector((s) => s.connectivity.offline);
@@ -166,56 +189,19 @@ function ProfileHero({ profile, schoolName }: { profile: ProfileData; schoolName
         />
       </div>
       <div className="profile-hero-content">
-        <h2>{name}</h2>
-        <p className="profile-hero-school">
-          Parent · {count} {childWord}
-          {schoolName ? ` · ${schoolName}` : ""}
-        </p>
+        <h1>{name}</h1>
+        <p className="profile-hero-school">{schoolName ? `Parent at ${schoolName}` : "Parent"}</p>
       </div>
     </section>
   );
 }
 
-function DetailRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="profile-row">
       <dt>{label}</dt>
-      <dd>
-        {value || "None"}
-        {hint && <small>{hint}</small>}
-      </dd>
+      <dd>{value || "None"}</dd>
     </div>
-  );
-}
-
-function SchoolDetails({ profile }: { profile: ProfileData }) {
-  const managed = profile.managed_by_school;
-  const count = managed.children.length;
-  return (
-    <section className="profile-surface profile-card profile-school">
-      <div className="profile-card-heading">
-        <span className="profile-card-icon">
-          <LockKeyhole size={18} aria-hidden="true" />
-        </span>
-        <div>
-          <h2>Managed by the school</h2>
-          <p>Your official details on your account</p>
-        </div>
-      </div>
-      <dl className="profile-rows">
-        <DetailRow label="Full name" value={managed.full_name} />
-        <DetailRow
-          label="Sign-in email"
-          value={managed.sign_in_email}
-          hint="Your email is the address you sign in with. Ask the school to change it."
-        />
-        <DetailRow label="Children on your account" value={String(count)} />
-      </dl>
-      <p className="profile-school-tip">
-        <Info size={17} aria-hidden="true" />
-        <span>Need to correct one of these? Ask the school office.</span>
-      </p>
-    </section>
   );
 }
 
@@ -274,25 +260,17 @@ function EditableDetails({ profile }: { profile: ProfileData }) {
     };
 
   return (
-    <section className="profile-surface profile-card profile-contact">
-      <div className="profile-card-top">
-        <div className="profile-card-heading">
-          <span className="profile-card-icon">
-            <Pencil size={19} aria-hidden="true" />
-          </span>
-          <div>
-            <h2>Your details</h2>
-            <p>Keep these up to date for the school</p>
-          </div>
-        </div>
+    <section className="profile-group profile-contact" aria-labelledby="profile-contact-heading">
+      <div className="profile-group-top">
+        <h2 id="profile-contact-heading" className="profile-group-label">Your contact details</h2>
         {!editing && (
-          <button type="button" className="profile-edit-button" onClick={start}>
-            Edit details
+          <button type="button" className="profile-edit-button" onClick={start} aria-label="Edit your contact details">
+            Edit
           </button>
         )}
       </div>
       {editing ? (
-        <form className="profile-form" onSubmit={submit} noValidate>
+        <form className="screen-card profile-form" onSubmit={submit} noValidate>
           <div className="profile-field">
             <label htmlFor="profile-phone">Phone number</label>
             <input
@@ -359,51 +337,50 @@ function EditableDetails({ profile }: { profile: ProfileData }) {
           </div>
         </form>
       ) : (
-        <dl className="profile-rows">
+        <dl className="screen-card profile-rows">
           <DetailRow label="Phone number" value={profile.editable.phone} />
-          <DetailRow label="Second phone" value={profile.editable.alt_phone} />
+          {profile.editable.alt_phone && <DetailRow label="Second phone" value={profile.editable.alt_phone} />}
           <DetailRow label="Home address" value={profile.editable.address} />
+          <DetailRow label="Email" value={profile.managed_by_school.sign_in_email} />
         </dl>
       )}
+      <p className="profile-group-note">Your email is the address you sign in with. Ask the school to change it.</p>
     </section>
   );
 }
 
+/** The children the school has linked, each opening their Results. Only the school adds one. */
 function LinkedChildren({ profile, showBranch }: { profile: ProfileData; showBranch: boolean }) {
   const children = profile.managed_by_school.children;
   return (
-    <section className="profile-surface profile-card profile-linked">
-      <div className="profile-card-heading">
-        <span className="profile-card-icon">
-          <Users size={19} aria-hidden="true" />
-        </span>
-        <div>
-          <h2>Linked children</h2>
-          <p>Only the school can add or remove a link here.</p>
-        </div>
+    <section className="profile-group profile-linked" aria-labelledby="profile-children-heading">
+      <h2 id="profile-children-heading" className="profile-group-label">Your children</h2>
+      <div className="screen-card profile-linked-card">
+        {children.length > 0 && (
+          <ul className="profile-linked-list">
+            {children.map((child) => (
+              <li key={child.id}>
+                <Link to={`/results?child=${child.id}`} className="profile-linked-row">
+                  <ChildAvatar name={child.full_name} childId={child.id} size={36} />
+                  <span className="profile-linked-main">
+                    <strong>{child.full_name}</strong>
+                    <small>
+                      {[child.class_name, showBranch ? child.branch?.name : null, child.relationship]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </small>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="profile-linked-note">
+          {children.length === 0
+            ? "No children on your account. Ask the school to link your children."
+            : "Only the school can add a child here. Ask the school to link another child to your account."}
+        </p>
       </div>
-      {children.length === 0 ? (
-        <p className="profile-linked-empty">No children on your account. Ask the school to link your children.</p>
-      ) : (
-        <ul className="profile-linked-list">
-          {children.map((child) => (
-            <li key={child.id}>
-              <Link to={`/results?child=${child.id}`} className="profile-linked-row">
-                <ChildAvatar name={child.full_name} childId={child.id} size={38} />
-                <span className="profile-linked-main">
-                  <strong>{child.full_name}</strong>
-                  <small>
-                    {[child.class_name, showBranch ? child.branch?.name : null, child.relationship]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </small>
-                </span>
-                <ChevronRight size={17} aria-hidden="true" className="profile-linked-chev" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }

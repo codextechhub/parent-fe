@@ -22,7 +22,7 @@ vi.mock("@/native/credentials", () => ({
 import { getAccessToken, setAccessToken } from "@/auth/access-token";
 import { _resetAccountForTests, getAccount, setAccount } from "@/auth/device-account";
 import { _resetRefreshForTests } from "@/auth/refresh";
-import { DeleteAccountCard } from "@/components/delete-account-card";
+import { DeleteAccountRow } from "@/components/delete-account-card";
 import { pushChoice, setPushChoice } from "@/push/push-choice";
 import { authReducer, meLoaded, type MeData } from "@/redux/features/auth-slice";
 import { connectivityReducer } from "@/redux/features/connectivity-slice";
@@ -71,7 +71,7 @@ function render(world: World, path: "/profile/delete-account" | "/profile") {
         <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/profile/delete-account" element={<DeleteAccountPage />} />
-            <Route path="/profile" element={<DeleteAccountCard />} />
+            <Route path="/profile" element={<DeleteAccountRow />} />
             <Route path="/sign-in" element={<p>Sign-in screen</p>} />
           </Routes>
         </MemoryRouter>

@@ -107,12 +107,13 @@ function both(m: Awaited<ReturnType<typeof load>>) {
   );
 }
 
+/** Installed: the Home card goes, and the Profile row says so with nothing to do. */
 function expectNothingShown(m: Awaited<ReturnType<typeof load>>) {
   expect(m.container.querySelector('[aria-label="Get the app"]')).toBeNull();
-  expect(m.container.querySelector('[aria-label="Install the app"]')).toBeNull();
+  expect(m.container.querySelector('[aria-label="Install the app"]')?.textContent).toBe("Install the appInstalled");
 }
 
-describe("once the app is installed, neither the card nor the row shows", () => {
+describe("once the app is installed, the card goes and the row says Installed", () => {
   for (const mode of ["standalone", "fullscreen", "minimal-ui"] as const) {
     it(`inside the installed app (${mode})`, async () => {
       openAs(mode);

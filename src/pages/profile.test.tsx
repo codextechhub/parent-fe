@@ -119,7 +119,7 @@ describe("ProfilePage", () => {
     expect(r.container.textContent).not.toContain("Edit email");
   });
 
-  it("renders Edit details and saves a changed address, surfacing a per-field refusal", async () => {
+  it("opens Edit and saves a changed address, surfacing a per-field refusal", async () => {
     let patchCalls = 0;
     const current = profilePayload();
     const fetchStub = vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
@@ -154,9 +154,7 @@ describe("ProfilePage", () => {
     const r = render(fetchStub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 20)));
-    const editButton = Array.from(r.container.querySelectorAll("button")).find((b) =>
-      b.textContent?.includes("Edit details"),
-    ) as HTMLButtonElement | undefined;
+    const editButton = r.container.querySelector<HTMLButtonElement>('button[aria-label="Edit your contact details"]') ?? undefined;
     await act(async () => {
       editButton!.click();
     });

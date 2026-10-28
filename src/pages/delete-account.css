@@ -10,7 +10,3 @@
 .delete-account-pending{display:flex;align-items:start;gap:10px;margin-top:16px;padding:14px;border-radius:14px;background:#f4f6fb;color:#2d4265;font-size:14px;line-height:1.5}
 .delete-account-pending svg{flex:none;margin-top:2px;color:#5268c9}
 .delete-account-error{margin:14px 0 0;color:#c0392b;font-size:13px;font-weight:600}
-.profile-delete-body{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:18px;padding-top:16px;border-top:1px solid #edf0f6}
-.profile-delete-body p{margin:0;color:#718199;font-size:13px;line-height:1.5}
-.profile-delete-body a{display:inline-flex;min-height:39px;flex:none;align-items:center;padding:8px 12px;border:1px solid #f1c9c4;border-radius:11px;background:#fff5f4;color:#b3382c;font-size:12px;font-weight:700}
-@media(max-width:380px){.profile-delete-body{align-items:start;flex-wrap:wrap}}
