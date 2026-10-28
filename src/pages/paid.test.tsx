@@ -142,9 +142,11 @@ describe("PaidPage", () => {
     const r = render("/fees/paid?reference=CXP-REF-1", stub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 60)));
-    expect(r.container.textContent).toContain("Payment received");
-    expect(r.container.textContent).toContain("Lagoon View Academy");
-    expect(r.container.textContent).toContain("View receipt");
+    expect(r.container.textContent).toContain("Payment confirmed");
+    expect(r.container.querySelector(".paid-cover-text")?.textContent).toBe("Tobi · IV-1");
+    expect(r.container.textContent).toContain("MethodCard");
+    expect(r.container.textContent).toContain("Family still owes₦0.00");
+    expect(r.container.querySelector('a[href="/fees/receipts/500"]')?.textContent).toBe("View receipt");
   });
 
   it("still shows a child's bill after payment when another child has matching credit", async () => {
@@ -172,8 +174,7 @@ describe("PaidPage", () => {
     const r = render("/fees/paid?reference=CXP-REF-CREDIT", stub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((resolve) => setTimeout(resolve, 60)));
-    expect(r.container.textContent).toContain("The family still owes ₦500.00");
-    expect(r.container.textContent).not.toContain("Your family has nothing outstanding");
+    expect(r.container.textContent).toContain("Family still owes₦500.00");
   });
 
   it("says still confirming on PENDING", async () => {
@@ -245,7 +246,8 @@ describe("PaidPage", () => {
     const r = render("/fees/paid?reference=CXP-REF-5", stub as unknown as typeof fetch);
     last = r;
     await act(() => new Promise((r) => setTimeout(r, 60)));
-    expect(r.container.textContent).toContain("Continue pay all");
-    expect(r.container.textContent).toContain("Step 1 of 2");
+    expect(r.container.textContent).toContain("Continue to Somto's bill");
+    expect(r.container.querySelector(".paid-next")?.textContent).toContain("Next · Step 2 of 2");
+    expect(r.container.querySelector(".paid-cover-text")?.textContent).toBe("Tobi · First Term");
   });
 });
