@@ -46,8 +46,9 @@ function refusalCode(data: unknown): string {
 }
 
 /**
- * The sign-in page, in the student app's design: the school's welcome beside
- * the form on a wide screen, above it on a phone.
+ * The sign-in page (design 1a), as the student app's: the school's crest and
+ * name on the deep blue welcome, the form on a white card that rises over it
+ * on a phone and sits beside it on a wide screen.
  *
  * The parent types their email and password and the sign-in asks for a device
  * session. On success the shell takes over through `me/`. An account the
@@ -153,25 +154,26 @@ export default function SignInPage() {
       <div className="signin-stage">
         <section className="signin-welcome" aria-label="Welcome">
           <div className="signin-welcome-copy">
-            {schoolName && <p className="signin-school-name">{schoolName}</p>}
-            <h1>Every child&apos;s school day, <span>in one place.</span></h1>
-            <p>Results, attendance, notices and fees for each child you look after.</p>
+            <div className="signin-school">
+              <SchoolMark logo={slug ? schoolLogoUrl(slug) : null} size={40} animate={false} surface="blue" alt={schoolName || "School crest"} />
+              {schoolName && <p className="signin-school-name">{schoolName}</p>}
+            </div>
+            <h1>Every child, <span>one clear view.</span></h1>
+            <p>Classes, results, attendance and fees for each of your children.</p>
           </div>
-          <p className="signin-welcome-foot"><LockKeyhole size={17} aria-hidden="true" />One sign-in for all your children</p>
         </section>
 
         <section className="signin-area" aria-label="Sign in">
           <div className="signin-card">
-            <div className="signin-form-mark"><SchoolMark logo={slug ? schoolLogoUrl(slug) : null} size={48} animate={false} alt={schoolName || "School crest"} /></div>
-            <h2>Sign in to your school</h2>
-            <p className="signin-card-intro">Your parent account, with the email the school invited you with.</p>
+            <h2>Sign in as a parent</h2>
+            <p className="signin-card-intro">Use the email your school has for you.</p>
             {!slug ? (
               <div className="signin-error" role="alert">This address doesn&apos;t belong to a school. Open the parent app from your school&apos;s own address.</div>
             ) : (
               <form className="signin-form" onSubmit={onSubmit} noValidate>
                 <div className="signin-field">
-                  <label htmlFor="signin-email">Email</label>
-                  <input id="signin-email" name="email" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="e.g. adaeze.okafor@gmail.com" value={email} aria-invalid={!!shown} onChange={(event) => { setEmail(event.target.value); clear(); }} />
+                  <label htmlFor="signin-email">Email address</label>
+                  <input id="signin-email" name="email" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="you@example.com" value={email} aria-invalid={!!shown} onChange={(event) => { setEmail(event.target.value); clear(); }} />
                 </div>
                 <div className="signin-field">
                   <label htmlFor="signin-password">Password</label>
@@ -187,8 +189,9 @@ export default function SignInPage() {
                 <button type="submit" className="signin-submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<ArrowRight size={18} aria-hidden="true" /></button>
               </form>
             )}
-            <p className="signin-helper">Trouble signing in? <strong>Ask the school office.</strong></p>
+            <p className="signin-helper">New here? <strong>Your school sends an invitation to set your password.</strong></p>
             {isNativeApp() && <Link to="/school" className="signin-change-school">Change school</Link>}
+            <p className="signin-device-note"><LockKeyhole size={15} aria-hidden="true" />Staff and pupils sign in on their own apps</p>
           </div>
         </section>
       </div>

@@ -80,7 +80,7 @@ describe("parent sign-in", () => {
     render();
     expect(container.querySelector(".signin-school-name")?.textContent).toBe("Lagoon View Academy");
     expect(container.textContent?.match(/Lagoon View Academy/g)).toHaveLength(1);
-    expect(container.querySelector("h2")?.textContent).toBe("Sign in to your school");
+    expect(container.querySelector("h2")?.textContent).toBe("Sign in as a parent");
   });
 
   it("reveals the password and hides it again", () => {
