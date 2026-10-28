@@ -31,7 +31,7 @@
 
 /* How much: radio rows in one card, the amount field under Part payment. */
 .pay-card-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
-.pay-panel-intro { margin: 0; padding: 0 4px; color: var(--xs-muted); font-size: 13px; line-height: 1.45; }
+.pay-panel-intro { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--xs-line); color: var(--xs-ink-2); font-size: 14px; line-height: 1.45; }
 .pay-amount-options { overflow: hidden; }
 .pay-amount-option { display: flex; align-items: center; gap: 12px; width: 100%; padding: 15px 16px; border: 0; background: transparent; color: var(--xs-ink); text-align: left; cursor: pointer; }
 .pay-amount-option + .pay-amount-option { box-shadow: inset 50px 1px 0 -49px #fff, inset 0 1px 0 var(--xs-line); }
@@ -46,7 +46,8 @@
 .pay-amount-field span { color: var(--xs-faint); font-size: 18px; font-weight: 600; }
 .pay-amount-field input { flex: 1; min-width: 0; padding-left: 6px; border: 0; outline: 0; background: transparent; color: var(--xs-ink); font: 600 18px var(--font-geist); font-variant-numeric: tabular-nums; }
 .pay-amount-label small { display: block; margin-top: 7px; color: var(--xs-faint); font-size: 12px; font-weight: 400; }
-.pay-review { margin: 0; padding: 6px 16px; font-variant-numeric: tabular-nums; }
+.pay-review { padding: 6px 16px; font-variant-numeric: tabular-nums; }
+.pay-review dl { margin: 0; }
 .pay-review div { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; font-size: 14px; }
 .pay-review div + div { border-top: 1px solid var(--xs-line); }
 .pay-review dt { color: var(--xs-muted); }
@@ -74,6 +75,17 @@
 .pay-transfer .fees-transfer-waiting strong { font-weight: 600; }
 .pay-transfer .fees-transfer-waiting .live-dot { box-shadow: 0 0 0 4px rgba(29, 118, 86, .18); }
 .pay-transfer .fees-transfer-activity { margin-top: 14px; }
+
+/* A Pay all step: "Step 1 of 2" on the right of the back bar, a bar of the steps under it, and the next bill under the amount. */
+.detail-bar:has(.pay-step-pill) { grid-template-columns: 96px minmax(0, 1fr) 96px; }
+.pay-step-pill { padding: 6px 10px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 1px var(--xs-field); color: var(--xs-brand); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pay-step-bar { display: flex; gap: 4px; margin: 8px 4px 16px; }
+.pay-step-bar span { flex: 1; height: 5px; border-radius: 9px; background: #d5dceb; }
+.pay-step-bar span.is-done { background: var(--xs-brand); }
+.pay-next { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 255, 255, .6); box-shadow: 0 0 0 1px var(--xs-field); }
+.pay-next-label { flex: none; color: var(--xs-faint); font-size: 12px; font-weight: 600; }
+.pay-next-name { flex: 1; min-width: 0; color: var(--xs-ink-2); font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+.pay-next-amount { flex: none; color: var(--xs-muted); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .pay-note { padding: 18px; color: var(--xs-ink-2); font-size: 14px; line-height: 1.5; }
 .pay-loading { height: 200px; border-radius: 26px; background: #e7ecf4; animation: pay-pulse 1.4s ease-in-out infinite alternate; }

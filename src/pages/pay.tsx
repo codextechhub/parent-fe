@@ -11,6 +11,7 @@ import { formatDate, formatNaira, parseNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { openCheckout } from "@/native/checkout";
 import { isNativeApp } from "@/native/platform";
+import { StepAvatar, StepPill } from "@/pages/pay-all";
 import { clearPayAllQueue, readPayAllQueue } from "@/pages/pay-all-queue";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { baseApi } from "@/redux/services/base-api";
@@ -25,6 +26,7 @@ import {
   type ChildFeesEntry,
   type FamilyFeesData,
   type Invoice,
+  type PayAllStep,
 } from "@/redux/services/portal-api";
 
 import "./fees.css";
@@ -39,7 +41,9 @@ import "./pay.css";
  * secure payment" in the bar at the foot; by transfer, the child's account
  * number large, with the transfer arriving on this screen. Where families
  * pay by transfer alone there is no choice, only the number. A Pay all step
- * (`?pay-all=1`) charges the queued amount and offers no choice either.
+ * (`?pay-all=1`, design 1n) charges the queued amount and offers no choice
+ * either: the bar shows which step of how many, the next bill waits under
+ * the amount, and the way back is to the Pay all list, not Fees.
  */
 export function PayPage() {
   const { invoiceRef } = useParams();
@@ -66,8 +70,17 @@ export function PayPage() {
 
   return (
     <PageShell className="pay-page">
-      <DetailBar title="Pay a bill" back="/fees" backLabel="Back to Fees" onBack={isPayAllStep ? clearPayAllQueue : undefined} />
+      {isPayAllStep && queue ? (
+        <DetailBar title="Pay a bill" back="/fees/pay-all" backLabel="Back to Pay all balances" action={<StepPill index={queue.index} count={queue.steps.length} />} />
+      ) : (
+        <DetailBar title="Pay a bill" back="/fees" backLabel="Back to Fees" />
+      )}
       <div className="pay-wrap">
+        {isPayAllStep && queue && (
+          <div className="pay-step-bar" aria-hidden="true">
+            {queue.steps.map((item, index) => <span key={item.invoice_ref} className={index <= queue.index ? "is-done" : undefined} />)}
+          </div>
+        )}
         {isLoading && !fees && <div className="pay-loading" role="status" aria-label="Loading bill" />}
         {fees && !invoice && <Note>This bill isn&apos;t on your family&apos;s account.</Note>}
         {fees && invoice && childEntry && (
@@ -129,7 +142,7 @@ export function PayPage() {
                     </div>
                   </>}
                   {isPayAllStep || method === "card" ? (
-                    <CardPayment fees={fees} invoice={invoice} queuedAmount={queuedAmount} onCardOff={() => setCardRefused(true)} />
+                    <CardPayment fees={fees} invoice={invoice} queuedAmount={queuedAmount} next={isPayAllStep ? queue?.steps[queue.index + 1] : undefined} onCardOff={() => setCardRefused(true)} />
                   ) : (
                     <div className="pay-transfer">
                       <div className="screen-section pay-section-heading"><h2>Pay into {childEntry.child.first_name}&apos;s account</h2></div>
@@ -197,8 +210,8 @@ function findInvoice(fees: FamilyFeesData | undefined, ref: number): {
   return {};
 }
 
-function CardPayment({ fees, invoice, queuedAmount, onCardOff }: {
-  fees: FamilyFeesData; invoice: Invoice; queuedAmount?: number; onCardOff: () => void;
+function CardPayment({ fees, invoice, queuedAmount, next, onCardOff }: {
+  fees: FamilyFeesData; invoice: Invoice; queuedAmount?: number; next?: PayAllStep; onCardOff: () => void;
 }) {
   const dispatch = useAppDispatch();
   const [mode, setMode] = useState<"full" | "part">("full");
@@ -250,7 +263,7 @@ function CardPayment({ fees, invoice, queuedAmount, onCardOff }: {
   return (
     <section className="pay-card-panel" aria-label="Card payment">
       <div className="screen-section"><h2>{queuedAmount ? "This payment step" : "How much to pay?"}</h2></div>
-      {queuedAmount ? <p className="pay-panel-intro">The amount for this step is {formatNaira(queuedAmount)}.</p> : (
+      {queuedAmount ? null : (
         <div className="screen-card pay-amount-options" role="radiogroup" aria-label="How much">
           <AmountOption active={mode === "full"} onClick={() => { setMode("full"); setError(""); }} label="Pay in full" aside={formatNaira(invoice.balance)} />
           <AmountOption active={mode === "part"} onClick={() => { setMode("part"); setError(""); }} label="Part payment" aside="Choose an amount" />
@@ -276,11 +289,22 @@ function CardPayment({ fees, invoice, queuedAmount, onCardOff }: {
           )}
         </div>
       )}
-      <dl className="screen-card pay-review">
-        <div><dt>You&apos;ll pay</dt><dd>{amount ? formatNaira(amount) : "–"}</dd></div>
-        <div><dt>Left to pay after</dt><dd>{amount && amount <= invoice.balance ? formatNaira(Math.max(0, invoice.balance - amount)) : "–"}</dd></div>
-      </dl>
+      <div className="screen-card pay-review">
+        {queuedAmount && <p className="pay-panel-intro">The amount for this step is {formatNaira(queuedAmount)}.</p>}
+        <dl>
+          <div><dt>You&apos;ll pay</dt><dd>{amount ? formatNaira(amount) : "–"}</dd></div>
+          <div><dt>Left to pay after</dt><dd>{amount && amount <= invoice.balance ? formatNaira(Math.max(0, invoice.balance - amount)) : "–"}</dd></div>
+        </dl>
+      </div>
       {error && <p className="pay-error" role="alert">{error}</p>}
+      {next && (
+        <div className="pay-next" aria-label="Next bill">
+          <span className="pay-next-label">Next</span>
+          <StepAvatar step={next} size={26} />
+          <span className="pay-next-name">{next.first_name}{next.title ? ` · ${next.title}` : ""}</span>
+          <span className="pay-next-amount">{formatNaira(next.amount)}</span>
+        </div>
+      )}
       <p className="pay-secure">
         <Lock size={14} aria-hidden="true" />
         Card details go on the secure gateway page, never in this app. The gateway may offer other methods there.
