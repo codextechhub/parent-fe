@@ -156,14 +156,14 @@ describe("Pay a bill where families pay by transfer alone", () => {
     last = render({ cardPayments: false, payStatus: 409, calls: [] }, "/fees/pay/101");
     await settle();
     const text = last.container.textContent ?? "";
-    expect(text).toContain("Pay into Tobi's account");
-    expect(text).toContain("0123456011");
-    expect(text).toContain("Owing ₦5,000.00");
-    expect(text).toContain("It shows here as soon as it arrives.");
+    expect(last.container.querySelector('[aria-label="Pay into Tobi\'s account"]')).not.toBeNull();
+    expect(last.container.querySelector(".transfer-lead-number strong")?.textContent).toBe("0123456011");
+    expect(text).toContain("Save this number in your bank app. It stays the same for Tobi.");
+    expect(text).toContain("There is no card-payment minimum for a bank transfer.");
     expect(last.container.querySelector(".pay-section-heading h2")?.textContent).toBe("Pay by bank transfer");
     expect(last.container.querySelector(".pay-help")).toBeNull();
     expect(last.container.querySelector(".fees-transfer-waiting")?.textContent).toBe(
-      "Waiting for your transfer. Keep this page open to see it arrive.",
+      "Waiting for your transfer. This updates by itself when the money arrives.",
     );
     expect(text).not.toContain("How would you like to pay?");
     expect(text).not.toContain("Continue to secure payment");

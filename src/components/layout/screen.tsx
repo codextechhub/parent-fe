@@ -44,9 +44,9 @@ export function ScreenTitle({
  * title and a line under it in the middle (or none), and an optional action
  * on the right. It stays at the top and turns frosted once the screen
  * scrolls under it. (The app shell opens every screen at its top.) A
- * `<header>`, so it never prints.
+ * `<header>`, so it never prints. `onBack` runs as the way back is taken.
  */
-export function DetailBar({ title, subtitle, back, backLabel, backText, action }: { title?: string; subtitle?: string; back: string; backLabel: string; backText?: string; action?: ReactNode }) {
+export function DetailBar({ title, subtitle, back, backLabel, backText, action, onBack }: { title?: string; subtitle?: string; back: string; backLabel: string; backText?: string; action?: ReactNode; onBack?: () => void }) {
   const [scrolled, setScrolled] = useState(() => window.scrollY > 4);
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 4);
@@ -56,8 +56,8 @@ export function DetailBar({ title, subtitle, back, backLabel, backText, action }
   return (
     <header className={cn("detail-bar", backText && "has-pill", scrolled && "is-scrolled")}>
       {backText
-        ? <Link to={back} className="detail-bar-pill" aria-label={backLabel}><ChevronLeft size={20} aria-hidden="true" />{backText}</Link>
-        : <Link to={back} className="detail-bar-button" aria-label={backLabel}><ChevronLeft size={22} aria-hidden="true" /></Link>}
+        ? <Link to={back} className="detail-bar-pill" aria-label={backLabel} onClick={onBack}><ChevronLeft size={20} aria-hidden="true" />{backText}</Link>
+        : <Link to={back} className="detail-bar-button" aria-label={backLabel} onClick={onBack}><ChevronLeft size={22} aria-hidden="true" /></Link>}
       <div className="detail-bar-title">
         {title && <h1>{title}</h1>}
         {subtitle && <p>{subtitle}</p>}

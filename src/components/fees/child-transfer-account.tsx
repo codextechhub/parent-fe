@@ -10,6 +10,7 @@ import {
 
 import { GetTransferAccount } from "./get-transfer-account";
 import { TransferAccountCard } from "./transfer-account-card";
+import { TransferAccountLead } from "./transfer-account-lead";
 import { TransferAccountRow } from "./transfer-account-row";
 
 /** What the card says under the number, where a school's families pay by transfer alone. */
@@ -33,8 +34,12 @@ type Props = {
   showAccount?: boolean;
   /** Says "Waiting for your transfer" under the number until a transfer shows, for the Pay step. */
   waiting?: boolean;
-  /** "row" is the compact line Fees lists every child's number in; the card is for Pay and Invoice. */
-  layout?: "card" | "row";
+  /**
+   * "row" is the compact line Fees lists every child's number in; "lead" the
+   * large number the Pay step shows while the parent transfers; the card is
+   * for Invoice.
+   */
+  layout?: "card" | "row" | "lead";
 };
 
 /**
@@ -92,6 +97,14 @@ export function ChildTransferAccount({ childId, firstName, fullName, owing, titl
       </div>
     );
   }
+  if (layout === "lead") {
+    return (
+      <div className="fees-transfer-card is-lead">
+        <TransferAccountLead account={account} title={title ?? `${firstName}'s account`} firstName={firstName} />
+        <TransferActivity deposits={deposits} firstName={firstName} waiting={waiting} />
+      </div>
+    );
+  }
   if (layout === "row") {
     return (
       <div className="fees-transfer-card is-row">
@@ -118,7 +131,10 @@ export function ChildTransferAccount({ childId, firstName, fullName, owing, titl
 export function TransferActivity({ deposits, firstName, waiting = false }: { deposits: Deposit[]; firstName: string; waiting?: boolean }) {
   if (deposits.length === 0) {
     return waiting ? (
-      <p className="fees-transfer-waiting" role="status">Waiting for your transfer. Keep this page open to see it arrive.</p>
+      <p className="fees-transfer-waiting" role="status">
+        <span className="live-dot live-dot--good" aria-hidden="true" />
+        <span><strong>Waiting for your transfer.</strong> This updates by itself when the money arrives.</span>
+      </p>
     ) : null;
   }
   return (

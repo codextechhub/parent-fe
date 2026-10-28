@@ -13,6 +13,7 @@ import {
 
 import "./fees.css";
 import "./pay.css";
+import "./pay-all.css";
 
 /**
  * The pay-all route: one checkout per child, in the server's order.

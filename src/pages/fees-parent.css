@@ -62,7 +62,6 @@
 .fees-transfer-activity li.is-pending { background: #fff5e9; color: #95621f; }
 .fees-transfer-activity li.is-received { background: #e9f8f2; color: #227956; }
 .fees-transfer-activity a { color: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; }
-.fees-transfer-switched { margin: 0 0 12px; padding: 11px 12px; border-radius: 12px; background: #fff5e9; color: #95621f; font-size: 13px; line-height: 1.45; }
 
 /* Under a number on the Pay step, until a transfer shows. */
 .fees-transfer-waiting { margin: 12px 0 0; padding: 10px 12px; border-radius: 11px; background: #f3f5f9; color: #6a7a97; font-size: 13px; line-height: 1.4; }
