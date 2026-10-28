@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Inbox } from "lucide-react";
+import { ChevronLeft, Inbox } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigationType } from "react-router";
 
 import { SchoolMark } from "@/components/school-mark";
@@ -27,7 +27,7 @@ const UNREAD_POLL_MS = 60_000;
  * their name out until the large title has scrolled away under it, as on an
  * iPhone, so the name is never on screen twice.
  */
-const LARGE_TITLE: ReadonlySet<NavItem["key"]> = new Set(["home", "results", "attendance", "inbox"]);
+const LARGE_TITLE: ReadonlySet<NavItem["key"]> = new Set(["home", "results", "attendance", "timetable", "inbox"]);
 
 /** How far down, in px, a large title has gone under the header. */
 const LARGE_TITLE_PAST = 56;
@@ -39,9 +39,10 @@ const LARGE_TITLE_PAST = 56;
  * app's: a frosted pill of four tabs (Home, Results, Attendance, Fees) and,
  * beside it, a round Inbox button for the school's notices and the parent's
  * messages in one list. The header carries the school's crest, the screen
- * title and the child switcher. It is clear over the page's own tinted
- * background, so the two read as one surface, and turns frosted once the page
- * scrolls under it. The offline bar sits under the header whenever the
+ * title and the child switcher (on Timetable, which is no tab, a round back
+ * button to Home stands where the crest is). It is clear over the page's own
+ * tinted background, so the two read as one surface, and turns frosted once
+ * the page scrolls under it. The offline bar sits under the header whenever the
  * browser reports no connection, and a pull down from the top of a screen
  * reads everything on it again. The unread message count is read every
  * minute, on regaining focus and on reconnecting.
@@ -140,13 +141,20 @@ export function AppShell() {
               : "border-transparent bg-transparent",
           )}
         >
-          <SchoolMark
-            logo={me?.school.logo_url || null}
-            size={34}
-            animate={false}
-            alt={where}
-            className="max-h-7 sm:max-h-[34px]"
-          />
+          {current?.key === "timetable" ? (
+            // Timetable opens from a child's card on Home and is no tab, so its way back takes the crest's place.
+            <Link to="/" className="app-shell-back" aria-label="Back to Home">
+              <ChevronLeft size={22} aria-hidden="true" />
+            </Link>
+          ) : (
+            <SchoolMark
+              logo={me?.school.logo_url || null}
+              size={34}
+              animate={false}
+              alt={where}
+              className="max-h-7 sm:max-h-[34px]"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <p
               className="app-shell-title truncate text-base font-semibold text-foreground"

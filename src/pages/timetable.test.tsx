@@ -163,9 +163,10 @@ describe("TimetablePage", () => {
     expect(r.container.textContent).toContain(
       "Tobi's class timetable hasn't been published yet",
     );
-    // The child strip at the top names the showing child by class and branch.
-    expect(r.container.textContent).toContain("JSS1 A");
-    expect(r.container.textContent).toContain("Lekki");
+    // The title names the child, with their class and branch over it.
+    expect(r.container.querySelector("h1")?.textContent).toBe("Tobi's timetable");
+    expect(r.container.querySelector(".screen-title-eyebrow")?.textContent).toContain("JSS1 A");
+    expect(r.container.querySelector(".screen-title-eyebrow")?.textContent).toContain("Lekki");
   });
 
   it("renders the published grid for a child whose class has one", async () => {
@@ -191,5 +192,7 @@ describe("TimetablePage", () => {
     expect(r.container.textContent).toContain("Mrs. Afolabi");
     // The "unpublished" banner must NOT render here.
     expect(r.container.textContent).not.toContain("hasn't been published yet");
+    const showing = r.container.querySelector('.child-picker-chip[aria-pressed="true"]');
+    expect(showing?.textContent).toContain("Somto");
   });
 });

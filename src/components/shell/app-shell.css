@@ -14,6 +14,11 @@
 .app-shell-title { transition: opacity .2s; }
 .app-shell-title[data-hidden] { opacity: 0; }
 
+/* The round way back to Home on a screen that is no tab (Timetable), where the crest would be. */
+.app-shell-back { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-left: -4px; border-radius: 50%; background: rgba(255, 255, 255, .85); box-shadow: 0 0 0 .5px rgba(34, 49, 83, .1), 0 4px 14px -6px rgba(34, 49, 83, .25); color: #41506b; }
+.app-shell-back:hover { background: #fff; }
+.app-shell-back:focus-visible { outline: 3px solid #5975ff; outline-offset: 2px; }
+
 /* An open conversation: the frame is the visible screen and nothing outside the message list scrolls. */
 .app-shell--fixed {
   position: fixed;
