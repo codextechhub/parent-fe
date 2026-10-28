@@ -208,11 +208,10 @@ describe("Fees where families pay by transfer alone", () => {
     const text = last.container.textContent ?? "";
     expect(text).toContain("0123456011");
     expect(text).toContain("0123456022");
-    expect(text).toContain("For Tobi Okafor");
-    expect(text).toContain("Owing ₦5,000.00");
-    expect(text).toContain("Owing ₦3,000.00");
-    expect(text).toContain("Wema Bank");
-    expect(text).toContain("Bank account name: Lagoon View / Okafor");
+    // A line per child: their avatar, the bank and account name over the number, and Copy.
+    const rows = [...last.container.querySelectorAll(".fees-account-row")];
+    expect(rows[0]?.textContent).toContain("Wema Bank · Lagoon View / Okafor");
+    expect(rows[0]?.querySelector('[aria-label="Copy Tobi\'s account number"]')).not.toBeNull();
     expect(text).toContain("Pay any amount by transfer from your bank app. It shows here as soon as it arrives.");
     expect(text).not.toContain("Pay all balances");
     expect(last.container.querySelector('a[href="/fees/pay-all"]')).toBeNull();
@@ -222,8 +221,8 @@ describe("Fees where families pay by transfer alone", () => {
   it("lets a parent go from a bill that is owed to the Pay step, with no card or method choice on Fees", async () => {
     last = render(newWorld(false));
     await settle();
-    expect(last.container.querySelector('a[href="/fees/pay/111"]')?.textContent).toContain("Pay Tobi");
-    expect(last.container.querySelector('a[href="/fees/pay/122"]')?.textContent).toContain("Pay Somto");
+    expect(last.container.querySelector('a[href="/fees/pay/111"]')?.getAttribute("aria-label")).toBe("Pay Tobi's bill");
+    expect(last.container.querySelector('a[href="/fees/pay/122"]')?.getAttribute("aria-label")).toBe("Pay Somto's bill");
     // Grace owes nothing, so there is nothing to pay for her.
     expect(last.container.querySelector('a[href^="/fees/pay/13"]')).toBeNull();
     expect(last.container.textContent).not.toContain("Pay all balances");
@@ -292,11 +291,11 @@ describe("Fees where families pay by transfer alone", () => {
     last = render(newWorld(false));
     await settle();
     await openAccounts(last.container);
-    const copy = last.container.querySelector<HTMLButtonElement>(".student-transfer-number");
-    expect(copy?.textContent).toContain("Copy");
+    const copy = last.container.querySelector<HTMLButtonElement>(".fees-account-copy");
+    expect(copy?.textContent).toBe("Copy");
     await act(async () => { copy?.click(); await Promise.resolve(); });
     expect(written).toEqual(["0123456011"]);
-    expect(last.container.querySelector(".student-transfer-copy")?.textContent).toBe("Copied");
+    expect(copy?.textContent).toBe("Copied");
   });
 
   it("shows a transfer on its way, then received with its receipt, and updates the balance", async () => {

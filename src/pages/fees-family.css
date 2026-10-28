@@ -1,0 +1,134 @@
+/* Fees (design 1g): the large title, the deep blue card, a card per child, then Payment history and the account numbers in one card. Shared pieces are in screen.css. */
+.fees-page { padding: 8px 16px 32px; color: var(--xs-ink); }
+.fees-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; width: 100%; max-width: 640px; margin: 0 auto; }
+.fees-side, .fees-content, .fees-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; align-content: start; }
+.fees-side > .fees-summary, .fees-side > .fees-loading, .fees-side > .fees-notice { margin-top: 6px; }
+
+.fees-loading { height: 240px; border-radius: 28px; background: #e4e9f2; animation: fees-pulse 1.4s ease-in-out infinite alternate; }
+.fees-notice { padding: 16px; color: var(--xs-muted); font-size: 14px; }
+.fees-notice button { border: 0; background: none; color: var(--xs-brand); font: inherit; font-weight: 600; cursor: pointer; }
+.fees-empty { margin: 0; padding: 16px; color: var(--xs-muted); font-size: 14px; }
+
+/* The family's total on the deep blue card, with Pay all balances in white under it. */
+.fees-summary { position: relative; overflow: hidden; isolation: isolate; padding: 20px; border-radius: 28px; background: var(--xs-brand-deep); box-shadow: 0 20px 40px -16px rgba(45, 71, 120, .7); color: #fff; }
+.fees-summary::before { content: ""; position: absolute; z-index: -1; inset: 0; background-image: radial-gradient(#c2d7ff 1px, transparent 1px); background-size: 24px 24px; opacity: .12; }
+.fees-summary > .screen-orb { top: auto; right: -140px; bottom: -170px; }
+.fees-summary > :not(.screen-orb) { position: relative; z-index: 1; }
+.fees-summary.is-unavailable { background: #8a5a14; box-shadow: 0 20px 40px -16px rgba(138, 90, 20, .6); }
+.fees-summary-label { display: block; color: #c3d2ee; font-size: 13px; font-weight: 600; }
+.fees-summary.is-unavailable .fees-summary-label { color: #f7dfb6; }
+.fees-summary-amount { display: block; margin-top: 6px; font-size: 38px; line-height: 1; font-weight: 650; letter-spacing: -.05em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fees-summary-amount span { color: #c3d2ee; font-size: 22px; }
+.fees-summary-line { margin: 8px 0 0; color: var(--xs-on-brand); font-size: 13.5px; line-height: 1.45; }
+.fees-summary-credit { display: inline-block; margin: 12px 0 0; padding: 7px 10px; border: 1px solid rgba(255, 255, 255, .3); border-radius: 12px; background: rgba(255, 255, 255, .14); font-size: 12.5px; line-height: 1.4; }
+.fees-summary-pay { display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px; margin-top: 18px; border-radius: 16px; background: #fff; color: var(--xs-brand-deep); font-size: 15.5px; font-weight: 600; text-decoration: none; }
+.fees-summary-pay:hover { background: #eef2fa; }
+.fees-summary-pay:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.fees-summary-steps { display: block; margin-top: 8px; color: #c3d2ee; font-size: 12px; text-align: center; }
+.fees-summary-offline { margin: 16px 0 0; font-size: 13.5px; font-weight: 600; }
+
+/* Added charges are never paid by card: the amber note under the card. */
+.fees-charges-note { display: flex; gap: 11px; align-items: flex-start; padding: 14px 16px; border-radius: 20px; background: #fff6e6; }
+.fees-charges-note > svg { flex: none; margin-top: 1px; color: var(--xs-warn); }
+.fees-charges-note p { margin: 0; color: #6b4a12; font-size: 13px; line-height: 1.5; }
+
+/* A card per child: who, what they owe and when, Pay and their bills under the name. */
+.fees-simple-children { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.fees-simple-child { overflow: hidden; }
+.fees-child-summary-row { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; }
+.fees-child-identity { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; }
+.fees-child-identity > div { min-width: 0; }
+.fees-child-identity strong { display: block; font-size: 16px; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.fees-child-identity small { display: block; color: var(--xs-faint); font-size: 12.5px; }
+.fees-child-balance { flex: none; text-align: right; }
+.fees-child-balance strong { display: block; font-size: 16px; font-weight: 650; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.fees-child-balance small { display: block; color: var(--xs-warn); font-size: 12px; font-weight: 600; }
+.fees-child-balance.is-clear strong { color: var(--xs-good); letter-spacing: -.02em; }
+.fees-child-balance.is-clear small { color: var(--xs-faint); font-weight: 400; }
+.fees-child-unavailable { margin: 0; padding: 0 16px 14px 72px; color: var(--xs-warn-text); font-size: 13px; line-height: 1.45; }
+.fees-child-credit-note { margin: 0; padding: 0 16px 12px 72px; color: var(--xs-good); font-size: 12.5px; font-weight: 600; line-height: 1.45; }
+.fees-child-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 14px 72px; }
+.fees-child-pay, .fees-child-bills-button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 36px; border: 0; border-radius: 12px; font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.fees-child-pay { padding: 0 16px; background: var(--xs-brand); color: #fff; }
+.fees-child-pay:hover { background: #425b8f; }
+.fees-child-bills-button { padding: 0 12px; background: var(--xs-bg); color: var(--xs-ink-2); }
+.fees-child-bills-button:hover { background: #eaeef5; }
+.fees-child-bills-button svg { transition: transform .2s; }
+.fees-child-bills-button[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+/* The child's bills and charges, opened in a grey panel at the foot of their card. */
+.fees-child-bills-panel { margin: 0 12px 12px; }
+.fees-simple-bills { margin: 0; padding: 2px 14px; border-radius: 18px; background: #f7f9fc; list-style: none; }
+.fees-simple-bill { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px 12px; padding: 12px 0; }
+.fees-simple-bill + .fees-simple-bill { border-top: 1px solid #e9edf4; }
+.fees-bill-main { min-width: 0; }
+.fees-bill-main strong, .fees-bill-main small, .fees-bill-side strong, .fees-bill-side small { display: block; }
+.fees-bill-main strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.fees-bill-main small { margin-top: 2px; color: var(--xs-faint); font-size: 12px; }
+.fees-bill-side { text-align: right; }
+.fees-bill-side strong { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.fees-bill-side small { color: var(--xs-faint); font-size: 11.5px; }
+.fees-bill-links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; font-weight: 600; }
+.fees-bill-links a, .fees-charge-transfer { padding: 0; border: 0; background: none; color: var(--xs-brand); font: inherit; text-decoration: none; cursor: pointer; }
+.fees-bill-links a:hover, .fees-charge-transfer:hover { text-decoration: underline; }
+.fees-bill-paid { display: inline-flex; align-items: center; gap: 4px; color: var(--xs-good); }
+.fees-charge-note { grid-column: 1 / -1; margin: 0; color: var(--xs-faint); font-size: 12px; line-height: 1.45; }
+
+/* Payment history and the account numbers: two rows of one card, each opening in place. */
+.fees-more { overflow: hidden; margin-top: 4px; }
+.fees-more-button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 15px 16px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.fees-more-button:hover { background: #fafbfd; }
+.fees-more-panel + .fees-more-button { position: relative; }
+.fees-more-panel + .fees-more-button::before { content: ""; position: absolute; top: 0; right: 0; left: 64px; height: 1px; background: var(--xs-line); }
+.fees-more-text { flex: 1; min-width: 0; }
+.fees-more-text strong { display: block; font-size: 15px; font-weight: 600; }
+.fees-more-text small { display: block; color: var(--xs-faint); font-size: 12.5px; }
+.fees-more-chevron { flex: none; color: var(--xs-hint); transition: transform .2s; }
+.fees-more-button[aria-expanded="true"] .fees-more-chevron { transform: rotate(180deg); }
+.fees-more-panel { padding: 0 16px 14px; }
+.fees-more-message { margin: 0 0 10px; color: #65738b; font-size: 12.5px; line-height: 1.5; }
+
+.fees-payment-list { margin: 0; padding: 0; list-style: none; }
+.fees-payment { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--xs-line); }
+.fees-payment-icon { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--xs-good-soft); color: var(--xs-good); }
+.fees-payment-icon.is-pending { background: var(--xs-warn-soft); color: var(--xs-warn); }
+.fees-payment-main { flex: 1; min-width: 0; }
+.fees-payment-main strong { display: block; font-size: 14.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.fees-payment-main span { display: block; color: var(--xs-faint); font-size: 12px; overflow-wrap: anywhere; }
+.fees-payment-receipt { display: inline-flex; flex: none; align-items: center; gap: 3px; color: var(--xs-brand); font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.fees-payment-receipt:hover { text-decoration: underline; }
+.fees-payment-none { flex: none; color: var(--xs-hint); font-size: 12px; }
+
+/* Each child's account number as a grey line: avatar, bank and name over the number, Copy. */
+.fees-account-list { display: grid; gap: 8px; }
+.fees-account-list .fees-transfer-card { padding: 12px; border: 0; border-radius: 16px; background: #f6f8fb; box-shadow: none; }
+.fees-account-list .fees-transfer-card--loading { min-height: 62px; background: #eceff5; }
+.fees-account-list .fees-transfer-card--note { margin: 0; color: var(--xs-muted); font-size: 13px; line-height: 1.45; }
+.fees-account-list .fees-transfer-activity { margin-top: 10px; }
+.fees-account-list .fees-get-account h3 { font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; }
+.fees-account-list .fees-get-account p { margin-top: 3px; color: var(--xs-faint); font-size: 12.5px; }
+.fees-account-list .fees-get-account-action { min-height: 40px; margin-top: 10px; border-radius: 12px; background: var(--xs-brand); font-size: 13.5px; font-weight: 600; }
+.fees-account-row { display: flex; align-items: center; gap: 12px; }
+.fees-account-text { flex: 1; min-width: 0; }
+.fees-account-bank { display: block; color: var(--xs-faint); font-size: 12px; overflow-wrap: anywhere; }
+.fees-account-number { display: block; margin-top: 1px; font-family: var(--font-geist-mono); font-size: 17px; font-weight: 600; letter-spacing: .02em; overflow-wrap: anywhere; }
+.fees-account-copy { display: inline-flex; flex: none; align-items: center; gap: 5px; height: 32px; padding: 0 10px; border: 0; border-radius: 10px; background: var(--xs-brand-soft); color: var(--xs-brand-text); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.fees-account-copy:hover { background: #dde6f5; }
+
+:is(.fees-child-pay, .fees-child-bills-button, .fees-bill-links a, .fees-charge-transfer, .fees-more-button, .fees-payment-receipt, .fees-account-copy):focus-visible { outline: 3px solid #5975ff; outline-offset: 2px; }
+
+/* A wide screen: the title and money on the left, the children and the rest on the right. */
+@media (min-width: 900px) {
+  .fees-page { padding: 16px 28px 40px; }
+  .fees-layout { grid-template-columns: minmax(340px, 1fr) minmax(380px, 1.1fr); gap: 20px 28px; max-width: 1080px; align-items: start; }
+}
+
+@media (max-width: 360px) {
+  .fees-summary-amount { font-size: 32px; }
+  .fees-child-actions, .fees-child-unavailable, .fees-child-credit-note { padding-left: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fees-loading { animation: none; }
+  .fees-child-bills-button svg, .fees-more-chevron { transition: none; }
+}

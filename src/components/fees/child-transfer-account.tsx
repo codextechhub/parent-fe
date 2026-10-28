@@ -10,6 +10,7 @@ import {
 
 import { GetTransferAccount } from "./get-transfer-account";
 import { TransferAccountCard } from "./transfer-account-card";
+import { TransferAccountRow } from "./transfer-account-row";
 
 /** What the card says under the number, where a school's families pay by transfer alone. */
 export const TRANSFER_HINT =
@@ -32,6 +33,8 @@ type Props = {
   showAccount?: boolean;
   /** Says "Waiting for your transfer" under the number until a transfer shows, for the Pay step. */
   waiting?: boolean;
+  /** "row" is the compact line Fees lists every child's number in; the card is for Pay and Invoice. */
+  layout?: "card" | "row";
 };
 
 /**
@@ -43,7 +46,7 @@ type Props = {
  * (`NONE`), or the school's sentence (`UNAVAILABLE`). The transfers are kept
  * current by the app's one watcher while this is on screen.
  */
-export function ChildTransferAccount({ childId, firstName, fullName, owing, title, hint = TRANSFER_HINT, showAccount = true, waiting = false }: Props) {
+export function ChildTransferAccount({ childId, firstName, fullName, owing, title, hint = TRANSFER_HINT, showAccount = true, waiting = false, layout = "card" }: Props) {
   const { data: account, isLoading, isFetching, isError } = useChildTransferAccountQuery(childId, {
     refetchOnMountOrArgChange: true,
   });
@@ -86,6 +89,14 @@ export function ChildTransferAccount({ childId, firstName, fullName, owing, titl
     return (
       <div className="fees-transfer-card">
         <GetTransferAccount childId={childId} firstName={firstName} />
+      </div>
+    );
+  }
+  if (layout === "row") {
+    return (
+      <div className="fees-transfer-card is-row">
+        <TransferAccountRow account={account} childId={childId} firstName={firstName} fullName={fullName} />
+        <TransferActivity deposits={deposits} firstName={firstName} />
       </div>
     );
   }
