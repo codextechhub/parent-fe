@@ -1,3 +1,5 @@
+import { timeoutSignal } from "@/lib/request-timeout";
+
 /**
  * Django's double-submit CSRF token, read from the cookie Django sets and
  * sent back on every write.
@@ -33,6 +35,7 @@ export async function getCsrfToken(): Promise<string> {
       method: "GET",
       credentials: "include",
       headers: { accept: "application/json" },
+      signal: timeoutSignal(),
     });
     if (!response.ok) return "";
     const data = (await response.json()) as { data?: { csrf_token?: string } };

@@ -1,3 +1,4 @@
+import { timeoutSignal } from "@/lib/request-timeout";
 import { isNativeApp } from "@/native/platform";
 import { currentSchoolSlug } from "@/utils/school-host";
 
@@ -25,9 +26,9 @@ export type ApiRefusal = { status: number; code: string; message: string };
  * cookies, which that app does not use.
  *
  * Used for sign-in, refresh and sign-out, which run outside RTK Query because
- * they decide whether the store has a session at all. A network failure
- * answers status 0 so a caller can tell "the school is unreachable" from
- * "the school said no".
+ * they decide whether the store has a session at all. A network failure, or
+ * no answer within the request time limit, answers status 0 so a caller can
+ * tell "the school is unreachable" from "the school said no".
  */
 export async function authPost<T>(
   path: string,
@@ -45,6 +46,7 @@ export async function authPost<T>(
         ...(csrf ? { "X-CSRFToken": csrf } : {}),
       },
       body: JSON.stringify(body ?? {}),
+      signal: timeoutSignal(),
     });
   } catch {
     return { ok: false, refusal: { status: 0, code: "NETWORK", message: "" } };

@@ -1,3 +1,4 @@
+import { timeoutSignal } from "@/lib/request-timeout";
 import { schoolNameUrl } from "@/utils/school-brand";
 
 /**
@@ -18,7 +19,7 @@ export async function lookUpSchool(code: string): Promise<SchoolLookup> {
   if (!address) return { ok: false, reason: "not-found" };
   let response: Response;
   try {
-    response = await fetch(address, { headers: { accept: "application/json" }, credentials: "omit" });
+    response = await fetch(address, { headers: { accept: "application/json" }, credentials: "omit", signal: timeoutSignal() });
   } catch {
     return { ok: false, reason: "unreachable" };
   }

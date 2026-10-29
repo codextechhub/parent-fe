@@ -11,6 +11,7 @@ import App from "./App";
 import { adoptHandover, useAccountStorage as setAccountStorage } from "./auth/device-account";
 import { captureInstallPrompt } from "./install/install-prompt";
 import { checkRelatedApps } from "./install/installed";
+import { timeoutSignal } from "./lib/request-timeout";
 import { applySchoolApp, keepName, keptName, nameThePage } from "./lib/school-app";
 import { nativeAccountStorage } from "./native/account-storage";
 import { isNativeApp } from "./native/platform";
@@ -34,7 +35,7 @@ const native = isNativeApp();
 async function readSchoolName(slug: string): Promise<string> {
   const url = schoolNameUrl(slug);
   if (!url) return "";
-  const response = await fetch(url, { credentials: "include" });
+  const response = await fetch(url, { credentials: "include", signal: timeoutSignal() });
   if (!response.ok) throw new Error("name unreadable");
   const body = (await response.json()) as { name?: string };
   return (body.name ?? "").trim();

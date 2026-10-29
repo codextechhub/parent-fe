@@ -195,3 +195,53 @@ describe("base-api 401 flow", () => {
 
 // Keep the base-api's baseUrl in sync with the test harness.
 void BASE;
+
+const probe = baseApi.injectEndpoints({
+  endpoints: (b) => ({
+    probeUpload: b.mutation<unknown, void>({
+      query: () => ({ url: "/portal/parent/probe/photo/", method: "POST", body: new FormData() }),
+    }),
+  }),
+});
+
+/** A school that takes the request and never answers it, until the app gives up. */
+function silent() {
+  const fetcher = vi.fn((input: Request | string, init?: RequestInit) => {
+    const signal = input instanceof Request ? input.signal : init?.signal;
+    return new Promise<Response>((_, reject) => {
+      // As a browser does: the fetch fails with the reason the signal gave up.
+      signal?.addEventListener("abort", () => reject(signal.reason));
+    });
+  });
+  globalThis.fetch = fetcher as unknown as typeof fetch;
+  return fetcher;
+}
+
+describe("a request the school never answers", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("is given up after 45 seconds", async () => {
+    const fetcher = silent();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const store = makeStore();
+    const pending = store.dispatch(portalApi.endpoints.me.initiate());
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalled());
+    await vi.advanceTimersByTimeAsync(45_000);
+    const result = await pending;
+    expect((result.error as { status?: unknown }).status).toBe("TIMEOUT_ERROR");
+  });
+
+  it("gives an upload two minutes before giving up", async () => {
+    const fetcher = silent();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const store = makeStore();
+    let settled = false;
+    const pending = store.dispatch(probe.endpoints.probeUpload.initiate()).finally(() => { settled = true; });
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalled());
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(60_000);
+    const result = await pending;
+    expect("error" in result && (result.error as { status?: unknown }).status).toBe("TIMEOUT_ERROR");
+  });
+});

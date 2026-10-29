@@ -1,3 +1,5 @@
+import { timeoutSignal } from "@/lib/request-timeout";
+
 import { getAccessToken } from "./access-token";
 import { API_BASE, requestCredentials, withTenant } from "./api";
 import { refreshTokenSingleFlight } from "./refresh";
@@ -29,6 +31,7 @@ export async function parentRequest(method: string, path: string, body: unknown)
         Authorization: `Bearer ${getAccessToken()}`,
       },
       body: JSON.stringify(body ?? {}),
+      signal: timeoutSignal(),
     });
   const renewed = async (): Promise<ParentAnswer | null> => {
     const outcome = await refreshTokenSingleFlight();

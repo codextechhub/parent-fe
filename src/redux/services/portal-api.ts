@@ -954,6 +954,9 @@ export function refusal(error: unknown): FieldRefusal {
   if (err.status === "FETCH_ERROR") {
     return { message: "You are offline. Try again when you have a connection.", field: "" };
   }
+  if (err.status === "TIMEOUT_ERROR") {
+    return { message: "The school took too long to answer. Try again.", field: "" };
+  }
   const data = err.data;
   const detail = data?.error?.detail;
   // ProfileFieldInvalid serialises as {error: {detail: {<field>: ["sentence"]}}}
@@ -990,6 +993,9 @@ export function passwordRefusals(error: unknown): PasswordRefusals {
   const err = error as { status?: number | string; data?: { message?: string; error?: Record<string, unknown> } } | undefined;
   if (err?.status === "FETCH_ERROR") {
     return { form: "You are offline. Try again when you have a connection." };
+  }
+  if (err?.status === "TIMEOUT_ERROR") {
+    return { form: "The school took too long to answer. Try again." };
   }
   const detail = err?.data?.error ?? {};
   const out: PasswordRefusals = {};

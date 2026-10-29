@@ -137,7 +137,7 @@ export default function SignInPage() {
         refuse({ message: NOT_A_PARENT, staff: true });
       } else if (failed?.status === 401 || failed?.status === 400) {
         refuse({ message: failed.data?.message || "Those details did not match an account at this school." });
-      } else if (failed?.status === 0 || failed?.status === "FETCH_ERROR") {
+      } else if (failed?.status === 0 || failed?.status === "FETCH_ERROR" || failed?.status === "TIMEOUT_ERROR") {
         refuse({ message: "Could not reach the school. Check your connection and try again." });
       } else {
         refuse({ message: failed?.data?.message || "Something went wrong. Please try again." });

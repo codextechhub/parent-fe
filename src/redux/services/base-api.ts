@@ -13,6 +13,7 @@ import {
   markSessionInvalidated,
   refreshTokenSingleFlight,
 } from "@/auth/refresh";
+import { REQUEST_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from "@/lib/request-timeout";
 import { isNativeApp } from "@/native/platform";
 import { currentSchoolSlug } from "@/utils/school-host";
 
@@ -60,6 +61,12 @@ const injectTenant = (args: string | FetchArgs): string | FetchArgs => {
   return { ...args, params: { ...(args.params as object), tenant: slug } };
 };
 
+/** An upload is given longer than other requests (see `UPLOAD_TIMEOUT_MS`). */
+const timed = (args: string | FetchArgs): string | FetchArgs =>
+  typeof args !== "string" && args.body instanceof FormData && args.timeout === undefined
+    ? { ...args, timeout: UPLOAD_TIMEOUT_MS }
+    : args;
+
 /**
  * Every call carries the parent's access token (except signing in and out,
  * which run on the session cookie) and every write carries the CSRF token.
@@ -69,6 +76,7 @@ const injectTenant = (args: string | FetchArgs): string | FetchArgs => {
 export const baseQuery = fetchBaseQuery({
   baseUrl,
   credentials: requestCredentials(),
+  timeout: REQUEST_TIMEOUT_MS,
   prepareHeaders: async (headers, { endpoint, type }) => {
     const accessToken = getAccessToken();
     if (accessToken && endpoint !== "login" && endpoint !== "logout") {
@@ -99,7 +107,7 @@ export const baseQueryInterceptor: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  const tenantArgs = injectTenant(args);
+  const tenantArgs = timed(injectTenant(args));
   const result = await baseQuery(tenantArgs, api, extraOptions);
   if (!result?.error) return result;
 
