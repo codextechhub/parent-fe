@@ -122,6 +122,30 @@ describe("base-api 401 flow", () => {
     expect(refreshCalls.length).toBe(1);
   });
 
+  it("reports a refresh that can't reach the school as no connection, not a 401", async () => {
+    stubFetch((url) => {
+      if (url.endsWith("/user/auth/device/refresh/")) throw new TypeError("Failed to fetch");
+      if (url.includes("/portal/parent/me/")) return new Response("{}", { status: 401 });
+      return new Response("{}", { status: 200 });
+    });
+    const store = makeStore();
+    const result = await store.dispatch(portalApi.endpoints.me.initiate());
+    expect(result.status).toBe("rejected");
+    expect((result.error as { status?: unknown }).status).toBe("FETCH_ERROR");
+  });
+
+  it("reports a refresh the server fails as an error, not a 401", async () => {
+    stubFetch((url) => {
+      if (url.endsWith("/user/auth/device/refresh/")) return new Response("{}", { status: 503 });
+      if (url.includes("/portal/parent/me/")) return new Response("{}", { status: 401 });
+      return new Response("{}", { status: 200 });
+    });
+    const store = makeStore();
+    const result = await store.dispatch(portalApi.endpoints.me.initiate());
+    expect(result.status).toBe("rejected");
+    expect((result.error as { status?: unknown }).status).toBe("CUSTOM_ERROR");
+  });
+
   it("appends ?tenant= from the hostname", async () => {
     stubFetch(() =>
       new Response(

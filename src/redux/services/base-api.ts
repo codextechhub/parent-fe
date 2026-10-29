@@ -112,7 +112,7 @@ export const baseQueryInterceptor: BaseQueryFn<
     const retry = await baseQuery(tenantArgs, api, extraOptions);
     if ((retry?.error as FetchBaseQueryError | undefined)?.status === 401) {
       markSessionInvalidated();
-      // The me-query's own 401 handling (in auth-events.ts) empties the slice
+      // The me-query's own 401 handling (in portal-api.ts) empties the slice
       // on the next read; a reroute to /sign-in happens there, not here, so a
       // background 401 does not yank a parent off a page they were reading.
     }
@@ -121,8 +121,13 @@ export const baseQueryInterceptor: BaseQueryFn<
 
   if (refreshed.reason === "token_invalid" || refreshed.reason === "no_token") {
     markSessionInvalidated();
+    return result;
   }
-  return result;
+  // The sign-in may be fine; the school just couldn't be asked. Passing the
+  // 401 on would read as "signed out" and send the parent to sign-in.
+  return refreshed.reason === "network_error"
+    ? { error: { status: "FETCH_ERROR", error: "The school could not be reached to renew the sign-in." } }
+    : { error: { status: "CUSTOM_ERROR", error: "The sign-in could not be renewed right now." } };
 };
 
 export const baseApi = createApi({
