@@ -1,0 +1,15 @@
+/* The app or one screen crashed. The whole-app page borrows not-found.css's layout; this adds its two buttons and the in-shell panel. Self-contained: student-fe and parent-fe keep the same file. */
+.crash-actions { display: flex; flex-direction: column; gap: 10px; }
+.crash-page button.not-found-home { border: 0; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+.crash-secondary { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border: 1px solid #cfd7ea; border-radius: 17px; background: #fff; color: #4a659d; font-size: 15px; font-weight: 600; text-decoration: none; }
+.crash-secondary:hover { background: #f7f9fd; }
+.crash-secondary:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }
+
+/* One screen inside the shell: a card where the screen would be, the tab bar still under it. */
+.crash-panel { display: flex; flex-direction: column; align-items: center; width: min(100% - 32px, 420px); margin: 48px auto; padding: 28px 22px; border-radius: 24px; background: #fff; box-shadow: 0 18px 40px -24px rgba(34, 49, 83, .35); color: #223153; text-align: center; }
+.crash-panel-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: #fdf0e6; color: #c2621a; }
+.crash-panel h2 { margin: 16px 0 0; font-size: 20px; line-height: 1.2; font-weight: 650; letter-spacing: -.03em; }
+.crash-panel p { margin: 8px 0 0; color: #65738b; font-size: 14px; line-height: 1.5; }
+.crash-panel button { display: inline-flex; align-items: center; gap: 8px; height: 46px; margin-top: 20px; padding: 0 22px; border: 0; border-radius: 15px; background: #4a659d; color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.crash-panel button:hover { background: #425b8f; }
+.crash-panel button:focus-visible { outline: 3px solid #5975ff; outline-offset: 3px; }

@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -47,6 +47,13 @@ const empty = () =>
     { status: 200, headers: { "content-type": "application/json" } },
   );
 
+/** A screen with a bug in it: it throws until the bug is "fixed". */
+let broken = true;
+function Broken(): ReactNode {
+  if (broken) throw new Error("a bug in Attendance");
+  return <p>Attendance</p>;
+}
+
 let view: { root: Root; container: HTMLDivElement; store: ReturnType<typeof configureStore> } | null = null;
 
 function render(path: string) {
@@ -73,6 +80,7 @@ function render(path: string) {
               <Route path="results" element={<p>Results</p>} />
               <Route path="timetable" element={<p>Timetable</p>} />
               <Route path="profile" element={<p>Profile</p>} />
+              <Route path="attendance" element={<Broken />} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -223,3 +231,33 @@ describe("The way back from Timetable and Profile", () => {
   });
 });
 
+describe("A screen that crashes", () => {
+  beforeEach(() => {
+    broken = true;
+    // React reports the caught error to the console; the test expects it.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it("shows Try again in its place and keeps the header and the tab bar", () => {
+    const container = render("/attendance");
+    expect(container.querySelector("[role=alert]")?.textContent).toContain("This screen stopped working.");
+    expect(appHeader(container)).not.toBeNull();
+    expect(tabBar(container)).not.toBeNull();
+  });
+
+  it("draws the screen again on Try again", () => {
+    const container = render("/attendance");
+    broken = false;
+    act(() => [...container.querySelectorAll("button")].find((b) => b.textContent === "Try again")!.click());
+    expect(container.querySelector("[role=alert]")).toBeNull();
+    expect(container.textContent).toContain("Attendance");
+  });
+
+  it("leaves the crash behind when the parent opens another tab", () => {
+    const container = render("/attendance");
+    act(() => [...tabBar(container)!.querySelectorAll("a")].find((a) => a.textContent?.includes("Fees"))!.click());
+    expect(container.querySelector("[role=alert]")).toBeNull();
+    expect(container.textContent).toContain("Fees");
+  });
+});

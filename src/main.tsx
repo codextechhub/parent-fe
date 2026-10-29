@@ -8,6 +8,7 @@ import "@fontsource-variable/geist/index.css";
 import "@fontsource-variable/geist-mono/index.css";
 
 import App from "./App";
+import { CrashBoundary } from "./components/crash-boundary";
 import { adoptHandover, useAccountStorage as setAccountStorage } from "./auth/device-account";
 import { captureInstallPrompt } from "./install/install-prompt";
 import { checkRelatedApps } from "./install/installed";
@@ -16,6 +17,7 @@ import { applySchoolApp, keepName, keptName, nameThePage } from "./lib/school-ap
 import { nativeAccountStorage } from "./native/account-storage";
 import { isNativeApp } from "./native/platform";
 import { logDebugToken } from "./native/push-debug";
+import { CrashPage } from "./pages/crash";
 import { loadSchoolCode } from "./native/school-code";
 import { lookUpSchool } from "./native/school-lookup";
 import { store } from "./redux/store";
@@ -80,7 +82,10 @@ async function start() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <Provider store={store}>
-        <App />
+        {/* Inside the store: the error page's crest is read through it. */}
+        <CrashBoundary fallback={() => <CrashPage />}>
+          <App />
+        </CrashBoundary>
       </Provider>
     </StrictMode>,
   );

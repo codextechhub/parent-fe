@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, Inbox } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigationType } from "react-router";
 
+import { CrashBoundary } from "@/components/crash-boundary";
 import { SchoolMark } from "@/components/school-mark";
 import {
   ChildSwitcher, CHILD_PARAM, useActiveChild, useFollowAddressedChild,
@@ -11,6 +12,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { reachedSchool, wentOffline } from "@/redux/features/connectivity-slice";
 import { useUnreadMessagesQuery } from "@/redux/services/messages-api";
 import { useNoticesQuery } from "@/redux/services/portal-api";
+import { CrashPanel } from "@/pages/crash";
 
 import { INBOX, isConversationPath, isDetailPath, itemFor, TABS, type NavItem } from "./nav";
 import { OfflineBar } from "./offline-bar";
@@ -45,7 +47,9 @@ const LARGE_TITLE_PAST = 56;
  * the page scrolls under it. The offline bar sits under the header whenever the
  * browser reports no connection, and a pull down from the top of a screen
  * reads everything on it again. The unread message count is read every
- * minute, on regaining focus and on reconnecting.
+ * minute, on regaining focus and on reconnecting. A screen that crashes is
+ * replaced by a card with Try again, under the same header and above the same
+ * tab bar, and moving to another address leaves it behind.
  *
  * A screen opened from another (`isDetailPath`: a notice, a new message)
  * draws its own back bar, so the header and the tab bar step aside for it at
@@ -168,7 +172,9 @@ export function AppShell() {
       )}
       <OfflineBar clearTop={bareScreen} />
       <PullToRefresh fillHeight={fixed}>
-        <Outlet />
+        <CrashBoundary resetKey={pathname} fallback={(retry) => <CrashPanel onRetry={retry} />}>
+          <Outlet />
+        </CrashBoundary>
       </PullToRefresh>
       {!bareScreen && <TabBar badges={{ notices: unreadNotices, messages: unreadMessages }} />}
     </div>
