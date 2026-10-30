@@ -43,6 +43,8 @@
       </array>
     </dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>XVS Parent uses the camera only when you choose to take a profile photo.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

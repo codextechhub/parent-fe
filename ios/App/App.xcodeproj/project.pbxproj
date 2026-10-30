@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8B1D4C6A2E7F4A9B9C3D5E01 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8B1D4C6A2E7F4A9B9C3D5E02 /* GoogleService-Info.plist */; };
+		8B1D4C6A2E7F4A9B9C3D5E11 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8B1D4C6A2E7F4A9B9C3D5E12 /* PrivacyInfo.xcprivacy */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -21,6 +22,7 @@
 
 /* Begin PBXFileReference section */
 		8B1D4C6A2E7F4A9B9C3D5E02 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		8B1D4C6A2E7F4A9B9C3D5E12 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7A3C91E2B4D5460F8E1A2C3D /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				7A3C91E2B4D5460F8E1A2C3D /* App.entitlements */,
 				8B1D4C6A2E7F4A9B9C3D5E02 /* GoogleService-Info.plist */,
+				8B1D4C6A2E7F4A9B9C3D5E12 /* PrivacyInfo.xcprivacy */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -153,6 +156,7 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				8B1D4C6A2E7F4A9B9C3D5E01 /* GoogleService-Info.plist in Resources */,
+				8B1D4C6A2E7F4A9B9C3D5E11 /* PrivacyInfo.xcprivacy in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
