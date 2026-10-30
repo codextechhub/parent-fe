@@ -203,6 +203,37 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 npm run cap:sync && cd android && ./gradlew assembleDebug
 ```
 
+## Release signing
+
+The Play Store takes a bundle signed with the app's **upload key**. Google
+then re-signs it with the app signing key it holds (Play App Signing), so the
+upload key can be replaced through Play Console if it is ever lost, but every
+release in between waits on that. Keep the key and its passwords off GitHub
+and backed up somewhere only CodeX can reach.
+
+Make the key once, outside this repository:
+
+```bash
+"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkeypair -v -keystore ~/keys/xvs-parent-upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Then create `android/keystore.properties` (git-ignored, as are `*.jks` and
+`*.keystore`) naming it:
+
+```
+storeFile=/Users/<you>/keys/xvs-parent-upload.jks
+storePassword=<the store password>
+keyAlias=upload
+keyPassword=<the key password>
+```
+
+`./gradlew bundleRelease` then writes a signed
+`app/build/outputs/bundle/release/app-release.aab`. Without the file a release
+build stops and says so, rather than produce a bundle Play refuses; debug
+builds need nothing. Raise `versionCode` in `android/app/build.gradle` for
+every upload. When Play Console asks for the app links fingerprints, list both
+the app signing key's and this upload key's (school-fe `docs/app-links.md`).
+
 ## Native push
 
 Notifications reach the phone through Firebase Cloud Messaging on both

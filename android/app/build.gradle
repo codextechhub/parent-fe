@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+// The upload key that signs a release build for the Play Store. Its passwords
+// and the .jks file stay on the machine that builds releases, never in git:
+// android/keystore.properties names them (docs/native-app.md, "Release
+// signing"). A release build without it stops rather than produce a bundle
+// the Play Store refuses.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "com.codexng.xvs.parent"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +27,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -43,6 +67,16 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+gradle.taskGraph.whenReady { graph ->
+    def releasing = graph.allTasks.any { it.name in ["bundleRelease", "assembleRelease"] }
+    if (releasing && !keystorePropertiesFile.exists()) {
+        throw new GradleException(
+            "A release build needs the upload key: create android/keystore.properties " +
+            "(see docs/native-app.md, Release signing)."
+        )
+    }
+}
 
 try {
     def servicesJSON = file('google-services.json')
