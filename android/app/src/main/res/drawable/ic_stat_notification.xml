@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The XVS crest as a status-bar icon: Android draws a notification's small
+     icon as a white mask, so this is the shield's outline with the badge cut
+     out, nothing else. Named in AndroidManifest.xml as Firebase's default. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="296"
+    android:viewportHeight="296">
+    <group android:translateX="31.5">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M116,3L221,35L221,165C221,225 170,262 116,290C62,262 12,225 12,165L12,35Z M116,41L85,59L85,95L116,113L147,95L147,59Z" />
+    </group>
+</vector>

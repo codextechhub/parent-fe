@@ -216,10 +216,11 @@ missing method, so it must never be the result of an `await` or an async return
 - **Config files** (committed, not secret): `android/app/google-services.json`
   (the Google services Gradle plugin is applied by `app/build.gradle` when the
   file exists) and `ios/App/App/GoogleService-Info.plist` (an App target
-  resource). iOS also has `aps-environment` (`development`; the store build
-  needs `production`) in `App.entitlements`, the `remote-notification`
-  background mode in `Info.plist`, and the three APNs forwarding methods in
-  `AppDelegate.swift`. `capacitor.config.ts` links the plugin by symlink for
+  resource). iOS also has `aps-environment` in `App.entitlements`
+  (`development`, for Debug) and `AppRelease.entitlements` (`production`, which
+  the Release build and so every store build signs with), the
+  `remote-notification` background mode in `Info.plist`, and the three APNs
+  forwarding methods in `AppDelegate.swift`. `capacitor.config.ts` links the plugin by symlink for
   Swift Package Manager and sets the iPhone to show the banner and sound for an
   open app.
 - **A build without the iPhone file.** The plugin configures Firebase only when
@@ -255,9 +256,11 @@ missing method, so it must never be the result of an `await` or an async return
   (`appStateChange`), read the fees and the watched transfers again at once.
 - **Debug builds** log `[push] Firebase token obtained: <token>` once at start
   (`push-debug.ts`); a release build logs nothing.
-- Not done: Android's small notification icon is the app icon; the iPhone
-  `aps-environment` must be `production` in a store build, and the APNs key must
-  be uploaded to Firebase.
+- Android's small notification icon is the crest's outline
+  (`res/drawable/ic_stat_notification.xml`), tinted `#1D47A1`, named as
+  Firebase's default in `AndroidManifest.xml`.
+- Not done: the APNs key must be uploaded to Firebase (Project settings,
+  Cloud Messaging, Apple app configuration) before an iPhone receives anything.
 
 ## Deleting the account
 
