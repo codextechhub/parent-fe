@@ -31,6 +31,8 @@
 .signin-visibility { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--xs-muted); cursor: pointer; }
 .signin-visibility:hover { background: #eef1f6; }
 .signin-forgot { justify-self: end; margin-top: -2px; color: var(--xs-brand); font-size: 13px; font-weight: 600; text-decoration: none; }
+/* The two-step code form's switches look like the link above them. */
+button.signin-forgot { padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .signin-submit { display: flex; align-items: center; justify-content: center; gap: 8px; height: 54px; margin-top: 4px; border: 0; border-radius: 17px; background: var(--xs-brand); box-shadow: 0 10px 24px -10px rgba(45, 71, 120, .7); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform .15s, background-color .15s; }
 .signin-submit:hover { background: #425b8f; }
 .signin-submit:active { transform: scale(.98); }

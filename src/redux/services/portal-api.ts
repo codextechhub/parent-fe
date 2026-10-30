@@ -37,6 +37,21 @@ export type LoginData = {
   permissions: string[];
 };
 
+/**
+ * Keep a finished sign-in, from the password or from a two-step code.
+ *
+ * The parent app is for parent accounts only. Codex staff are signed back out
+ * by the sign-in page, which needs the account key to do it, so the key is
+ * kept for them too; their access token is not. The `me/` fetch the sign-in
+ * page makes next turns a tenant sign-in into a confirmed parent.
+ */
+function adoptSignIn(data: LoginData | undefined): void {
+  if (data?.account) void setAccount(data.account);
+  if (data?.tenant?.kind === "PLATFORM") return;
+  resetSessionInvalidation();
+  setAccessToken(data?.access || "");
+}
+
 export const portalApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<Envelope<LoginData>, LoginRequest>({
@@ -49,19 +64,29 @@ export const portalApi = baseApi.injectEndpoints({
         dispatch(signInStarted());
         try {
           const { data: result } = await queryFulfilled;
-          const data = result.data;
-          // The parent app is for parent accounts only. Codex staff are signed
-          // back out by the sign-in page, which needs the account key to do
-          // it, so the key is kept for them too; their access token is not.
-          if (data?.account) void setAccount(data.account);
-          if (data?.tenant?.kind === "PLATFORM") return;
-          resetSessionInvalidation();
-          setAccessToken(data?.access || "");
-          // The `me/` fetch triggers from the route guard once the mutation
-          // settles, which turns a successful tenant login into a confirmed
-          // "yes, you are a parent" with the shell loaded.
+          adoptSignIn(result.data);
         } catch {
-          // The sign-in page shows the refusal inline from the mutation's error.
+          // The sign-in page shows the refusal inline from the mutation's error,
+          // including a request for a two-step code, which carries no session.
+        }
+      },
+    }),
+    /**
+     * The second step of a sign-in for a member of staff who is also a parent:
+     * a code from their authenticator app, or one backup code, for the
+     * challenge the password was refused with. Answers as `login` does.
+     */
+    twoStepVerify: builder.mutation<
+      Envelope<LoginData>,
+      { challenge: string; code?: string; recovery_code?: string }
+    >({
+      query: (body) => ({ url: "/user/auth/two-step/verify/", method: "POST", body }),
+      async onQueryStarted(_args, { queryFulfilled }) {
+        try {
+          const { data: result } = await queryFulfilled;
+          adoptSignIn(result.data);
+        } catch {
+          // A wrong code; the sign-in page shows it.
         }
       },
     }),
@@ -131,7 +156,7 @@ export const portalApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useLoginMutation, useLogoutMutation, useMeQuery, useLazyMeQuery } = portalApi;
+export const { useLoginMutation, useTwoStepVerifyMutation, useLogoutMutation, useMeQuery, useLazyMeQuery } = portalApi;
 
 /* ─── Home ──────────────────────────────────────────────────────────────── */
 

@@ -13,6 +13,8 @@ import {
   useLazyMeQuery,
   useLoginMutation,
   useLogoutMutation,
+  useTwoStepVerifyMutation,
+  type LoginData,
 } from "@/redux/services/portal-api";
 import { isNativeApp } from "@/native/platform";
 import { schoolLogoUrl } from "@/utils/school-brand";
@@ -38,6 +40,15 @@ function schoolLink(path: string, slug: string) {
 type Refusal = { message: string; staff?: boolean };
 
 const NOT_A_PARENT = "This account is not a parent at this school.";
+
+const SET_UP_FIRST =
+  "Your account needs two-step sign-in, and it is not set up yet. Set it up on the school's staff sign-in, then sign in here again.";
+
+/** The challenge a refusal carries when the server wants a two-step code. */
+function challengeOf(data: unknown): string {
+  const error = (data as { error?: { challenge?: unknown } } | undefined)?.error;
+  return typeof error?.challenge === "string" ? error.challenge : "";
+}
 
 /** The code the API gives a refusal, under either key it uses. */
 function refusalCode(data: unknown): string {
@@ -74,6 +85,11 @@ export default function SignInPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   const [checking, setChecking] = useState(false);
+  // A member of staff who is also a parent: the password was right and the
+  // server wants the code from their authenticator app. Held here only, so a
+  // reload starts again at the password.
+  const [challenge, setChallenge] = useState("");
+  const [verify, verifyState] = useTwoStepVerifyMutation();
 
   const shown: Refusal | null = refusal ?? (notAParent
     ? { message: NOT_A_PARENT, staff: true }
@@ -90,6 +106,38 @@ export default function SignInPage() {
     setRefusal(next);
   };
 
+  /** The sign-in is answered: keep it, or close it for an account that is not a parent here. */
+  const finish = async (result: { data: LoginData }) => {
+    // The store app keeps its credential in secure storage, before anything else can need it to sign out.
+    if (isNativeApp() && !(await keepNativeCredential(result.data.account, result.data.refresh))) {
+      setAccessToken("");
+      await clearAccount();
+      refuse({ message: "This phone could not keep your sign-in safe, so you were not signed in. Try again." });
+      return;
+    }
+    // The platform tenant is XVS's own staff: never a school parent.
+    if (result.data.tenant?.kind === "PLATFORM") {
+      await logout().unwrap().catch(() => {});
+      refuse({ message: "That is a CodeX staff account. Sign in on the CodeX console." });
+      return;
+    }
+    const meResult = await fetchMe().unwrap().then(
+      () => ({ ok: true as const }),
+      (err: unknown) => ({ ok: false as const, status: (err as { status?: number })?.status }),
+    );
+    if (meResult.ok) {
+      navigate("/", { replace: true });
+    } else if (meResult.status === 404) {
+      // Not a parent here. The logout reducer clears the slice, so the flag is put back after it.
+      await logout().unwrap().catch(() => {});
+      setAccessToken("");
+      dispatch(meRefused());
+      setPassword("");
+    } else {
+      refuse({ message: "Something went wrong signing you in. Please try again." });
+    }
+  };
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const typed = email.trim().toLowerCase();
@@ -101,38 +149,16 @@ export default function SignInPage() {
     dispatch(signInStarted());
     setChecking(true);
     try {
-      const result = await login({ email: typed, password }).unwrap();
-      // The store app keeps its credential in secure storage, before anything else can need it to sign out.
-      if (isNativeApp() && !(await keepNativeCredential(result.data.account, result.data.refresh))) {
-        setAccessToken("");
-        await clearAccount();
-        refuse({ message: "This phone could not keep your sign-in safe, so you were not signed in. Try again." });
-        return;
-      }
-      // The platform tenant is XVS's own staff: never a school parent.
-      if (result.data.tenant?.kind === "PLATFORM") {
-        await logout().unwrap().catch(() => {});
-        refuse({ message: "That is a CodeX staff account. Sign in on the CodeX console." });
-        return;
-      }
-      const meResult = await fetchMe().unwrap().then(
-        () => ({ ok: true as const }),
-        (err: unknown) => ({ ok: false as const, status: (err as { status?: number })?.status }),
-      );
-      if (meResult.ok) {
-        navigate("/", { replace: true });
-      } else if (meResult.status === 404) {
-        // Not a parent here. The logout reducer clears the slice, so the flag is put back after it.
-        await logout().unwrap().catch(() => {});
-        setAccessToken("");
-        dispatch(meRefused());
-        setPassword("");
-      } else {
-        refuse({ message: "Something went wrong signing you in. Please try again." });
-      }
+      await finish(await login({ email: typed, password }).unwrap());
     } catch (err) {
       const failed = err as { status?: number | string; data?: { message?: string } };
-      if (failed?.status === 403 && refusalCode(failed.data) === "DEVICE_SESSION_NOT_OFFERED") {
+      const code = refusalCode(failed?.data);
+      if (failed?.status === 403 && code === "TWO_STEP_REQUIRED" && challengeOf(failed.data)) {
+        setPassword("");
+        setChallenge(challengeOf(failed.data));
+      } else if (failed?.status === 403 && code === "TWO_STEP_SET_UP_REQUIRED") {
+        refuse({ message: SET_UP_FIRST, staff: true });
+      } else if (failed?.status === 403 && code === "DEVICE_SESSION_NOT_OFFERED") {
         // Not a parent at this school: a teacher, a bursar, a pupil.
         refuse({ message: NOT_A_PARENT, staff: true });
       } else if (failed?.status === 401 || failed?.status === 400) {
@@ -148,6 +174,29 @@ export default function SignInPage() {
   };
 
   const busy = loginState.isLoading || checking;
+
+  /** The code from the authenticator app, or a backup code, for the waiting sign-in. */
+  const onCode = async (answer: { code?: string; recovery_code?: string }) => {
+    setRefusal(null);
+    setChecking(true);
+    try {
+      const result = await verify({ challenge, ...answer }).unwrap();
+      setChallenge("");
+      await finish(result);
+    } catch (err) {
+      const failed = err as { status?: number | string; data?: { message?: string } };
+      if (refusalCode(failed?.data) === "TWO_STEP_CHALLENGE_INVALID") {
+        setChallenge("");
+        refuse({ message: "This sign-in has expired. Enter your email and password again." });
+      } else if (failed?.status === 0 || failed?.status === "FETCH_ERROR" || failed?.status === "TIMEOUT_ERROR") {
+        setRefusal({ message: "Could not reach the school. Check your connection and try again." });
+      } else {
+        setRefusal({ message: "That code is not right. Check your authenticator app and try again." });
+      }
+    } finally {
+      setChecking(false);
+    }
+  };
 
   return (
     <main className="signin-page">
@@ -169,6 +218,17 @@ export default function SignInPage() {
             <p className="signin-card-intro">Use the email your school has for you.</p>
             {!slug ? (
               <div className="signin-error" role="alert">This address doesn&apos;t belong to a school. Open the parent app from your school&apos;s own address.</div>
+            ) : challenge ? (
+              <CodeStep
+                busy={checking || verifyState.isLoading}
+                refusal={refusal?.message ?? ""}
+                onChange={() => setRefusal(null)}
+                onSubmit={(answer) => void onCode(answer)}
+                onStartAgain={() => {
+                  setChallenge("");
+                  setRefusal(null);
+                }}
+              />
             ) : (
               <form className="signin-form" onSubmit={onSubmit} noValidate>
                 <div className="signin-field">
@@ -196,5 +256,86 @@ export default function SignInPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+/**
+ * The second step for a member of staff who is also a parent: their school
+ * asks them for a code from their authenticator app after their password. They
+ * set the app up on the school's staff sign-in, so this asks only for a code,
+ * or one of the backup codes they saved there.
+ */
+function CodeStep({
+  busy,
+  refusal,
+  onChange,
+  onSubmit,
+  onStartAgain,
+}: {
+  busy: boolean;
+  refusal: string;
+  onChange: () => void;
+  onSubmit: (answer: { code?: string; recovery_code?: string }) => void;
+  onStartAgain: () => void;
+}) {
+  const [backup, setBackup] = useState(false);
+  const [value, setValue] = useState("");
+  const ready = backup ? value.trim().length >= 10 : /^\d{6}$/.test(value);
+
+  return (
+    <form
+      className="signin-form"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!ready || busy) return;
+        onSubmit(backup ? { recovery_code: value.trim() } : { code: value });
+      }}
+    >
+      <p className="signin-card-intro">
+        {backup
+          ? "Type one of the backup codes you saved when you set up two-step sign-in. Each one works once."
+          : "Your school asks staff for a code from their authenticator app. Type the 6-digit code it shows."}
+      </p>
+      <div className="signin-field">
+        <label htmlFor="signin-code">{backup ? "Backup code" : "6-digit code"}</label>
+        <input
+          id="signin-code"
+          name="code"
+          inputMode={backup ? "text" : "numeric"}
+          autoComplete="one-time-code"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={backup ? 16 : 6}
+          placeholder={backup ? "For example 3f9a2-7c1e0" : "123456"}
+          value={value}
+          aria-invalid={!!refusal}
+          autoFocus
+          onChange={(event) => {
+            setValue(backup ? event.target.value : event.target.value.replace(/\D/g, ""));
+            onChange();
+          }}
+        />
+      </div>
+      <button
+        type="button"
+        className="signin-forgot"
+        onClick={() => {
+          setBackup((was) => !was);
+          setValue("");
+          onChange();
+        }}
+      >
+        {backup ? "Use the authenticator app instead" : "Lost your phone? Use a backup code"}
+      </button>
+      {refusal && <div className="signin-error" role="alert">{refusal}</div>}
+      <button type="submit" className="signin-submit" disabled={busy || !ready}>
+        {busy ? "Checking…" : "Continue"}
+        <ArrowRight size={18} aria-hidden="true" />
+      </button>
+      <button type="button" className="signin-forgot" onClick={onStartAgain}>
+        Sign in as someone else
+      </button>
+    </form>
   );
 }

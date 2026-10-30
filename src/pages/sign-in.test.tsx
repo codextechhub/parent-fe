@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   auth: { notAParent: false },
   login: vi.fn(),
+  verify: vi.fn(),
   logout: vi.fn(),
   fetchMe: vi.fn(),
   dispatch: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock("@/redux/hooks", () => ({
 }));
 vi.mock("@/redux/services/portal-api", () => ({
   useLoginMutation: () => [mocks.login, { isLoading: false }],
+  useTwoStepVerifyMutation: () => [mocks.verify, { isLoading: false }],
   useLogoutMutation: () => [mocks.logout],
   useLazyMeQuery: () => [mocks.fetchMe],
 }));
@@ -51,7 +53,7 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
   mocks.auth = { notAParent: false };
-  for (const fn of [mocks.login, mocks.logout, mocks.fetchMe, mocks.dispatch, mocks.navigate]) fn.mockReset();
+  for (const fn of [mocks.login, mocks.verify, mocks.logout, mocks.fetchMe, mocks.dispatch, mocks.navigate]) fn.mockReset();
   mocks.logout.mockReturnValue(unwrapped({}));
 });
 afterEach(() => {
@@ -156,3 +158,62 @@ describe("parent sign-in", () => {
     expect(alert?.querySelector("a")?.getAttribute("href")).toBe("/accounts");
   });
 });
+
+describe("a member of staff who is also a parent", () => {
+  const askedForCode = (code: string) => ({
+    status: 403,
+    data: { message: "", error: { code, detail: "", challenge: "ts_abc", expires_in: 600 } },
+  });
+
+  const signIn = async () => {
+    render();
+    type("email", "bursar@lagoonview.test");
+    type("password", "Str0ng!pass123");
+    await submit();
+  };
+
+  it("is asked for the code from their authenticator app, and comes in with it", async () => {
+    mocks.login.mockReturnValue(unwrapped(askedForCode("TWO_STEP_REQUIRED"), false));
+    mocks.verify.mockReturnValue(unwrapped({ data: { account: "a1", access: "t", tenant: { kind: "SCHOOL" } } }));
+    mocks.fetchMe.mockReturnValue(unwrapped({}));
+    await signIn();
+
+    expect(container.querySelector('input[name="password"]')).toBeNull();
+    type("code", "123456");
+    await submit();
+
+    expect(mocks.verify).toHaveBeenCalledWith({ challenge: "ts_abc", code: "123456" });
+    expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true });
+  });
+
+  it("is told a wrong code where the form is, and can try again", async () => {
+    mocks.login.mockReturnValue(unwrapped(askedForCode("TWO_STEP_REQUIRED"), false));
+    mocks.verify.mockReturnValue(unwrapped({ status: 400, data: { error: { code: "TWO_STEP_CODE_INVALID" } } }, false));
+    await signIn();
+    type("code", "000000");
+    await submit();
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("That code is not right");
+    expect(container.querySelector('input[name="code"]')).not.toBeNull();
+  });
+
+  it("goes back to the password once the sign-in has expired", async () => {
+    mocks.login.mockReturnValue(unwrapped(askedForCode("TWO_STEP_REQUIRED"), false));
+    mocks.verify.mockReturnValue(unwrapped({ status: 400, data: { error: { code: "TWO_STEP_CHALLENGE_INVALID" } } }, false));
+    await signIn();
+    type("code", "000000");
+    await submit();
+
+    expect(container.querySelector('input[name="password"]')).not.toBeNull();
+    expect(container.textContent).toContain("This sign-in has expired");
+  });
+
+  it("is sent to set it up on the school's staff sign-in first", async () => {
+    mocks.login.mockReturnValue(unwrapped(askedForCode("TWO_STEP_SET_UP_REQUIRED"), false));
+    await signIn();
+
+    expect(container.textContent).toContain("Set it up on the school's staff sign-in");
+    expect(container.querySelector('a[href="/accounts"]')).not.toBeNull();
+  });
+});
+

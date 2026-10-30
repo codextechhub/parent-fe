@@ -24,7 +24,7 @@ const baseUrl = import.meta.env.VITE_BACKEND_URL;
  * never run the 401 refresh/retry on them. Matched as a path under
  * `/user/auth/`, so "activate" and "login" never collide with other words.
  */
-const AUTH_URLS = ["login", "device", "csrf", "password", "activate"];
+const AUTH_URLS = ["login", "two-step/verify", "device", "csrf", "password", "activate"];
 
 const isAuthRoute = (args: string | FetchArgs): boolean => {
   const url =
@@ -79,7 +79,7 @@ export const baseQuery = fetchBaseQuery({
   timeout: REQUEST_TIMEOUT_MS,
   prepareHeaders: async (headers, { endpoint, type }) => {
     const accessToken = getAccessToken();
-    if (accessToken && endpoint !== "login" && endpoint !== "logout") {
+    if (accessToken && endpoint !== "login" && endpoint !== "twoStepVerify" && endpoint !== "logout") {
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
     // CSRF guards cookies; the store app sends none.
