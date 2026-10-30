@@ -71,6 +71,10 @@ so a new version reaches phones on their next open, and
 Render otherwise sends as a plain download. Everything under `/assets/` is
 named by its content and may be cached for good.
 
+The security headers (HSTS, the content security policy, no framing) are the
+same on all four sites and are listed once, in school-fe's
+`docs/security-headers.md`. Add them here as well as on school-fe's site.
+
 ### 2. Two rules on school-fe's static site
 
 On the **existing** school-fe static site of the same environment, under
